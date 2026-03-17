@@ -1,0 +1,21 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "ap-claude-marketplace",
+  "description": "Claude Code plugins for software engineering workflows — SDLC, git pipelines, NestJS patterns, and engineering methodology",
+  "owner": {
+    "name": "An Pham",
+    "email": "anpham1925@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "basic-engineering",
+      "description": "Engineering toolkit — SDLC workflow, git pipeline, NestJS patterns, and engineering methodology. Includes 4 skills: sdlc (6-stage SDLC with Jira), ship-n-check (8-stage git workflow), nestjs-stack (NestJS + TypeORM + DDD patterns), engineering-foundations (TDD, domain modeling, code review, requirements, architecture, ADRs).",
+      "version": "1.0.0",
+      "author": {
+        "name": "An Pham"
+      },
+      "source": "./plugins/basic-engineering",
+      "category": "development"
+    }
+  ]
+}
