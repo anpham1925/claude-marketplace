@@ -1,6 +1,6 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
-  "name": "claude-marketplace",
+  "name": "anpham-marketplace",
   "description": "Claude Code plugins for software engineering workflows — SDLC, git pipelines, NestJS patterns, and engineering methodology",
   "owner": {
     "name": "An Pham",
