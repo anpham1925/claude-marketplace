@@ -1,6 +1,6 @@
 ---
 name: engineering-foundations
-description: Engineering methodology — TDD, domain modeling, code review, requirements gathering, architecture planning, and ADR writing. Use when writing tests, designing domains, reviewing code, gathering requirements, planning features, or documenting decisions.
+description: "TRIGGER when: user says 'write tests', 'TDD', 'red-green-refactor', 'design the domain', 'review this code', 'gather requirements', 'plan the architecture', 'write an ADR', or asks about testing strategy, domain modeling, or code review process. Also trigger when user asks 'how should I structure this?' or 'what are the trade-offs?'. DO NOT trigger for: running existing tests (use test-runner agent), NestJS-specific patterns (use nestjs-stack), or CI/CD workflows."
 model: opus
 ---
 
@@ -49,3 +49,16 @@ Need to plan a feature or make architecture decisions?
 Need to document a significant decision?
   -> Read reference/adr.md
 ```
+
+## Gotchas
+
+Common failure points — if Claude keeps hitting these, the skill needs updating:
+
+- **Writing tests after code (Green-Red)** — TDD means Red first. Writing the implementation then adding tests is just "testing", not TDD. The test must fail before you write production code.
+- **Testing implementation, not behavior** — `expect(service.processPayment).toHaveBeenCalledWith(...)` tests how, not what. Test the observable outcome: `expect(account.balance).toBe(900)`.
+- **Anemic domain models** — Entity with only getters/setters and all logic in services. If `Payout.approve()` doesn't exist but `PayoutService.approvePayout()` does, the domain model is anemic.
+- **Architecture decision without trade-offs** — "We should use Event Sourcing" without listing the cons (complexity, eventual consistency, debugging difficulty). Always present 2-3 options with honest trade-offs.
+- **Over-engineering for hypothetical requirements** — Adding a plugin system "in case we need it later." Build for current requirements. The right amount of complexity is the minimum needed.
+- **Code review scope creep** — Reviewer suggests refactoring unrelated code. Review only what changed. Pre-existing issues go in a separate ticket.
+- **Requirements without acceptance criteria** — "Support bulk operations" is not a requirement. "Given 100 payouts, when bulk-approve is called, then all 100 transition to APPROVED within 5 seconds" is.
+- **ADR without status** — Every ADR needs a status (Proposed/Accepted/Deprecated/Superseded). An ADR without status is just a document.

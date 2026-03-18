@@ -1,6 +1,6 @@
 ---
 name: nestjs-stack
-description: NestJS patterns — error handling, config, auth, API design, code structure, logging, domain models, TypeORM. Use when working with NestJS, designing APIs, handling errors, writing queries, or structuring code.
+description: "TRIGGER when: code imports @nestjs/*, typeorm, class-validator, or user asks about NestJS patterns, error handling, guards, interceptors, DTOs, migrations, domain models, CQRS, or logging format. Also trigger when creating new modules, controllers, services, or entities. DO NOT trigger for: non-NestJS Node.js code, frontend code, or general TypeScript questions."
 model: sonnet
 ---
 
@@ -76,3 +76,17 @@ Adding logging?
 6. **Context-first logging** — structured fields before message string
 7. **Query hierarchy** — built-in methods first, query builder second, raw SQL last resort
 8. **Release query runners** — always in a `finally` block
+
+## Gotchas
+
+Common failure points — if Claude keeps hitting these, the skill needs updating:
+
+- **Throwing `HttpException` from domain layer** — Domain services must throw domain exceptions (e.g., `PayoutNotFoundException`). HTTP mapping belongs in exception filters, not business logic.
+- **Using `process.env.FOO` directly** — Works in dev, breaks in test. Always use `ConfigService.get()` with a typed config namespace.
+- **Forgetting `@ApiProperty()` on DTO fields** — Swagger docs will be empty. Every DTO field needs the decorator, including nested objects.
+- **Circular module dependencies** — Module A imports Module B which imports Module A. Use `forwardRef()` or restructure with a shared module.
+- **TypeORM migration not matching entity** — Entity has a new column but no migration. Always generate a migration after entity changes: `yarn migration:generate`.
+- **Raw SQL without parameterization** — `query(\`SELECT * WHERE id = '${id}'\`)` is SQL injection. Use `query('SELECT * WHERE id = $1', [id])`.
+- **Auth logic in services instead of guards** — Services receive an already-authenticated user context. If you're checking `req.user` inside a service, the guard is missing.
+- **Exposing entities as API responses** — Entities have internal fields (timestamps, soft-delete flags). Always map to a response DTO.
+- **Query runner not released** — `queryRunner.connect()` without a `finally { await queryRunner.release() }` leaks connections.

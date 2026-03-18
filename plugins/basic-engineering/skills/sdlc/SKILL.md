@@ -1,6 +1,6 @@
 ---
 name: sdlc
-description: Full SDLC orchestration with 7 composable stages — analyze, design, implement, test, verify, review, release. Uses agent teams with Jira integration, human checkpoints, and goal-backward verification. Use when starting a ticket end-to-end, analyzing requirements, designing solutions, implementing features, or running the full development lifecycle.
+description: "TRIGGER when: user says 'start ticket', 'pick up TICKET-123', 'analyze this ticket', 'design a solution', 'implement', 'ship this', or references a Jira ticket ID. Also trigger for 'run the full pipeline', 'what stage am I on', or resuming a partially-completed ticket. DO NOT trigger for: one-off code changes without a ticket, quick fixes, or questions about code."
 argument-hint: '[stage] [TICKET-ID]'
 model: opus
 ---
@@ -385,3 +385,29 @@ The main conversation is the orchestrator. It should stay thin — route work to
 - **ALWAYS** update STATE.md after each stage completion
 - If a stage fails or gets stuck, **STOP** and inform the user — don't retry endlessly
 - Implementer can auto-fix bugs and blocking issues (deviation rules 1-3) but must STOP for architectural changes (rule 4)
+
+## Gotchas
+
+Common failure points — if Claude keeps hitting these, the skill needs updating:
+
+- **Skipping the pre-read** — Claude summarizes stages from memory instead of reading `reference/stages.md`. The summaries in SKILL.md are navigation aids, not instructions. Always read the reference.
+- **Pasting large artifacts inline** — Design output dumped into the conversation instead of written to a file. This bloats the orchestrator context. Write to disk, pass file paths.
+- **Shallow plans** — `specs.md` tasks with vague actions like "implement the handler" instead of concrete "add `CreatePayoutHandler` in `modules/payout/application/commands/` implementing `ICommandHandler<CreatePayoutCommand>`". If `acceptance_criteria` can't be grep-verified, the plan is not ready.
+- **Skipping Verify** — Going straight from Test to Review. Verify catches wiring gaps that tests miss (e.g., handler exists but isn't registered in the module).
+- **Forgetting STATE.md** — Resuming a pipeline without reading STATE.md, leading to repeated work or skipped stages.
+- **Revision loop runs forever** — Plan-Checker and Architect going back and forth. Enforce the max 3 iteration limit — surface unresolved issues at the checkpoint instead.
+- **Jira MCP not available** — If Jira MCP tools aren't connected, don't fail silently. Ask the user whether to proceed without Jira or set it up first.
+- **Analysis paralysis in Implement** — Implementer reads 10+ files without writing anything. The 5-read guard exists for a reason — surface the blocker early.
+
+## Persistent Data
+
+This skill stores execution data in `${CLAUDE_PLUGIN_DATA}/sdlc/` for cross-session learning:
+
+- `execution-log.jsonl` — append-only log of each stage execution (stage, timestamp, outcome, duration)
+- `velocity.json` — rolling metrics: avg time per stage, common blockers, gap-closure frequency
+- `gotchas-learned.md` — gotchas discovered during execution that aren't in this file yet (user can PR them back)
+
+**How to use:**
+- At pipeline start, read `velocity.json` to estimate complexity and flag if this ticket type historically has issues
+- After each stage, append to `execution-log.jsonl`
+- If Verify finds the same gap type repeatedly, append to `gotchas-learned.md`

@@ -1,6 +1,6 @@
 ---
 name: ship-n-check
-description: Git workflow with 8 composable stages — branch, commit, self-review, lint, type-check, tests, simplify, push, create draft PR, watch CI/CD, fix pipeline failures, verify staging, open PR for code review, and address review feedback. Use when creating branches, committing changes, pushing code, creating PRs, reviewing your own code, running quality checks, simplifying code, checking PR review feedback, monitoring CI/CD pipelines, fixing build failures, connecting to staging, or running the full done flow.
+description: "TRIGGER when: user says 'ship it', 'create a PR', 'push this', 'commit and push', 'run CI', 'check the pipeline', 'fix CI failures', 'open PR', 'address review feedback', 'simplify', or 'done flow'. Also trigger for 'check staging', 'watch CI', 'babysit PR'. DO NOT trigger for: simple git commands like 'git status' or 'git log', or when user just wants to commit without the full pipeline."
 argument-hint: '[ticket-number]'
 model: sonnet
 ---
@@ -235,3 +235,29 @@ This stage has two phases — test pipelines first, then build/deploy.
 - **NEVER** delete `docs/<identifier>/review-feedback.md` — always append new entries with a dated section header
 - **ALWAYS** check for repeated patterns in the feedback log before starting a new review — if the same issue appears across multiple entries, flag it to the user and suggest a rule improvement
 - If any quality check fails and can't be fixed, **STOP** and inform the user
+
+## Gotchas
+
+Common failure points — if Claude keeps hitting these, the skill needs updating:
+
+- **`git add .` or `git add -A`** — Stages everything including `.env`, `node_modules`, or large binaries. Always stage specific files by name.
+- **`$()` in commit messages** — Process substitution in commit messages can execute arbitrary commands. Use a temp file or heredoc instead.
+- **Force push to main** — Never. Not even "just this once." If the history is wrong, create a revert commit.
+- **Skipping requirements review** — "It's a small change" is not an excuse. The requirements reviewer catches scope creep that the author is blind to.
+- **Auto-fixing debatable items** — Reviewer finds a naming issue but there are valid arguments both ways. Don't auto-fix — ask the user.
+- **CI retry loop** — Test fails, auto-fix, test fails again with a different error, auto-fix again. After 3 attempts, STOP. The issue is likely architectural, not a quick fix.
+- **Creating PR without running tests locally** — CI will catch it, but it wastes time and clutters the pipeline. Always run lint + type-check + test locally first.
+- **Forgetting to read review-feedback.md** — Previous review feedback contains patterns. Reading it before self-review catches repeat issues.
+
+## Persistent Data
+
+This skill stores data in `${CLAUDE_PLUGIN_DATA}/ship-n-check/` for cross-session learning:
+
+- `review-patterns.jsonl` — append-only log of review findings (type, file, auto-fixed or user-decided)
+- `ci-failures.jsonl` — CI failure history (error type, root cause, fix applied, retry count)
+- `pr-log.jsonl` — PR creation history (branch, PR URL, time-to-merge, review rounds)
+
+**How to use:**
+- Before self-review, read `review-patterns.jsonl` to check for recurring issues in this codebase
+- Before CI retry, check `ci-failures.jsonl` for known flaky tests or infra issues
+- After PR merge, append to `pr-log.jsonl` for velocity tracking
