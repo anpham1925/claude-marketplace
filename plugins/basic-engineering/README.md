@@ -37,6 +37,13 @@ An opinionated toolkit for Claude Code covering the full development lifecycle f
 
 ### Workflow Skills
 - **sdlc**: Analyze -> Design -> Implement -> Test -> Verify -> Review -> Release
+  - Goal-backward verification (exists/substantive/wired checks)
+  - Plans-as-prompts with deep work rules (`read_first`, `acceptance_criteria`, concrete `action`)
+  - Thin orchestrator — agents get fresh context windows, orchestrator stays lean
+  - Deviation rules — auto-fix bugs, STOP for architectural changes
+  - STATE.md for lightweight pipeline tracking (<100 lines)
+  - Design revision loop with Plan-Checker agent (max 3 iterations)
+  - Per-agent model selection (opus/sonnet/haiku based on task nature)
 - **ship-n-check**: Branch -> Commit -> Requirements Review -> Quality Checks -> Push -> CI/CD -> Staging -> PR Review
 
 ### Coding Pattern Skills
