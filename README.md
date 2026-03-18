@@ -1,4 +1,4 @@
-# AP Claude Marketplace
+# Claude Marketplace
 
 A collection of Claude Code plugins for software engineering workflows.
 
@@ -19,5 +19,5 @@ Licensed under the [MIT License](LICENSE).
 ## Install
 
 ```bash
-/plugin install basic-engineering@ap-claude-marketplace
+/install-plugin anpham1925/claude-marketplace
 ```
