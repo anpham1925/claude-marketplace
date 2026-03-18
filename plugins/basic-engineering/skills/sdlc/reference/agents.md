@@ -2,9 +2,27 @@
 
 Each agent has a bounded responsibility, clear inputs/outputs, and specific skills it leverages.
 
+## Model Selection
+
+Each agent has a recommended model based on the nature of its work:
+
+| Agent | Model | Reasoning |
+|-------|-------|-----------|
+| Analyst | haiku | Codebase search and extraction — speed over depth |
+| Architect | opus | Architecture decisions require deep reasoning |
+| Plan-Checker | sonnet | Validation checklist — systematic, not creative |
+| Implementer | sonnet | Code generation — high volume, pattern-following |
+| Tester | sonnet | Test generation — systematic, pattern-following |
+| Verifier | sonnet | Systematic checks — grep/glob verification, not creative |
+| Reviewer | opus | Deep code review requires nuanced judgment |
+| Release | sonnet | Git workflow and CI/CD — procedural |
+
+Pass the model via the `model` parameter on the Agent tool call. If the agent delegates to a pre-defined agent file (e.g., `code-reviewer.md`), the model in the agent file takes precedence.
+
 ## 1. Analyst Agent
 
 **Mission**: Understand the ticket and produce structured requirements.
+**Model**: haiku
 
 **Inputs**: Jira ticket ID
 **Outputs**: Structured Requirements artifact
@@ -49,6 +67,7 @@ Each agent has a bounded responsibility, clear inputs/outputs, and specific skil
 ## 2. Architect Agent
 
 **Mission**: Design a solution that fits the codebase and is implementable.
+**Model**: opus
 
 **Inputs**: Structured Requirements from Analyst
 **Outputs**: Solution Design artifact (+ ADR if significant decision)
@@ -102,39 +121,85 @@ Each agent has a bounded responsibility, clear inputs/outputs, and specific skil
 
 ---
 
-## 3. Implementer Agent
+## 3. Plan-Checker Agent
 
-**Mission**: Build the solution using TDD, following the Architect's design.
+**Mission**: Validate design quality before execution begins — catch issues when they're cheap to fix.
+**Model**: sonnet
 
-**Inputs**: Solution Design from Architect
+**Inputs**: Solution Design from Architect + Structured Requirements from Analyst
+**Outputs**: Validation result (PASS or list of issues)
+
+**Responsibilities**:
+- Verify every acceptance criterion maps to at least one file change
+- Check interfaces are concrete TypeScript (not prose descriptions)
+- Verify no contradictions between design and existing code patterns
+- Check every new file has a clear consumer (not orphaned)
+- Validate `depends_on` relationships make sense
+
+**Subagent type**: `general-purpose`
+
+**Validation Checklist**:
+- [ ] Every acceptance criterion → file change mapping exists
+- [ ] Interfaces are TypeScript, not prose
+- [ ] New files have consumers
+- [ ] No contradictions with existing patterns
+- [ ] Risk mitigations are concrete, not vague
+
+**On failure**: return specific issues to Architect for revision. Max 3 revision iterations.
+
+---
+
+## 4. Implementer Agent
+
+**Mission**: Build the solution using TDD, following the execution plan.
+**Model**: sonnet
+
+**Inputs**: Execution plan (`specs.md`) with task breakdown
 **Outputs**: Code changes with passing unit tests
 
 **Responsibilities**:
+- Read each task's `read_first` files before starting
+- Execute the concrete `action` for each task
 - Follow TDD: Red -> Green -> Refactor for each behavior
-- Implement according to the Solution Design's file structure and interfaces
-- Write unit tests covering all acceptance criteria
+- Verify each task's `acceptance_criteria` after completing it
 - Commit after each Green phase
 - Follow codebase conventions (naming, imports, error handling, logging)
+- Apply deviation rules (auto-fix bugs/security, STOP for architectural changes)
 
 **Skills**: `/testing-unit`, `/domain-model`, `/error-handling`, `/logging` (or project-specific equivalents)
 
 **Subagent type**: `general-purpose` (multi-step implementation)
 
 **TDD Rhythm**:
-1. Pick the simplest behavior from acceptance criteria
-2. Write a failing test (Red)
-3. Write minimum code to pass (Green)
-4. Refactor if needed
-5. Commit
-6. Pick next behavior, repeat
+- Read the task's `read_first` files
+- Write a failing test for the behavior (Red)
+- Write minimum code to pass (Green)
+- Refactor if needed
+- Verify `acceptance_criteria` (grep/test check)
+- Commit
+- Pick next task (respecting `depends_on`), repeat
+
+**Deviation Rules**:
+| Rule | Situation | Action |
+|------|-----------|--------|
+| 1 | Bug found | Auto-fix, `fix:` commit |
+| 2 | Missing validation/security | Auto-add |
+| 3 | Blocking issue | Auto-fix (max 3 attempts) |
+| 4 | Architectural change | **STOP and ask** |
+
+**Guards**:
+- Analysis paralysis: 5+ reads without a write = stuck, surface the blocker
+- Fix attempts: max 3 per issue, then document and move on
+- Scope boundary: only fix issues caused by current task
 
 ---
 
-## 4. Tester Agent
+## 5. Tester Agent
 
 **Mission**: Validate the implementation through e2e and integration tests.
+**Model**: sonnet
 
-**Inputs**: Solution Design (contracts) + Implementation (code)
+**Inputs**: Execution plan (`specs.md`) + Implementation (code)
 **Outputs**: E2e tests, edge case tests
 
 **Responsibilities**:
@@ -153,11 +218,44 @@ Each agent has a bounded responsibility, clear inputs/outputs, and specific skil
 
 ---
 
-## 5. Reviewer Agent
+## 6. Verifier Agent
+
+**Mission**: Confirm the implementation achieves the goal, not just that tasks completed.
+**Model**: sonnet
+
+**Inputs**: Goal + Must-Haves (from `specs.md`) + Implementation (code)
+**Outputs**: Verification report (PASSED / GAPS_FOUND / HUMAN_NEEDED)
+
+**Responsibilities**:
+- Extract must-haves from specs.md Goal and acceptance criteria
+- Three-level artifact verification: exists → substantive → wired
+- Anti-pattern scanning (TODO/FIXME, stubs, dead exports, log-only handlers)
+- Identify items that need human verification (visual, UX, performance)
+- Produce structured verification report with file:line references
+
+**Subagent type**: `general-purpose`
+
+**Core Principle**: Do NOT trust task completion claims or summaries. Verify independently by checking files on disk, running grep checks, and tracing wiring.
+
+**Three-Level Check**:
+| Level | Question | How |
+|-------|----------|-----|
+| Exists | Is the artifact present? | Glob/grep for file/symbol |
+| Substantive | Is it real, not a stub? | Check for TODO, empty returns, placeholders |
+| Wired | Is it connected? | Check imports, route registrations, DI bindings |
+
+**Gap Closure**: if gaps found, return specific gaps (with file:line) to Implementer. On re-verification, deep check failed items, quick regression check passed items. Max 2 iterations.
+
+See [verification.md](verification.md) for technology-specific patterns.
+
+---
+
+## 7. Reviewer Agent
 
 **Mission**: Ensure code quality, architecture compliance, and security.
+**Model**: opus
 
-**Inputs**: Full diff of all changes
+**Inputs**: Full diff of all changes + verification report
 **Outputs**: Review feedback (categorized)
 
 **Responsibilities**:
@@ -185,9 +283,10 @@ Each agent has a bounded responsibility, clear inputs/outputs, and specific skil
 
 ---
 
-## 6. Release Agent
+## 8. Release Agent
 
 **Mission**: Get the code merged and deployed.
+**Model**: sonnet
 
 **Inputs**: Approved, reviewed code
 **Outputs**: Merged PR, deployed to staging/production
@@ -214,16 +313,31 @@ Each agent produces a structured artifact that feeds into the next:
 
 ```
 Analyst --[Structured Requirements]--> Architect
-Architect --[Solution Design]--> Implementer
-Architect --[Solution Design]--> Tester (parallel)
-Implementer --[Code + Tests]--> Reviewer
-Tester --[E2e Tests]--> Reviewer
+Architect <--[Revision Loop]--> Plan-Checker (max 3 iterations)
+Architect --[Solution Design]--> Orchestrator creates Plan (specs.md)
+                                        |
+                                        +--> Implementer (execution plan)
+                                        +--> Tester (execution plan, parallel)
+Implementer --[Code + Tests]--> Verifier
+Tester --[E2e Tests]--> Verifier
+Verifier --[Gaps]--> Implementer (gap closure, max 2 iterations)
+Verifier --[Verification Report]--> Reviewer
 Reviewer --[Approved Code]--> Release
 ```
 
 ### Handoff Rules
 
-1. **Never skip a handoff** — each agent needs the previous artifact
-2. **Artifacts are append-only** — later agents can add to them but not remove
-3. **Checkpoint artifacts** — Analyst and Architect outputs must be user-approved before handoff
-4. **Parallel handoff** — Implementer and Tester both receive the Solution Design simultaneously
+- **Never skip a handoff** — each agent needs the previous artifact
+- **Artifacts are append-only** — later agents can add to them but not remove
+- **Checkpoint artifacts** — Analyst and Architect outputs must be user-approved before handoff
+- **Parallel handoff** — Implementer and Tester both receive the execution plan simultaneously
+- **Revision loops are bounded** — Design: max 3 iterations, Verify gap closure: max 2 iterations
+- **Pass file paths, not content** — agents read artifacts from disk, keeping the orchestrator thin
+
+### Thin Orchestrator Principle
+
+The orchestrator (main conversation) should use ~15% of its context for routing and state. Heavy work goes to agents, each getting a fresh context window. This prevents quality degradation from accumulated context.
+
+- Write artifacts to files → pass file paths to agents
+- Never paste large code blocks inline in the orchestrator
+- Each agent reads what it needs from `read_first` and artifact files

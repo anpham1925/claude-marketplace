@@ -6,7 +6,7 @@ An opinionated toolkit for Claude Code covering the full development lifecycle f
 
 | Skill | Invoke | What It Does |
 |---|---|---|
-| **SDLC** | `/basic-engineering:sdlc PRT-123` | 6-stage SDLC with Jira integration, agent teams, and human checkpoints |
+| **SDLC** | `/basic-engineering:sdlc PRT-123` | 7-stage SDLC with Jira integration, agent teams, goal-backward verification, and human checkpoints |
 | **Ship & Check** | `/basic-engineering:ship-n-check` | 8-stage git workflow — branch, commit, push, PR, CI/CD, staging |
 | **NestJS Stack** | `/basic-engineering:nestjs-stack` | NestJS patterns — error handling, config, auth, API design, code structure, logging, TypeORM |
 | **Engineering Foundations** | `/basic-engineering:engineering-foundations` | TDD, domain modeling, code review, requirements, architecture planning, ADRs |
@@ -14,7 +14,7 @@ An opinionated toolkit for Claude Code covering the full development lifecycle f
 ## Install
 
 ```bash
-/plugin install basic-engineering@ap-claude-marketplace
+/install-plugin anpham1925/claude-marketplace
 ```
 
 ## Usage
@@ -36,7 +36,7 @@ An opinionated toolkit for Claude Code covering the full development lifecycle f
 ## What's Included
 
 ### Workflow Skills
-- **sdlc**: Analyze -> Design -> Implement -> Test -> Review -> Release
+- **sdlc**: Analyze -> Design -> Implement -> Test -> Verify -> Review -> Release
 - **ship-n-check**: Branch -> Commit -> Requirements Review -> Quality Checks -> Push -> CI/CD -> Staging -> PR Review
 
 ### Coding Pattern Skills
