@@ -1,7 +1,7 @@
 {
   "name": "basic-engineering",
-  "description": "Engineering toolkit — SDLC workflow, git pipeline, NestJS patterns, and engineering methodology. Includes 4 skills: sdlc (7-stage SDLC with Jira), ship-n-check (8-stage git workflow), nestjs-stack (NestJS + TypeORM + DDD patterns), engineering-foundations (TDD, domain modeling, code review, requirements, architecture, ADRs).",
-  "version": "1.0.0",
+  "description": "Engineering toolkit — 19 composable skills: sdlc orchestrator (8 stages) + 8 standalone SDLC stage skills (analyze, design, breakdown, implement, test, verify, review, release), ship-n-check orchestrator (8 stages) + 6 standalone SNC stage skills (commit, quality, push, ci, staging, review), create-user-story (Jira story creation), plus nestjs-stack (NestJS + TypeORM + DDD patterns) and engineering-foundations (TDD, domain modeling, code review, requirements, architecture, ADRs).",
+  "version": "2.1.0",
   "author": {
     "name": "An Pham"
   }

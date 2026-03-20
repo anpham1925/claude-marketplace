@@ -1,10 +1,27 @@
-# Requirements Review + Local Quality Checks
+---
+name: snc-quality
+description: "TRIGGER when: user says 'requirements review', 'self-review', 'code quality check', 'run quality checks', or references the requirements review or local quality stage. DO NOT trigger for: full done flow, CI/CD, or other stages."
+argument-hint: '[ticket-number]'
+model: sonnet
+---
 
 ## Purpose
 
-Validate that changes match requirements AND meet code quality standards — before pushing, creating PRs, or touching CI/CD.
+Validate that changes match requirements AND meet code quality standards — before pushing, creating PRs, or touching CI/CD. This stage has two sub-stages: **Requirements Review** (blocking gate) and **Code Quality Review**.
 
-This stage has two sub-stages. **Requirements Review is a blocking gate** — if requirements mismatches are found, the pipeline stops.
+## Working Directory
+
+All temporary and generated files are stored under `docs/<identifier>/` in the repo root:
+- Use the ticket number if available (e.g., `docs/PRT-123/`)
+- Otherwise use the branch name (e.g., `docs/fix-auth-bug/`)
+
+## Standalone Invocation
+
+```
+/basic-engineering:snc-quality PRT-123
+```
+
+If no ticket number is provided, derive from the current branch name or ask the user.
 
 ---
 
@@ -103,9 +120,9 @@ OR
 - If the subagent returns **FAIL**:
   1. Present the full report to the user
   2. For each issue, ask the user to either:
-     - **Fix it** — make the code change, then re-run 2a
+     - **Fix it** — make the code change, then re-run requirements review
      - **Accept it** — explicitly acknowledge the gap/over-scope with a reason
-  3. Do NOT proceed to 2b until all issues are resolved or accepted
+  3. Do NOT proceed to Code Quality Review until all issues are resolved or accepted
   4. If the user fixes code, re-run the requirements review (max 3 iterations)
 
 ---
@@ -128,6 +145,7 @@ Review your own changes before committing:
 3. **Domain naming** — project-specific naming conventions followed
 4. **Testing coverage** — unit and e2e tests present
 5. **Security** — no secrets, parameterized queries, input validation
+6. **Documentation** — README and PR description updated if behavior, API, config, or usage changed
 
 ### Review Categories
 
@@ -200,29 +218,6 @@ Before writing a new entry, scan the existing feedback log for repeated issues:
    - Flag it to the user: "Repeated issue detected: [description] — seen N times"
    - Suggest a rule improvement (e.g., add to CLAUDE.md/AGENTS.md, update a skill, add a lint rule)
 4. Track patterns like: same lint error, same architectural mistake, same naming violation
-
-## Example Flow
-
-```
-Requirements Review
-1. Get requirements (Jira ticket / PRD file / user input)
-2. git diff master...HEAD                  # full diff
-3. git diff master...HEAD --name-only      # changed files
-4. Spawn requirements-reviewer subagent  # cross-check
-5. If FAIL -> present to user, wait       # BLOCKING
-6. If PASS -> proceed to 2b
-
-Code Quality Review
-7. git diff                              # see all changes
-8. Review against 5 sections             # architecture, quality, naming, tests, security
-9. Write feedback to review file         # categorize as AUTO-FIX / NEEDS-INPUT / INFO
-10. Fix AUTO-FIX issues                  # apply fixes
-11. Ask user about NEEDS-INPUT           # get decisions
-12. Run lint with auto-fix               # lint
-13. Run type-check                       # type check
-14. Run tests for affected files         # run tests
-15. Re-lint if any code changed          # re-lint after fixes
-```
 
 ## Rules
 

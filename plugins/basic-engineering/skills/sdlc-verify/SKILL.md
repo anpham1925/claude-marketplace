@@ -1,16 +1,78 @@
-# Verification Patterns
-
-Reference for the Verifier agent. Technology-specific patterns for checking that artifacts are real implementations, not stubs.
-
+---
+name: sdlc-verify
+description: "TRIGGER when: user says 'verify this', 'check the implementation', 'goal-backward verification', 'are we done', or references the verification stage. DO NOT trigger for: full SDLC pipeline, code review, or other stages."
+argument-hint: '[TICKET-ID]'
+model: sonnet
 ---
 
-## Three-Level Verification
+> **Recommended model: Sonnet** — Systematic checks — grep/glob verification, not creative.
 
-Every must-have is checked at three levels. Passing level 1 does NOT mean levels 2-3 are satisfied.
+## Purpose
+
+Confirm the implementation achieves the goal, not just that tasks completed. Task completion ≠ goal achievement. This is the fifth stage of the SDLC pipeline but can run standalone.
+
+## Standalone Invocation
+
+```
+/basic-engineering:sdlc-verify PRT-123
+```
+
+If no ticket ID is provided, derive from the current branch name or ask the user. Expects `docs/<identifier>/prd-plans/specs.md` and implementation code to exist.
+
+## State Tracking
+
+Read `docs/<identifier>/STATE.md` at start (if it exists). Update Current stage, Status, Artifacts, and Notes when done. If standalone (no orchestrator), derive identifier from branch name.
+
+## Agent: Verifier
+
+**Mission**: Confirm the implementation achieves the goal, not just that tasks completed.
+**Model**: sonnet
+
+**Subagent type**: `general-purpose`
+
+### Inputs
+- Goal + Must-Haves (from `specs.md`) + Implementation (code)
+
+### Outputs
+- Verification report (PASSED / GAPS_FOUND / HUMAN_NEEDED)
+
+### Core Principle
+Do NOT trust task completion claims or summaries. Verify independently by checking files on disk, running grep checks, and tracing wiring.
+
+## Steps
+
+- **Extract must-haves**
+  - Read `specs.md` — the Goal and Must-Haves are the source of truth
+  - Each must-have becomes a verification target
+
+- **Three-level artifact check** (for each must-have):
+
+  | Level | Question | How to check |
+  |-------|----------|--------------|
+  | **Exists** | Is the file/function/endpoint present? | Glob for the file, grep for the symbol |
+  | **Substantive** | Is it a real implementation, not a stub? | Check for TODO/FIXME, empty returns, placeholder values, log-only handlers |
+  | **Wired** | Is it connected to the system? | Check imports, route registrations, DI bindings, module exports |
+
+- **Anti-pattern scan** across all new/modified files:
+  - `TODO`, `FIXME`, `HACK` in new code
+  - Empty catch blocks
+  - Functions that only log (no business logic)
+  - Exports with zero external call sites (dead code)
+
+- **Identify human-needed items**
+  - Visual correctness, UX flow, performance under load
+  - These can't be machine-verified — list them explicitly
+
+- **Produce verification report** (see template below)
+
+- **Gap closure loop**:
+  - If GAPS_FOUND → return specific gaps to Implementer → Implementer fixes → Verifier re-checks
+  - On re-verification: deep check on previously failed items, quick regression check on passed items
+  - **Max 2 gap-closure iterations** — after that, surface remaining gaps at the Review checkpoint
+
+## Three-Level Verification Patterns
 
 ### Level 1: Exists
-
-The file, function, endpoint, or schema is present.
 
 ```bash
 # File exists
@@ -24,8 +86,6 @@ grep "'/api/v1/bar'" src/apps/
 ```
 
 ### Level 2: Substantive
-
-The implementation is real, not a placeholder.
 
 **Red flags** (any of these = FAIL at level 2):
 - `TODO`, `FIXME`, `HACK`, `XXX` in the implementation
@@ -48,8 +108,6 @@ The implementation is real, not a placeholder.
 | DTO/validation | No validation decorators or constraints |
 
 ### Level 3: Wired
-
-The artifact is connected to the rest of the system — it's imported, called, and reachable.
 
 **Common wiring patterns to check:**
 
@@ -85,8 +143,6 @@ grep "barService\.\(create\|update\|delete\)" src/ --include="*.ts"
 # If a symbol is exported but grep finds it only in its own file → dead code
 ```
 
----
-
 ## Anti-Pattern Scan
 
 Run across ALL new/modified files (use `git diff --name-only master...HEAD`):
@@ -98,8 +154,6 @@ Run across ALL new/modified files (use `git diff --name-only master...HEAD`):
 | Log-only handler | Function with only `console.log`/`logger` calls | MEDIUM — no business logic |
 | Hardcoded credentials | `grep -n 'password\|secret\|api.key.*=.*"'` | CRITICAL — security |
 | Dead exports | Export not imported anywhere outside its file | LOW — cleanup |
-
----
 
 ## Verification Report Template
 
@@ -137,3 +191,20 @@ Run across ALL new/modified files (use `git diff --name-only master...HEAD`):
 - Previously failed items re-checked: <list>
 - Regression check on passed items: <all still passing | issues found>
 ```
+
+## What Good Verification Looks Like
+
+- Every must-have checked at all 3 levels (not just "file exists")
+- Gaps reference specific file:line locations (not vague descriptions)
+- Human-needed items are explicit (not a catch-all for "I didn't check")
+- Anti-pattern scan covers all new code, not just the happy path
+
+## Rules
+
+- **NEVER** skip verification — task completion != goal achievement
+- **NEVER** trust task completion claims — verify independently on disk
+- **ALWAYS** check at all 3 levels: exists, substantive, wired
+- **ALWAYS** run anti-pattern scan on all new/modified files
+- **ALWAYS** produce a structured verification report
+- **ALWAYS** update STATE.md after completion
+- Max 2 gap-closure iterations — surface remaining gaps at the Review checkpoint

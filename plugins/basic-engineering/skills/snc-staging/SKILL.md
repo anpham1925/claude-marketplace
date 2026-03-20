@@ -1,4 +1,27 @@
-# Staging Verification
+---
+name: snc-staging
+description: "TRIGGER when: user says 'check staging', 'verify staging', 'port-forward', 'staging sanity check', or references staging verification. DO NOT trigger for: full done flow, CI/CD, PR review, or other stages."
+argument-hint: '[ticket-number]'
+model: sonnet
+---
+
+## Purpose
+
+Verify the deployment on staging by connecting to the K8s cluster, port-forwarding, and running sanity checks.
+
+## Working Directory
+
+All temporary and generated files are stored under `docs/<identifier>/` in the repo root:
+- Use the ticket number if available (e.g., `docs/PRT-123/`)
+- Otherwise use the branch name (e.g., `docs/fix-auth-bug/`)
+
+## Standalone Invocation
+
+```
+/basic-engineering:snc-staging PRT-123
+```
+
+If no ticket number is provided, derive from the current branch name.
 
 ## Authentication
 

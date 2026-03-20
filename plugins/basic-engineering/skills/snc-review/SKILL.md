@@ -1,8 +1,27 @@
-# PR Review Checking
+---
+name: snc-review
+description: "TRIGGER when: user says 'open PR for review', 'check PR feedback', 'address review comments', 'babysit PR', or references PR review handling. DO NOT trigger for: full done flow, CI/CD, staging, or other stages."
+argument-hint: '[ticket-number]'
+model: sonnet
+---
 
 ## Purpose
 
 Mark PR ready for review, wait for review bots, check and address feedback — from both human reviewers and review bots.
+
+## Working Directory
+
+All temporary and generated files are stored under `docs/<identifier>/` in the repo root:
+- Use the ticket number if available (e.g., `docs/PRT-123/`)
+- Otherwise use the branch name (e.g., `docs/fix-auth-bug/`)
+
+## Standalone Invocation
+
+```
+/basic-engineering:snc-review PRT-123
+```
+
+If no ticket number is provided, derive from the current branch name.
 
 ## Flow
 
@@ -11,7 +30,7 @@ Mark PR ready for review, wait for review bots, check and address feedback — f
 3. **Read all review comments** — from human reviewers and review bots
 4. **Categorize feedback** — separate actionable items from informational comments
 5. **Address feedback** — fix issues, ask user about debatable items
-6. **If actionable** — convert to draft, fix, loop back to Push & PR stage
+6. **If actionable** — convert to draft, fix, loop back to CI/CD stage
 7. **Push fixes** — commit and push any changes made
 8. **Inform the user** — summary of what was addressed
 
@@ -55,7 +74,52 @@ gh api "repos/OWNER/REPO/pulls/PR_NUMBER/comments" --jq '.[] | select(.user.logi
 gh pr view --json reviews --jq '.reviews[] | select(.author.login | test("claude|code\\.review|copilot"; "i")) | {state: .state, body: .body}'
 ```
 
-## Address Feedback
+## Open PR for Review
+
+### Step 1: Mark PR Ready
+
+```bash
+gh pr ready
+```
+
+### Step 2: Discover the Review Workflow
+
+Don't hardcode workflow names — discover them from `gh pr checks`.
+Run each command separately — **never use `$()` command substitution**:
+
+```bash
+# Find the review check from PR checks
+# If no check appears yet, re-run this command once after a few seconds
+gh pr checks --json name,state,workflow --jq '.[] | select(.name | test("claude|review|code\\.review|copilot"; "i")) | {name: .name, state: .state, workflow: .workflow}'
+```
+
+If no review check appears, the workflow may not trigger for this PR (e.g., markdown-only changes with path filters). In that case, skip to reading comments directly.
+
+### Step 3: Watch the Review Workflow
+
+Use the workflow name from step 2. Run each as a separate command:
+
+```bash
+# Find the run ID using the workflow name
+gh run list --branch "BRANCH_NAME" --workflow "WORKFLOW_NAME" --limit 1 --json databaseId,status
+
+# Watch the run (blocks until done — no polling)
+gh run watch RUN_ID --exit-status
+```
+
+### Step 4: Read Review Comments
+
+After the workflow completes, read all review comments (see Commands section above).
+
+### No Review Workflow Triggered
+
+If no review check appears (e.g., markdown-only PR with path filters):
+
+1. Check for any human reviews: `gh pr view "$PR_NUMBER" --json reviews`
+2. If none -> inform user: "No review workflow triggered and no human reviews"
+3. PR is ready — **DONE**
+
+## Address Reviews
 
 ### Step 1: Categorize and Fix Locally
 
@@ -89,53 +153,21 @@ Reply guidelines:
 After fixing code AND replying to all comments, commit and push:
 
 ```bash
-printf 'fix: [<TICKET>] address PR review feedback\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n' > docs/<identifier>/commit-msg.txt
+# Use Write tool to create docs/<identifier>/commit-msg.txt first
 git commit -F docs/<identifier>/commit-msg.txt
 git push
 ```
 
 If no actionable comments (all ignored/informational), replies were already posted — **DONE**.
 
-## Waiting for Review Workflow
+### Loop Back
 
-**NEVER poll with sleep loops.** Use `gh run watch` to block until the review workflow completes.
+If actionable comments were fixed:
+1. Convert PR back to draft: `gh pr ready --undo`
+2. Commit and push fixes
+3. **Loop back to CI/CD** (`/basic-engineering:snc-ci`) -> Staging (`/basic-engineering:snc-staging`) -> Open PR -> Address Reviews
 
-### Step 1: Discover the Review Workflow
-
-Don't hardcode workflow names — discover them from `gh pr checks`.
-Run each command separately — **never use `$()` command substitution**:
-
-```bash
-# Find the review check from PR checks
-# If no check appears yet, re-run this command once after a few seconds
-gh pr checks --json name,state,workflow --jq '.[] | select(.name | test("claude|review|code\\.review|copilot"; "i")) | {name: .name, state: .state, workflow: .workflow}'
-```
-
-If no review check appears, the workflow may not trigger for this PR (e.g., markdown-only changes with path filters). In that case, skip to reading comments directly.
-
-### Step 2: Watch the Review Workflow
-
-Use the workflow name from step 1. Run each as a separate command:
-
-```bash
-# Find the run ID using the workflow name from step 1
-gh run list --branch "BRANCH_NAME" --workflow "WORKFLOW_NAME" --limit 1 --json databaseId,status
-
-# Watch the run (blocks until done — no polling)
-gh run watch RUN_ID --exit-status
-```
-
-### Step 3: Read Review Comments
-
-After the workflow completes, read all review comments (see Commands section above).
-
-### No Review Workflow Triggered
-
-If no review check appears (e.g., markdown-only PR with path filters):
-
-1. Check for any human reviews: `gh pr view "$PR_NUMBER" --json reviews`
-2. If none -> inform user: "No review workflow triggered and no human reviews"
-3. PR is ready — **DONE**
+Max 3 review-fix iterations — stop and inform user after 3 rounds.
 
 ## Rules
 
@@ -147,3 +179,4 @@ If no review check appears (e.g., markdown-only PR with path filters):
 - **NEVER** dismiss or resolve review comments without addressing them
 - **NEVER** auto-fix debatable items — ask the user
 - **ALWAYS** run local checks after making fixes before pushing
+- **NEVER** exceed 3 review-fix iterations — stop and inform user
