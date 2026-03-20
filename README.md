@@ -14,10 +14,14 @@ Licensed under the [MIT License](LICENSE).
 
 | Plugin | Description |
 |---|---|
-| **basic-engineering** | Engineering toolkit — SDLC workflow, git pipeline, NestJS patterns, and engineering methodology |
+| **basic-engineering** | 19 composable skills — SDLC orchestrator, stage skills, git pipeline, Jira story creation, NestJS patterns, and engineering methodology |
 
 ## Install
 
 ```bash
-/install-plugin anpham1925/claude-marketplace
+# 1. Add the marketplace
+/plugin marketplace add anpham1925/claude-marketplace
+
+# 2. Install the plugin
+/plugin install basic-engineering@anpham-marketplace
 ```
