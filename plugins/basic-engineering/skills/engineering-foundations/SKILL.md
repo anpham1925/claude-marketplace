@@ -1,12 +1,24 @@
 ---
 name: engineering-foundations
-description: "TRIGGER when: user says 'write tests', 'TDD', 'red-green-refactor', 'design the domain', 'review this code', 'gather requirements', 'plan the architecture', 'write an ADR', or asks about testing strategy, domain modeling, or code review process. Also trigger when user asks 'how should I structure this?' or 'what are the trade-offs?'. DO NOT trigger for: running existing tests (use test-runner agent), NestJS-specific patterns (use nestjs-stack), or CI/CD workflows."
+description: "TRIGGER when: (1) PROACTIVE — user asks to build, implement, create, or scaffold a feature, module, API, service, or app. Load this skill BEFORE writing production code to ensure TDD, domain modeling, and architecture planning are applied. (2) EXPLICIT — user says 'write tests', 'TDD', 'red-green-refactor', 'design the domain', 'review this code', 'gather requirements', 'plan the architecture', 'write an ADR', or asks about testing strategy, domain modeling, or code review process. Also trigger when user asks 'how should I structure this?' or 'what are the trade-offs?'. (3) CATCH — if you are about to write multiple files of production code without any test files, STOP and load this skill first. DO NOT trigger for: running existing tests (use test-runner agent), NestJS-specific patterns (use nestjs-stack), CI/CD workflows, or trivial one-line changes."
 model: opus
 ---
 
 > **Recommended model: Opus** — This skill involves deep reasoning, architecture decisions, or code review.
 
 Opinionated engineering methodology. Before applying any topic, read its reference file in `reference/`.
+
+## When This Skill Loads Proactively
+
+If this skill was loaded because you're about to implement a feature (not because the user explicitly asked for TDD/testing), follow this checklist:
+
+1. **Before writing production code** — Define acceptance criteria. What does "done" look like?
+2. **Write the test first** — Red-green-refactor. The test must fail before you write the implementation.
+3. **Design the domain** — If building entities/models, read `reference/domain-model.md`. Avoid anemic models.
+4. **Plan the architecture** — If making structural decisions, read `reference/architecture.md`. Present 2-3 options with trade-offs.
+5. **After implementation** — Self-review using `reference/code-review.md` checklist.
+
+If the user asks you to "just build it fast", you can streamline — but still write tests alongside, not after.
 
 ## Topics
 
