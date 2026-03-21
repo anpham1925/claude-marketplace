@@ -1,6 +1,6 @@
 ---
 name: sdlc
-description: "TRIGGER when: user says 'start ticket', 'pick up TICKET-123', 'analyze this ticket', 'design a solution', 'implement', 'ship this', or references a Jira ticket ID. Also trigger for 'run the full pipeline', 'what stage am I on', or resuming a partially-completed ticket. DO NOT trigger for: one-off code changes without a ticket, quick fixes, or questions about code."
+description: "TRIGGER when: user says 'start ticket', 'pick up TICKET-123', 'analyze this ticket', 'design a solution', 'implement', 'ship this', 'plan', 'analyze', or references a Jira ticket ID or GitHub issue (e.g. #123, org/repo#456). Also trigger for 'run the full pipeline', 'what stage am I on', or resuming a partially-completed ticket. DO NOT trigger for: one-off code changes without a ticket, quick fixes, or questions about code."
 argument-hint: '[stage] [TICKET-ID]'
 model: opus
 ---
