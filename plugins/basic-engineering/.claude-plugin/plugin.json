@@ -1,7 +1,7 @@
 {
   "name": "basic-engineering",
-  "description": "Engineering toolkit — 19 composable skills: sdlc orchestrator (8 stages) + 8 standalone SDLC stage skills (analyze, design, breakdown, implement, test, verify, review, release), ship-n-check orchestrator (8 stages) + 6 standalone SNC stage skills (commit, quality, push, ci, staging, review), create-user-story (Jira story creation), plus nestjs-stack (NestJS + TypeORM + DDD patterns) and engineering-foundations (TDD, domain modeling, code review, requirements, architecture, ADRs).",
-  "version": "2.2.0",
+  "description": "Engineering toolkit — 20 composable skills: sdlc orchestrator (8 stages) + 8 standalone SDLC stage skills (analyze, design, breakdown, implement, test, verify, review, release), ship-n-check orchestrator (8 stages) + 6 standalone SNC stage skills (commit, quality, push, ci, staging, review), create-user-story (Jira story creation), setup-storybook (Storybook setup + stories + deployment), plus nestjs-stack (NestJS + TypeORM + DDD patterns) and engineering-foundations (TDD, domain modeling, code review, requirements, architecture, ADRs).",
+  "version": "2.3.0",
   "author": {
     "name": "An Pham"
   }
