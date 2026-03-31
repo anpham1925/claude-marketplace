@@ -12,6 +12,18 @@ An opinionated toolkit for Claude Code covering the full development lifecycle f
 /plugin install basic-engineering@anpham-marketplace
 ```
 
+## What's New in v3.0
+
+- **Hooks system** — Git safety, auto-format detection, console.log warnings, cost tracking (hooks-over-prompts philosophy)
+- **Language-specific rules** — TypeScript, Python, Go (coding style, patterns, security)
+- **Mode switching** — Dev mode (build fast), Research mode (explore first), Review mode (adversarial quality)
+- **Framework stacks** — Next.js (App Router, Server Components, Server Actions) + Django (DRF, ORM, Celery)
+- **New agents** — Planner (read-only, architecture planning) + Security Reviewer (OWASP Top 10)
+- **Context budget analysis** — Audit and optimize token consumption
+- **Strategic compaction** — Compact at phase transitions, not arbitrary points
+- **Continuous learning** — Extract "instincts" from sessions with confidence scoring
+- **Autonomous loop patterns** — 6 architectures from simple pipelines to DAG orchestration
+
 ## Skills
 
 ### Orchestrators
@@ -45,18 +57,81 @@ An opinionated toolkit for Claude Code covering the full development lifecycle f
 | **Staging** | `/basic-engineering:snc-staging PRT-123` | K8s staging verification with port-forwarding |
 | **Review** | `/basic-engineering:snc-review PRT-123` | Open PR for review + address feedback |
 
+### Mode Switching Skills
+
+| Skill | Invoke | What It Does |
+|---|---|---|
+| **Dev Mode** | `/basic-engineering:mode-dev` | Build fast, explain later — bias toward action, minimal discussion |
+| **Research Mode** | `/basic-engineering:mode-research` | Read-only exploration — understand before acting |
+| **Review Mode** | `/basic-engineering:mode-review` | Adversarial quality review — systematic checklist-driven analysis |
+
+### Framework Stack Skills
+
+| Skill | Invoke | What It Does |
+|---|---|---|
+| **NestJS Stack** | `/basic-engineering:nestjs-stack` | NestJS + DDD + Hexagonal + CQRS patterns with 9 reference topics |
+| **Next.js Stack** | `/basic-engineering:nextjs-stack` | Next.js 14+ App Router, Server Components, Server Actions, data fetching, performance |
+| **Django Stack** | `/basic-engineering:django-stack` | Django + DRF patterns — models, views, security, testing, performance |
+| **Engineering Foundations** | `/basic-engineering:engineering-foundations` | TDD, domain modeling, code review, requirements, architecture, ADRs |
+
 ### Utility Skills
 
 | Skill | Invoke | What It Does |
 |---|---|---|
 | **Create User Story** | `/basic-engineering:create-user-story` | Create Jira user stories with structured format |
+| **Setup Storybook** | `/basic-engineering:setup-storybook` | Full Storybook setup with stories + deployment |
+| **Context Budget** | `/basic-engineering:context-budget` | Audit token consumption and optimize context window usage |
+| **Strategic Compaction** | `/basic-engineering:strategic-compaction` | Guide for when/how to compact conversation context |
+| **Continuous Learning** | `/basic-engineering:continuous-learning` | Extract reusable patterns as "instincts" with confidence scoring |
+| **Autonomous Loops** | `/basic-engineering:autonomous-loops` | 6 loop architectures for automated/multi-agent workflows |
 
-### Coding Pattern Skills
+## Agents
 
-| Skill | Invoke | What It Does |
+| Agent | Model | Purpose |
 |---|---|---|
-| **NestJS Stack** | `/basic-engineering:nestjs-stack` | NestJS patterns — error handling, config, auth, API design, logging, TypeORM |
-| **Engineering Foundations** | `/basic-engineering:engineering-foundations` | TDD, domain modeling, code review, requirements, architecture, ADRs |
+| **planner** | opus | Read-only implementation planning — 2-3 approaches with trade-offs |
+| **security-reviewer** | opus | OWASP Top 10 vulnerability scanning, secrets detection |
+| **requirements-reviewer** | opus | Adversarial cross-check of code vs acceptance criteria |
+| **code-reviewer** | opus | Quality, architecture, naming, security review |
+| **test-runner** | sonnet | Run tests, analyze failures, fix and re-run |
+| **codebase-explorer** | haiku | Fast codebase research and pattern discovery |
+| **ci-watcher** | sonnet | Monitor CI/CD pipelines, analyze failures |
+
+## Rules (13)
+
+Context-triggered rules that activate when matching files are edited:
+
+| Rule | Files | What It Enforces |
+|---|---|---|
+| **TypeScript Coding Style** | `*.ts`, `*.tsx` | `unknown` over `any`, `as const` over `enum`, discriminated unions |
+| **TypeScript Patterns** | `*.ts`, `*.tsx` | Result pattern, guard clauses, Zod schema-first, DI |
+| **TypeScript Security** | `*.ts`, `*.tsx` | No `eval`, parameterized queries, CORS, timing-safe comparisons |
+| **Python Coding Style** | `*.py` | Type hints, pathlib, dataclasses, f-strings |
+| **Python Patterns** | `*.py` | Repository pattern, service layer, structured logging, async |
+| **Python Security** | `*.py` | No pickle/eval, bcrypt, defusedxml, dependency auditing |
+| **Go Coding Style** | `*.go` | Accept interfaces/return structs, table-driven tests, context |
+| **Go Patterns** | `*.go` | Functional options, middleware chains, graceful shutdown |
+| **Go Security** | `*.go` | crypto/rand, timeouts, prepared statements, govulncheck |
+| **Testing** | `*.spec.ts`, `*.test.py`, etc. | TDD, 70% coverage, no mocking internals, AAA pattern |
+| **Naming** | `*.ts`, `*.py`, `*.go`, etc. | Specific names, no generic Service/Manager/Helper |
+| **Logging** | `*.ts`, `*.py`, `*.go`, etc. | Structured fields, context-first, no sensitive data |
+| **Shell Safety** | _(always on)_ | No `$()` subshells, no `>` redirection, no `\(.field)` in jq |
+
+## Hooks
+
+Git safety and quality hooks that enforce rules deterministically (not via prompt instructions):
+
+| Hook | Trigger | What It Does |
+|---|---|---|
+| **block-no-verify** | PreToolUse (Bash) | Blocks `--no-verify` and force pushes to main/master |
+| **git-safety** | PreToolUse (Bash) | Blocks `reset --hard`, `clean -f`, `checkout .`, `branch -D main` |
+| **sensitive-file-warning** | PreToolUse (Read) | Warns when reading `.env`, `.pem`, `.key`, credentials |
+| **auto-format-check** | PostToolUse (Bash) | Detects formatting issues in build/lint output |
+| **console-log-detection** | PostToolUse (Write/Edit) | Warns on `console.log`, `debugger`, `import pdb` |
+| **cost-tracker** | PostToolUse | Logs tool usage to `.claude/cost-log.jsonl` |
+| **session-context** | Session lifecycle | Saves/loads session state for continuity |
+
+See `hooks/README.md` for installation instructions.
 
 ## Usage
 
@@ -71,42 +146,30 @@ An opinionated toolkit for Claude Code covering the full development lifecycle f
 # Ship current changes through the pipeline
 /basic-engineering:ship-n-check
 
-# Run individual ship stages
-/basic-engineering:snc-commit PRT-123
-/basic-engineering:snc-quality PRT-123
+# Switch to dev mode (fast coding)
+/basic-engineering:mode-dev
+
+# Switch to research mode (exploration, no code changes)
+/basic-engineering:mode-research
+
+# Audit your context budget
+/basic-engineering:context-budget
+
+# Extract learnings from current session
+/basic-engineering:continuous-learning
 
 # Create a Jira user story
 /basic-engineering:create-user-story
 ```
 
-## What's Included
-
-### Workflow Skills
-- **sdlc**: Analyze -> Design -> Breakdown (optional) -> Implement -> Test -> Verify -> Review -> Release
-  - Goal-backward verification (exists/substantive/wired checks)
-  - Plans-as-prompts with deep work rules (`read_first`, `acceptance_criteria`, concrete `action`)
-  - Thin orchestrator — agents get fresh context windows, orchestrator stays lean
-  - Deviation rules — auto-fix bugs, STOP for architectural changes
-  - STATE.md for lightweight pipeline tracking (<100 lines)
-  - Design revision loop with Plan-Checker agent (max 3 iterations)
-  - Per-agent model selection (opus/sonnet/haiku based on task nature)
-- **ship-n-check**: Commit -> Requirements Review -> Quality Checks -> Simplify -> Push -> CI/CD -> Staging -> PR Review
-
-### Agents
-- **requirements-reviewer**: Cross-checks code changes against acceptance criteria
-- **code-reviewer**: Reviews code for quality, architecture, security
-- **test-runner**: Runs tests, analyzes failures, fixes and re-runs
-- **codebase-explorer**: Fast codebase research and exploration
-- **ci-watcher**: Monitors CI/CD pipelines and reports failures
-
 ## Opinions
 
 This toolkit reflects opinionated engineering choices:
-- DDD + Hexagonal + CQRS architecture
 - TDD with Red-Green-Refactor, 70% coverage target
-- Pino structured logging (context-first)
-- TypeORM for database access
-- class-validator + Swagger for API design
-- Rich domain models with @nestjs/cqrs
+- Hooks over prompts — deterministic enforcement > prompt adherence
+- Thin orchestrator — agents get fresh context windows, orchestrator stays lean
+- Adversarial review — assume bugs exist until proven otherwise
+- Plans as prompts — execution plans with `read_first`, `acceptance_criteria`, concrete `action`
+- Framework-specific patterns: NestJS (DDD + Hexagonal + CQRS), Next.js (App Router + Server Components), Django (DRF + Service Layer)
 
 Other teams may have different preferences — and that's fine. Fork or build your own toolkit.
