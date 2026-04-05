@@ -45,6 +45,6 @@ When adding a service to a constructor, IMMEDIATELY update module imports.
 
 ## Circular Dependency Fix
 
-1. Switch to relative imports within same module
-2. Import constants directly from source files
-3. Check for self-import through barrel export
+- Switch to relative imports within same module
+- Import constants directly from source files
+- Check for self-import through barrel export

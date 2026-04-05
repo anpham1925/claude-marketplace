@@ -2,10 +2,10 @@
 
 ## Rules
 
-1. **Validate at startup** — fail fast, not at first request
-2. **Use ConfigService** — never `process.env` in application code
-3. **Type your config** — typed namespaces, not raw string keys
-4. **Separate by concern** — database, auth, external services get own config
+- **Validate at startup** — fail fast, not at first request
+- **Use ConfigService** — never `process.env` in application code
+- **Type your config** — typed namespaces, not raw string keys
+- **Separate by concern** — database, auth, external services get own config
 
 ## Typed Config Namespace
 

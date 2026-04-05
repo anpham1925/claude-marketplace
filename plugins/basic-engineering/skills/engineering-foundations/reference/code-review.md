@@ -1,48 +1,37 @@
 # Code Review Process
 
-## Review Checklist
-
-- [ ] **Architecture Compliance** — code in correct layer, dependency direction respected
-- [ ] **Naming Conventions** — descriptive names, consistent casing, no generic "Service" names
-- [ ] **Import Rules** — no circular dependencies, clean module boundaries
-- [ ] **Error Handling** — correct error types, errors logged before transforming, no swallowed errors
-- [ ] **Logging** — structured logging with context, consistent format
-- [ ] **Testing** — AAA pattern, dynamic dates, only external services mocked
-- [ ] **Comments** — explain WHY not WHAT, action comments (TODO/FIXME) have context
-- [ ] **Security** — no secrets in code, input validation at boundaries, parameterized queries
-- [ ] **Existing Patterns** — checked for existing utilities/patterns before reinventing
+> Claude already knows how to review code. This file covers **our specific review checklist and the format we expect**.
 
 ## 5-Section Review
 
-### 1. Architecture Compliance
+### Architecture Compliance
 
-- Code in the correct layer?
-- Layer dependency rules respected? (Presentation -> Application -> Domain -> Infrastructure)
+- Code in the correct layer? (Presentation → Application → Domain → Infrastructure)
+- Layer dependency rules respected? (no upward imports)
 - No improper code sharing between separate applications?
 
-### 2. Code Quality
+### Code Quality
 
-- Specific class/function names (not generic "Service")?
+- Specific class/function names (not generic "Service", "Helper", "Utils")?
 - No circular dependencies?
 - Comments explain WHY not WHAT?
-- Existing shared utilities used?
+- Existing shared utilities reused instead of reinvented?
 
-### 3. Testing
+### Testing
 
 - Unit tests for new business logic?
 - E2e tests for new endpoints?
-- Only external services mocked?
+- Only external services mocked? (see tdd.md for details)
 - No hardcoded dates?
-- AAA pattern followed?
 
-### 4. Security
+### Security
 
 - No secrets or credentials in code?
 - Input validation at system boundaries?
-- Parameterized queries?
+- Parameterized queries (no string concatenation in SQL)?
 - Least privilege applied?
 
-### 5. Domain-Specific
+### Domain-Specific
 
 - Domain naming conventions followed?
 - State transitions valid?
@@ -74,3 +63,9 @@
 - **Blocking Issues**: [List or "None"]
 - **Suggestions**: [Non-blocking improvements]
 ```
+
+## Gotchas for Self-Review
+
+- Claude tends to mark its own code as PASS across all sections. Be adversarial with your own output.
+- Claude skips the "scope creep" check — always verify no unnecessary changes snuck in beyond the requirements.
+- Claude writes long review comments instead of categorizing into AUTO-FIX / NEEDS-INPUT / INFO. Use the categories.

@@ -1,113 +1,65 @@
 ---
 name: sdlc-analyze
-description: "TRIGGER when: user says 'analyze this ticket', 'gather requirements', 'understand this ticket', or references analyzing a Jira ticket. DO NOT trigger for: full SDLC pipeline, design, implementation, or other stages."
-argument-hint: '[TICKET-ID]'
-model: haiku
+description: "Internal stage of the sdlc pipeline — extracts structured requirements from a Jira ticket. Invoke directly only via /basic-engineering:sdlc-analyze when explicitly requested by name. For general requests like 'analyze this ticket' or 'start PRT-123', use prt:sdlc which routes here automatically."
+argument-hint: '<TICKET-ID>'
+model: opus
 ---
 
-> **Recommended model: Haiku** — Codebase search and extraction — speed over depth.
-
-## Purpose
-
-Turn a Jira ticket into structured, actionable requirements. This is the first stage of the SDLC pipeline but can run standalone.
-
-## Standalone Invocation
-
-```
-/basic-engineering:sdlc-analyze PRT-123
-```
-
-If no ticket ID is provided, derive from the current branch name or ask the user.
-
-## State Tracking
-
-Read `docs/<identifier>/STATE.md` at start (if it exists). Update Current stage, Status, Artifacts, and Notes when done. If standalone (no orchestrator), derive identifier from branch name.
+> **Recommended model: Opus** — Deep reasoning for requirements analysis.
 
 ## Agent: Analyst
 
 **Mission**: Understand the ticket and produce structured requirements.
-**Model**: haiku
 
+**Inputs**: Jira ticket ID
+**Outputs**: Structured Requirements artifact
 **Subagent type**: Use `codebase-explorer` if defined in `.claude/agents/`, otherwise `Explore`
-
-### Inputs
-- Jira ticket ID
-
-### Outputs
-- Structured Requirements artifact
-
-### Responsibilities
-- Read and parse Jira ticket (summary, description, acceptance criteria, comments, linked issues)
-- Research codebase to identify affected modules and existing patterns
-- Identify scope boundaries — what's in, what's out
-- Surface open questions and ambiguities
-- Produce a clear, actionable requirements document
 
 ## Steps
 
-- **Read the Jira ticket**
-  ```
-  Use getJiraIssue with the ticket ID
-  Extract: summary, description, acceptance criteria, comments, linked issues
-  ```
+### Check for Existing State
 
-- **Research the codebase**
-  - Launch Explore subagents to find:
-    - Affected modules (search for related entities, handlers, controllers)
-    - Existing similar implementations (patterns to follow)
-    - Related tests (understand current test coverage)
-  - Parallelize searches across different modules
+Read `docs/<identifier>/state.md` if it exists. If Analyze is already completed, ask the user if they want to re-run. See [shared reference](../sdlc/reference/shared.md) for state.md format.
 
-- **Identify scope**
-  - What exactly needs to change?
-  - What must NOT change? (scope boundaries)
-  - Are there dependencies on other tickets?
+### Read the Jira Ticket
 
-- **Surface ambiguities**
-  - If acceptance criteria are vague, list specific open questions
-  - If linked issues contradict, flag the conflict
-  - If scope seems larger than a single ticket, suggest breaking down
+Use `getJiraIssue` with the ticket ID. Extract: summary, description, acceptance criteria, comments, linked issues.
 
-- **Produce the Structured Requirements**
-  - Use the template below
-  - Be specific — "update the payout module" is too vague, "add a new handler in modules/payout/application/commands/" is actionable
+**Never infer from title alone.** Always read the full ticket.
 
-- **Update Jira**
-  - Transition ticket to "In Progress" (use `getTransitionsForJiraIssue` first to find the right transition ID)
-  - Post requirements summary as a comment
+### Route to Relevant Repos
 
-- **CHECKPOINT** — Present to user and wait for approval
+Before exploring, identify which repositories are relevant to this ticket. Read the [repo registry](../sdlc/reference/repo-registry.md) and apply the routing algorithm:
 
-## Jira Integration
+- **Prefix match**: Use the ticket's Jira project prefix (e.g., `PRT`) to load the default repo set from the Team Defaults table
+- **Keyword match**: Scan the ticket summary, description, and acceptance criteria for domain keywords. Check each repo's keyword list in the registry. Add any repos that match.
+- **Component/label match**: If the Jira ticket has Component or Label fields, check those against repo keywords too.
+- **Confirm with user**: Present the resolved repo list — "Based on the ticket, I'll search these repos: **[list]**. Should I add or remove any?"
 
-| Action | Tool | When |
-|--------|------|------|
-| Read ticket | `getJiraIssue` | Read full ticket details |
-| Get transitions | `getTransitionsForJiraIssue` | Before transitioning status |
-| Transition status | `transitionJiraIssue` | -> In Progress |
-| Post comment | `addCommentToJiraIssue` | After producing requirements |
-| Read linked issues | `getJiraIssue` | Understand dependencies |
+### Research the Codebase
 
-### Comment Format
+Launch Explore subagents **only for the confirmed repos** to find:
+- Affected modules (search for related entities, handlers, controllers)
+- Existing similar implementations (patterns to follow)
+- Related tests (understand current test coverage)
 
-Post a comment to Jira after completion:
+For each repo, pass the subagent the absolute repo path. Parallelize searches across repos.
 
-```
-**[SDLC: Analyze] — Completed**
+### Identify Scope
 
-{Brief summary of what was produced}
+- What exactly needs to change?
+- What must NOT change? (scope boundaries)
+- Are there dependencies on other tickets?
 
-Key decisions:
-- {Decision 1}
-- {Decision 2}
+### Surface Ambiguities
 
-Artifacts:
-- {Link or description of output}
-```
+- If acceptance criteria are vague, list specific open questions
+- If linked issues contradict, flag the conflict
+- If scope seems larger than a single ticket, suggest breaking down
 
-## Structured Requirements Template
+### Produce Structured Requirements
 
-```
+```markdown
 ## Goal
 {One sentence describing what this ticket achieves}
 
@@ -130,6 +82,20 @@ Artifacts:
 - {Question 1} — {who can answer}
 ```
 
+Be specific — "update the payout module" is too vague, "add a new handler in `modules/payout/application/commands/`" is actionable.
+
+### Update Jira
+
+- Post requirements summary as a comment (see [shared reference](../sdlc/reference/shared.md) for comment format)
+
+### Update State
+
+Update `docs/<identifier>/state.md` — create file, mark Analyze as completed, record key decisions.
+
+### CHECKPOINT
+
+Present requirements to user for approval before proceeding.
+
 ## What Good Analysis Looks Like
 
 - Every acceptance criterion is testable (can write a test for it)
@@ -139,9 +105,9 @@ Artifacts:
 
 ## Rules
 
-- **NEVER** skip reading the Jira ticket — always understand before building
-- **ALWAYS** research the codebase to find affected modules and patterns
-- **ALWAYS** post a Jira comment after completion
-- **ALWAYS** update STATE.md after completion
-- **ALWAYS** present requirements at the CHECKPOINT and wait for approval
-- If Jira MCP tools aren't connected, ask the user whether to proceed without Jira or set it up first
+- **NEVER** skip reading the Jira ticket — always call `getJiraIssue` and read full description, acceptance criteria, and comments
+- **ALWAYS** route via the repo registry before exploring — scope Explore subagents to confirmed repos, don't search the entire workspace
+- **ALWAYS** post a Jira comment after completing analysis
+- **ALWAYS** update `docs/<identifier>/state.md`
+- **ALWAYS** checkpoint — present requirements and wait for user approval
+- If acceptance criteria are vague, list open questions — don't fill in assumptions silently

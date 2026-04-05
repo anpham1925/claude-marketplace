@@ -91,8 +91,8 @@ async execute(command: ConfirmOrderCommand) {
 
 ## Key Principles
 
-1. **Domain model** encapsulates all business rules — no anemic models
-2. **Factory** handles object creation and wiring
-3. **Repository** converts between domain model and persistence entity
-4. **Handlers** orchestrate: load -> behavior -> persist -> publish
-5. **No framework imports** inside the domain model — keep it pure
+- **Domain model** encapsulates all business rules — no anemic models
+- **Factory** handles object creation and wiring
+- **Repository** converts between domain model and persistence entity
+- **Handlers** orchestrate: load -> behavior -> persist -> publish
+- **No framework imports** inside the domain model — keep it pure

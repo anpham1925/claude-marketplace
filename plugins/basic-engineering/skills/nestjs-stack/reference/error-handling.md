@@ -2,10 +2,10 @@
 
 ## Principles
 
-1. **Separate domain errors from HTTP errors**: Domain throws domain exceptions, presentation maps them
-2. **Use exception filters**: Let NestJS catch and transform consistently
-3. **Consistent error shapes**: Every error response follows the same structure
-4. **Never expose internals**: Stack traces and SQL errors stay in logs
+- **Separate domain errors from HTTP errors**: Domain throws domain exceptions, presentation maps them
+- **Use exception filters**: Let NestJS catch and transform consistently
+- **Consistent error shapes**: Every error response follows the same structure
+- **Never expose internals**: Stack traces and SQL errors stay in logs
 
 **Rule:** Domain and Application layers MUST NOT import `@nestjs/common` HTTP exceptions.
 

@@ -3,29 +3,59 @@
     "PreToolUse": [
       {
         "matcher": "Bash",
-        "command": "bash plugins/basic-engineering/hooks/scripts/block-no-verify.sh"
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/block-no-verify.sh"
+          }
+        ]
       },
       {
         "matcher": "Bash",
-        "command": "bash plugins/basic-engineering/hooks/scripts/git-safety.sh"
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/git-safety.sh"
+          }
+        ]
       },
       {
         "matcher": "Read",
-        "command": "bash plugins/basic-engineering/hooks/scripts/sensitive-file-warning.sh"
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/sensitive-file-warning.sh"
+          }
+        ]
       }
     ],
     "PostToolUse": [
       {
         "matcher": "Bash",
-        "command": "bash plugins/basic-engineering/hooks/scripts/auto-format-check.sh"
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/auto-format-check.sh"
+          }
+        ]
       },
       {
         "matcher": "Write|Edit",
-        "command": "bash plugins/basic-engineering/hooks/scripts/console-log-detection.sh"
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/console-log-detection.sh"
+          }
+        ]
       },
       {
         "matcher": "Bash|Write|Edit|Read",
-        "command": "bash plugins/basic-engineering/hooks/scripts/cost-tracker.sh"
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/cost-tracker.sh"
+          }
+        ]
       }
     ]
   }

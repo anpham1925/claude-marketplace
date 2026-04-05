@@ -17,11 +17,11 @@ Request -> AuthGuard (JWT) -> RolesGuard (authz) -> Controller -> Service
 
 ## Rules
 
-1. Auth in guards, not controllers or services
-2. Decorators for authorization (`@Roles()`, `@Public()`)
-3. Separate authn from authz — different guards
-4. Domain layer receives validated user context, never verifies tokens
-5. Token secrets from ConfigService, not hardcoded
+- Auth in guards, not controllers or services
+- Decorators for authorization (`@Roles()`, `@Public()`)
+- Separate authn from authz — different guards
+- Domain layer receives validated user context, never verifies tokens
+- Token secrets from ConfigService, not hardcoded
 
 ## Common Mistakes
 

@@ -2,10 +2,10 @@
 
 ## Steps
 
-1. Generate timestamp: `node -e "console.log(Date.now())"`
-2. Verify it's after the last migration in the directory
-3. Write idempotent SQL: `IF NOT EXISTS` / `IF EXISTS`
-4. Order dependencies: parent tables before foreign keys
+- Generate timestamp: `node -e "console.log(Date.now())"`
+- Verify it's after the last migration in the directory
+- Write idempotent SQL: `IF NOT EXISTS` / `IF EXISTS`
+- Order dependencies: parent tables before foreign keys
 
 ## Naming Rules
 

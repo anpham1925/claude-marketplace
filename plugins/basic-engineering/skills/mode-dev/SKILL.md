@@ -1,6 +1,6 @@
 ---
 name: mode-dev
-description: "TRIGGER when: user says 'dev mode', 'coding mode', 'implementation mode', 'let's build', or wants to switch to a fast implementation-focused workflow. DO NOT trigger for: research questions, code review requests, or architecture discussions."
+description: "TRIGGER when: user says 'dev mode', 'coding mode', 'implementation mode', or wants to SWITCH TO fast implementation behavior. DO NOT trigger for: implementing a specific ticket or task (use sdlc-implement), research questions, code review requests, or architecture discussions."
 model: sonnet
 ---
 

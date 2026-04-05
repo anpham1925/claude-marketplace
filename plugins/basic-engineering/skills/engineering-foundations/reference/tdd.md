@@ -1,11 +1,6 @@
 # Test-Driven Development
 
-## Red-Green-Refactor Cycle
-
-1. **Red** — Write a failing test first that describes the expected behavior
-2. **Green** — Write the minimum implementation to make the test pass
-3. **Refactor** — Clean up code while keeping tests green
-4. **Repeat** — Pick the next behavior and start a new cycle
+> Claude already knows TDD basics. This file covers **our specific conventions and the mistakes Claude makes most often**.
 
 ## When to Apply TDD
 
@@ -17,37 +12,32 @@
 | Validation logic | Auto-generated code |
 | Complex calculations | |
 
-## Core Rules
+## Our Conventions (Where We Differ from Defaults)
 
-1. **Arrange-Act-Assert pattern** in every test
-2. **Never hardcode dates** — use dynamic date generation
-3. **Test behavior, not implementation** — focus on what, not how
-4. **Never modify tests to fix CI failures** — fix the application logic instead
-5. **Only mock at system boundaries** — mock external services, not internal modules
+- **Coverage target: 70% minimum** for new code
+- **Test file co-location** — `.spec.ts` next to the implementation file, not in a separate `__tests__/` directory
+- **Dynamic dates only** — see patterns below. This is the #1 failure mode.
+- **Never modify existing tests to fix failures** — fix the application logic. Only change tests if requirements changed.
+- **Only mock at system boundaries** — external APIs, not internal modules. Claude over-mocks by default.
 
-## Unit Test Guidelines
+## Dynamic Date Patterns
 
-- Coverage target: 70% minimum for new code
-- Match mock signatures to actual constructor parameters
-- Test edge cases and error paths, not just happy path
+**CRITICAL: Never hardcode dates in tests.** Claude does this constantly.
 
-### What to Test vs What NOT to Test
+```typescript
+// WRONG — will break in a different year/month
+const date = new Date('2024-01-15');
 
-| Test | Don't Test |
-|---|---|
-| Service methods with business logic | Simple getters/setters |
-| Complex calculations | ORM/framework methods |
-| Error handling and edge cases | Framework code itself |
-| Validation logic | |
+// RIGHT — always relative to now
+const now = new Date();
+const yesterday = new Date(now);
+yesterday.setDate(now.getDate() - 1);
+const nextYear = now.getFullYear() + 1;
+```
 
-## E2E Test Guidelines
+## E2E Test Conventions
 
-- **Only mock external services**: Never mock internal services, handlers, guards, or repositories
-- **Test the full request-to-response flow**: That's the whole point
-- **Verify from the database**: Don't just check API response — verify persistence
-- **Generate real auth tokens**: Don't mock auth middleware
-
-### What to Mock in E2E
+These are the most common mistakes Claude makes in e2e tests:
 
 | ONLY Mock | NEVER Mock |
 |---|---|
@@ -56,21 +46,24 @@
 | External feature flag services | Guards and strategies |
 | | Database repositories |
 
-## Dynamic Date Patterns
+- **Generate real auth tokens** — don't mock auth middleware
+- **Verify from database** — don't just check API response, query the DB to confirm persistence
+- **Test the full request-to-response flow** — that's the point of e2e
 
-**CRITICAL: Never hardcode dates in tests.**
+## Mock Signature Rule
 
-```
-const now = new Date();
-const currentYear = now.getFullYear();
-const nextYear = currentYear + 1;
-const lastYear = currentYear - 1;
+Match mock signatures to actual constructor parameters. Claude frequently creates mocks with wrong parameter shapes, causing confusing runtime errors.
 
-const yesterday = new Date(now);
-yesterday.setDate(now.getDate() - 1);
+```typescript
+// WRONG — missing parameters the real constructor expects
+const mockService = { findOne: jest.fn() };
 
-const tomorrow = new Date(now);
-tomorrow.setDate(now.getDate() + 1);
+// RIGHT — match the actual interface
+const mockService: jest.Mocked<UserService> = {
+  findOne: jest.fn(),
+  create: jest.fn(),
+  // ... all methods from the interface
+};
 ```
 
 ## Checklists

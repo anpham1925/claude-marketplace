@@ -1,78 +1,86 @@
 ---
 name: sdlc-review
-description: "TRIGGER when: user says 'review the code', 'code review', 'check my changes', or references the review stage. DO NOT trigger for: full SDLC pipeline, PR review, or ship-n-check review."
+description: "Internal stage of the sdlc pipeline — code review for architecture, quality, security, and test coverage. Invoke directly only via /basic-engineering:sdlc-review when explicitly requested by name. For general requests like 'review code' or 'self-review', use prt:sdlc which routes here automatically."
 argument-hint: '[TICKET-ID]'
 model: opus
 ---
 
-> **Recommended model: Opus** — Deep code review requires nuanced judgment.
-
-## Purpose
-
-Ensure code quality, architecture compliance, and security before the code leaves the developer's machine. This is the sixth stage of the SDLC pipeline but can run standalone.
-
-## Standalone Invocation
-
-```
-/basic-engineering:sdlc-review PRT-123
-```
-
-If no ticket ID is provided, derive from the current branch name or ask the user.
-
-## State Tracking
-
-Read `docs/<identifier>/STATE.md` at start (if it exists). Update Current stage, Status, Artifacts, and Notes when done. If standalone (no orchestrator), derive identifier from branch name.
+> **Recommended model: Opus** — Deep reasoning for code review.
 
 ## Agent: Reviewer
 
 **Mission**: Ensure code quality, architecture compliance, and security.
-**Model**: opus
 
+**Inputs**: Full diff of all changes + Verification Report from Verifier
+**Outputs**: Review feedback (categorized)
 **Subagent type**: Use `code-reviewer` if defined in `.claude/agents/`, otherwise `general-purpose`
-
-### Inputs
-- Full diff of all changes + verification report
-
-### Outputs
-- Review feedback (categorized)
 
 ## Steps
 
-- **Generate the full diff**
-  - `git diff master...HEAD`
+### Check State
 
-- **Review checklist**:
-  - [ ] Architecture: code in correct layer, proper boundaries
-  - [ ] Naming: follows conventions, domain terms correct
-  - [ ] Imports: no circular deps, correct aliases
-  - [ ] Error handling: correct error types, retry logic
-  - [ ] Tests: adequate coverage, no hardcoded dates, correct mocking
-  - [ ] Security: input validation, no injection vectors
-  - [ ] Logging: correct format (context first, message second)
-  - [ ] No unnecessary changes beyond scope
+Read `docs/<identifier>/state.md`. Verify Verify is completed. Load the Verification Report. See [shared reference](../sdlc/reference/shared.md) for state.md format.
 
-- **Categorize findings**
+### Generate Full Diff
 
-  | Category | Action |
-  |----------|--------|
-  | AUTO-FIX | Fix immediately without asking |
-  | NEEDS-INPUT | Present to user for decision |
-  | INFO | Note for awareness, no action needed |
+```bash
+git diff origin/master...HEAD
+```
 
-- **Fix and verify**
-  - Auto-fix all AUTO-FIX items
-  - Ask user about NEEDS-INPUT items
-  - Run `yarn lint --fix`, `yarn type-check`, `yarn test` after fixes
-  - Repeat until clean
+### Review Checklist
 
-- **CHECKPOINT** — Present review summary to user
+- [ ] **Architecture**: code in correct layer, proper module boundaries
+- [ ] **Naming**: follows conventions, domain terms correct
+- [ ] **Imports**: no circular deps, correct aliases
+- [ ] **Error handling**: correct error types, retry logic
+- [ ] **Tests**: adequate coverage, no hardcoded dates, correct mocking
+- [ ] **Security**: input validation, no injection vectors, no exposed secrets
+- [ ] **Logging**: correct format (context first, message second)
+- [ ] **Scope**: no unnecessary changes beyond what was requested
+
+Include the Verification Report — any PARTIAL items should be flagged.
+
+### Categorize Findings
+
+| Category | Action |
+|----------|--------|
+| **AUTO-FIX** | Fix immediately without asking |
+| **NEEDS-INPUT** | Present to user for decision |
+| **INFO** | Note for awareness, no action needed |
+
+### Fix and Verify
+
+- Auto-fix all AUTO-FIX items
+- Ask user about NEEDS-INPUT items
+- Run lint, type-check, and tests after fixes:
+  ```bash
+  yarn lint --fix
+  yarn type-check
+  yarn test
+  ```
+- Repeat until clean
+
+### Update Jira
+
+Post review summary as a comment (see [shared reference](../sdlc/reference/shared.md) for comment format).
+
+### Update State
+
+Update `docs/<identifier>/state.md` — mark Review as completed.
+
+### CHECKPOINT
+
+Present review summary to user:
+- AUTO-FIX items (already fixed)
+- NEEDS-INPUT items (awaiting decisions)
+- INFO items (for awareness)
 
 ## Rules
 
-- **NEVER** skip the review — always review before shipping
+- **ALWAYS** generate the full diff — don't review from memory
 - **NEVER** auto-fix debatable items — always ask the user
-- **ALWAYS** review against the full checklist
-- **ALWAYS** categorize findings as AUTO-FIX / NEEDS-INPUT / INFO
-- **ALWAYS** run lint, type-check, and tests after fixes
-- **ALWAYS** update STATE.md after completion
-- **ALWAYS** present review summary at the CHECKPOINT and wait for approval
+- **ALWAYS** run lint, type-check, and tests after making fixes
+- **ALWAYS** flag PARTIAL items from the Verification Report
+- **ALWAYS** update `docs/<identifier>/state.md`
+- **ALWAYS** post a Jira comment after completing review
+- **ALWAYS** checkpoint — present review summary and wait for user

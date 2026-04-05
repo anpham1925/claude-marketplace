@@ -9,11 +9,11 @@
 
 ## ADR Structure (5 Sections)
 
-1. **Context and Problem Statement** — What problem? What constraints? Why now?
-2. **Decision** — What we chose + justification (3+ reasons)
-3. **Options Considered** — Comparison table with pros/cons
-4. **Consequences** — Positive, negative, risks
-5. **Compliance & Security** — Security and compliance impacts
+- **Context and Problem Statement** — What problem? What constraints? Why now?
+- **Decision** — What we chose + justification (3+ reasons)
+- **Options Considered** — Comparison table with pros/cons
+- **Consequences** — Positive, negative, risks
+- **Compliance & Security** — Security and compliance impacts
 
 ## Rules
 

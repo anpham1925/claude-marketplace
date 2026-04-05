@@ -1,40 +1,17 @@
 ---
 name: sdlc-breakdown
-description: "TRIGGER when: user says 'break down tasks', 'split this ticket', 'decompose the plan', 'too many files', or references breaking a large plan into sub-tasks. DO NOT trigger for: full SDLC pipeline, design, implement, or other stages."
+description: "Internal stage of the sdlc pipeline — splits a large plan into independent deployable sub-tasks with Jira tickets. Invoke directly only via /basic-engineering:sdlc-breakdown when explicitly requested by name. For general requests like 'break this down' or 'split this ticket', use prt:sdlc which routes here automatically."
 argument-hint: '[TICKET-ID]'
 model: sonnet
 ---
 
-> **Recommended model: Sonnet** — Systematic decomposition — structured, not creative.
-
-## Purpose
-
-Break down a large plan into independent, deployable sub-tasks with their own PRs and Jira tickets. This is an optional stage between Design and Implement in the SDLC pipeline, but can run standalone.
-
-## Standalone Invocation
-
-```
-/basic-engineering:sdlc-breakdown PRT-123
-```
-
-If no ticket ID is provided, derive from the current branch name or ask the user. Expects `docs/<identifier>/prd-plans/specs.md` and `flows.md` to exist.
-
-## State Tracking
-
-Read `docs/<identifier>/STATE.md` at start (if it exists). Update Current stage, Status, Artifacts, and Notes when done. If standalone (no orchestrator), derive identifier from branch name.
-
 ## Agent: Decomposer
 
 **Mission**: Split a large plan into independent, deployable sub-tasks and create them in Jira.
-**Model**: sonnet
 
+**Inputs**: Plan Summary (specs.md + flows.md) from Design
+**Outputs**: Breakdown Plan artifact + Jira sub-tasks linked to parent
 **Subagent type**: `general-purpose`
-
-### Inputs
-- Plan Summary (specs.md + flows.md) from Design
-
-### Outputs
-- Breakdown Plan artifact + Jira sub-tasks linked to parent
 
 ## When to Trigger
 
@@ -51,18 +28,18 @@ If any threshold is met, **offer the breakdown to the user**. If none are met, s
 
 ## Steps
 
-### 1. Check State
+### Check State
 
-Read `docs/<identifier>/STATE.md`. Verify Design is completed and Plan Summary exists.
+Read `docs/<identifier>/state.md`. Verify Design is completed and Plan Summary exists. See [shared reference](../sdlc/reference/shared.md) for state.md format.
 
-### 2. Analyze the Plan Summary
+### Analyze the Plan Summary
 
 Read `docs/<identifier>/prd-plans/specs.md` and `flows.md`:
 - Identify natural seams — modules, features, layers
 - Check which acceptance criteria are independent (can be deployed without others)
 - Check which file changes are self-contained
 
-### 3. Design the Split
+### Design the Split
 
 Each sub-task must be:
 - **Independently deployable** — deploying sub-task 1 without sub-task 2 must not break the system
@@ -71,7 +48,7 @@ Each sub-task must be:
 
 Prefer splitting by feature/AC rather than by layer (avoid "all models in one PR, all controllers in another").
 
-### 4. Produce Breakdown Plan
+### Produce Breakdown Plan
 
 ```markdown
 ## Breakdown Plan
@@ -96,11 +73,11 @@ Prefer splitting by feature/AC rather than by layer (avoid "all models in one PR
 (repeat for each sub-task)
 ```
 
-### 5. CHECKPOINT
+### CHECKPOINT
 
 Present breakdown plan to user for approval.
 
-### 6. Create Jira Sub-tasks (after approval)
+### Create Jira Sub-tasks (after approval)
 
 For each sub-task:
 - `createJiraIssue` with:
@@ -111,17 +88,17 @@ For each sub-task:
 
 Post a summary comment on the parent ticket listing all sub-tasks with links.
 
-### 7. Save Artifact
+### Save Artifact
 
 Write to `docs/<identifier>/prd-plans/breakdown.md`.
 
-### 8. Update State
+### Update State
 
-Update `docs/<identifier>/STATE.md` with breakdown decision and sub-task ticket IDs.
+Update `docs/<identifier>/state.md` with breakdown decision and sub-task ticket IDs.
 
-### 9. Pipeline Stops Here
+### Pipeline Stops Here
 
-Each sub-task gets its own SDLC cycle (`/basic-engineering:sdlc <sub-task-ticket>`).
+Each sub-task gets its own SDLC cycle (`/basic-engineering:sdlc <sub-task-ticket>` or `/basic-engineering:sdlc quick <sub-task-ticket>`).
 
 ## What Good Breakdown Looks Like
 
@@ -143,7 +120,5 @@ Each sub-task gets its own SDLC cycle (`/basic-engineering:sdlc <sub-task-ticket
 - **NEVER** create sub-tasks without user approval at the checkpoint
 - **ALWAYS** verify all parent ACs are covered across sub-tasks
 - **ALWAYS** post a summary comment on the parent Jira ticket
-- **ALWAYS** update `docs/<identifier>/STATE.md`
-- **ALWAYS** write breakdown artifact to `docs/<identifier>/prd-plans/breakdown.md`
+- **ALWAYS** update `docs/<identifier>/state.md`
 - If the user declines breakdown, skip to Implement — don't push back
-- If Jira MCP tools aren't connected, ask the user whether to proceed without Jira or set it up first

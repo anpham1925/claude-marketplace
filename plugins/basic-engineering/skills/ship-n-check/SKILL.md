@@ -1,131 +1,107 @@
 ---
 name: ship-n-check
-description: "TRIGGER when: user says 'ship it', 'create a PR', 'push this', 'commit and push', 'run CI', 'check the pipeline', 'fix CI failures', 'open PR', 'address review feedback', 'simplify', or 'done flow'. Also trigger for 'check staging', 'watch CI', 'babysit PR'. DO NOT trigger for: simple git commands like 'git status' or 'git log', or when user just wants to commit without the full pipeline."
+description: Primary shipping workflow — use whenever the user is done coding and wants to get code merged. Covers the full git pipeline from branch to merge including committing, quality checks, pushing, PR creation, CI/CD monitoring, staging verification, and PR review feedback. Triggers for "I'm done", "ship it", "commit this", "create a branch", "push", "create PR", "open a draft PR", "check CI", "watch pipeline", "fix CI failures", "fix the pipeline", "check build status", "check staging", "verify deployment", "test on staging", "check PR reviews", "open for review", "address review feedback", "handle PR comments", "run local checks", "check quality", "prepare for PR", "run the done flow". Always prefer this over individual ship-* stage skills unless the user explicitly invokes a stage by name (e.g. /basic-engineering:ship-branch). Do NOT use for development work — use sdlc instead.
 argument-hint: '[ticket-number]'
 model: sonnet
 ---
 
-## Working Directory
+## Quick Navigation
 
-All temporary and generated files for this workflow are stored under `docs/<identifier>/` in the repo root:
-- Use the ticket number if available (e.g., `docs/PRT-123/`)
-- Otherwise use the branch name (e.g., `docs/fix-auth-bug/`)
+| Stage | Skill | What It Does |
+|-------|-------|-------------|
+| Branch & Commit | `/basic-engineering:ship-branch` | Create branch, stage files, commit |
+| Requirements Review + Quality | `/basic-engineering:ship-quality` | Cross-check requirements (blocking) + lint/type-check/tests |
+| Simplify | `/simplify` | Review changed code for reuse, quality, efficiency |
+| Push & PR | `/basic-engineering:ship-push-pr` | Push branch, create draft PR |
+| CI/CD | `/basic-engineering:ship-cicd` | Watch test pipelines, then build/deploy |
+| Staging | `/basic-engineering:ship-staging` | Port-forward, health check, endpoint verification |
+| PR Review + Address | `/basic-engineering:ship-pr-review` | Open PR, wait for reviews, address feedback |
 
-Create the directory if it doesn't exist. Files stored here:
-- `commit-msg.txt` — temp commit message file
-- `pr-body.md` — temp PR body file
-- `review-feedback.md` — cumulative review feedback log
+## Invocation
 
-## Stage Skills
+```
+/basic-engineering:ship-n-check              # Full pipeline from branch to merge
+/basic-engineering:ship-n-check PRT-123      # Full pipeline with ticket number
+```
 
-Each stage is a standalone skill that can be invoked independently:
-
-| Stage | Skill |
-|-------|-------|
-| Branch & Commit | `/basic-engineering:snc-commit` |
-| Requirements Review + Local Quality | `/basic-engineering:snc-quality` |
-| Simplify | `/simplify` |
-| Push & PR | `/basic-engineering:snc-push` |
-| CI/CD | `/basic-engineering:snc-ci` |
-| Staging | `/basic-engineering:snc-staging` |
-| Open PR + Address Reviews | `/basic-engineering:snc-review` |
+Individual stages can also be invoked directly (e.g., `/basic-engineering:ship-cicd`, `/basic-engineering:ship-staging`).
 
 ## Done Flow (Full Pipeline)
 
-When finished coding and ready to submit:
+When finished coding and ready to submit, invoke each stage skill sequentially via the Skill tool:
 
 ```
-Branch & Commit              -> /basic-engineering:snc-commit
-Requirements Review          -> /basic-engineering:snc-quality (requirements cross-check, BLOCKING)
-  + Local Quality            -> /basic-engineering:snc-quality (self-review, lint, type-check, tests)
-Simplify                     -> /simplify skill
-Push & PR (draft)            -> /basic-engineering:snc-push
-CI/CD (tests first)          -> /basic-engineering:snc-ci
-CI/CD (build/deploy)         -> /basic-engineering:snc-ci (continues from Phase 2)
-Staging                      -> /basic-engineering:snc-staging
-Open PR for Review           -> /basic-engineering:snc-review
-Address Reviews              -> /basic-engineering:snc-review (continues to address feedback)
+[ship-branch]  -->  [ship-quality]  -->  /simplify  -->  [ship-push-pr]
+                                                              |
+                                                         [ship-cicd]
+                                                              |
+                                                        [ship-staging]
+                                                              |
+                                                       [ship-pr-review]
+                                                              |
+                                                     (loop back to ship-cicd if fixes pushed)
 ```
 
-Execute each stage sequentially via the Skill tool. Each stage must complete before the next begins.
+### Stage Invocation
+
+For each stage, invoke the corresponding skill via the Skill tool:
+- `/basic-engineering:ship-branch [ticket]`
+- `/basic-engineering:ship-quality [ticket]`
+- `/simplify` (invoke via Skill tool — do NOT freestyle)
+- `/basic-engineering:ship-push-pr [ticket]`
+- `/basic-engineering:ship-cicd [ticket]`
+- `/basic-engineering:ship-staging [ticket]`
+- `/basic-engineering:ship-pr-review [ticket]`
 
 ### Resume Flow (no changes to commit)
 
 If on a non-master/main branch with nothing to commit or push:
+- **Skip to CI/CD** — invoke `/basic-engineering:ship-cicd`, then continue with staging+
 
-1. **Skip to CI/CD** — invoke `/basic-engineering:snc-ci`, then continue with Staging+
+## Pre-Stage Protocol
 
-### Branch & Commit
+Before each stage, the stage skill will:
+1. **Read** `docs/<identifier>/stage-gate.md` — verify previous stage is done
+2. **Execute** the stage
+3. **Write** completion entry to `stage-gate.md`
 
-Invoke `/basic-engineering:snc-commit` with the ticket number.
+See [reference/shared.md](reference/shared.md) for full stage-gate protocol, git rules, commit conventions, and PR rules.
 
-### Requirements Review + Local Quality
+## Setup
 
-Invoke `/basic-engineering:snc-quality` with the ticket number.
+This skill reads config from `${CLAUDE_PLUGIN_DATA}/config.json` if it exists (shared with sdlc skill). See [reference/shared.md](reference/shared.md) for config fields.
 
-### Simplify
-
-Invoke `/simplify` via the Skill tool — do NOT freestyle.
-
-If `/simplify` finds issues, fix them, then re-run `/basic-engineering:snc-quality` checks (lint, type-check, tests).
-
-### Push & PR
-
-Invoke `/basic-engineering:snc-push` with the ticket number.
-
-### CI/CD
-
-Invoke `/basic-engineering:snc-ci` with the ticket number.
-
-### Staging
-
-Invoke `/basic-engineering:snc-staging` with the ticket number.
-
-### Open PR for Review + Address Reviews
-
-Invoke `/basic-engineering:snc-review` with the ticket number.
-
-If actionable comments were fixed → loop back: CI/CD -> Staging -> Open PR -> Address Reviews (max 3 iterations).
-
-## Rules
-
-- **NEVER** skip stages — execute every stage in order. If a stage doesn't apply (e.g., docs-only changes skip tests), explicitly state why before moving on
-- **NEVER** batch multiple stages into one action — each stage must complete before the next begins
-- **NEVER** commit without user approval — Branch & Commit has a CHECKPOINT
-- **NEVER** skip requirements review — if no ticket ID, ask for requirements. This is a blocking gate.
-- **NEVER** proceed past Requirements Review if the requirements reviewer finds mismatches — wait for user resolution
-- **NEVER** skip self-review — always review before creating a PR
-- **NEVER** skip `/simplify` — always simplify after local quality checks pass
-- **NEVER** create the PR without user approval at Push & PR
-- **NEVER** auto-fix debatable items — always ask the user
-- **NEVER** exceed 3 fix-and-retry attempts in CI/CD or Address Reviews
-- **ALWAYS** run lint, type-check, and tests before submitting
-- **NEVER** delete `docs/<identifier>/review-feedback.md` — always append new entries with a dated section header
-- **ALWAYS** check for repeated patterns in the feedback log before starting a new review — if the same issue appears across multiple entries, flag it to the user and suggest a rule improvement
-- If any quality check fails and can't be fixed, **STOP** and inform the user
+If config is missing, fall back to auto-detecting from `package.json` scripts.
 
 ## Gotchas
 
-Common failure points — if Claude keeps hitting these, the skill needs updating:
+Common failure modes — if you catch yourself doing any of these, stop and correct:
 
-- **`git add .` or `git add -A`** — Stages everything including `.env`, `node_modules`, or large binaries. Always stage specific files by name.
-- **`$()` in commit messages** — Process substitution in commit messages can execute arbitrary commands. Use a temp file or heredoc instead.
-- **Force push to main** — Never. Not even "just this once." If the history is wrong, create a revert commit.
-- **Skipping requirements review** — "It's a small change" is not an excuse. The requirements reviewer catches scope creep that the author is blind to.
-- **Auto-fixing debatable items** — Reviewer finds a naming issue but there are valid arguments both ways. Don't auto-fix — ask the user.
-- **CI retry loop** — Test fails, auto-fix, test fails again with a different error, auto-fix again. After 3 attempts, STOP. The issue is likely architectural, not a quick fix.
-- **Creating PR without running tests locally** — CI will catch it, but it wastes time and clutters the pipeline. Always run lint + type-check + test locally first.
-- **Forgetting to read review-feedback.md** — Previous review feedback contains patterns. Reading it before self-review catches repeat issues.
+- **Skipping the stage gate** — Every stage must read the gate file before starting and write after completing.
+- **Pushing before replying to PR comments** — Address Reviews has sub-gates. "Replied to ALL comments" MUST be checked before pushing.
+- **Using `git add .` or `git add -A`** — Always stage specific files.
+- **Forgetting `Co-Authored-By`** — Every commit must include it.
+- **Using `$()` in commit commands** — Write message to file first, then `git commit -F`.
+- **Skipping requirements review** — It's a blocking gate regardless of confidence.
+- **Polling CI with sleep loops** — Use `gh run watch --exit-status`.
+- **Creating PR as non-draft** — Always `--draft`.
+- **Amending commits** — Default is always a NEW commit.
+- **Force-pushing** — Never, unless user explicitly asks. Never to master/main.
 
-## Persistent Data
+## Rules
 
-This skill stores data in `${CLAUDE_PLUGIN_DATA}/ship-n-check/` for cross-session learning:
-
-- `review-patterns.jsonl` — append-only log of review findings (type, file, auto-fixed or user-decided)
-- `ci-failures.jsonl` — CI failure history (error type, root cause, fix applied, retry count)
-- `pr-log.jsonl` — PR creation history (branch, PR URL, time-to-merge, review rounds)
-
-**How to use:**
-- Before self-review, read `review-patterns.jsonl` to check for recurring issues in this codebase
-- Before CI retry, check `ci-failures.jsonl` for known flaky tests or infra issues
-- After PR merge, append to `pr-log.jsonl` for velocity tracking
+- **NEVER** skip the stage gate — read before, write after. No exceptions.
+- **NEVER** push code until "Replied to ALL comments" sub-gate is checked
+- **NEVER** skip stages — execute every stage in order
+- **NEVER** batch multiple stages into one action
+- **NEVER** commit without user approval at Branch & Commit checkpoint
+- **NEVER** skip requirements review — blocking gate
+- **NEVER** proceed past Requirements Review if it returns FAIL
+- **NEVER** skip `/simplify` — always run after quality checks pass
+- **NEVER** create the PR without user approval at Push & PR
+- **NEVER** auto-fix debatable items — always ask the user
+- **NEVER** exceed 3 fix-and-retry attempts in CI/CD or Address Reviews
+- **ALWAYS** invoke stage skills via the Skill tool — never execute stages inline
+- **ALWAYS** run lint, type-check, and tests before submitting
+- **NEVER** delete `docs/<identifier>/review-feedback.md` — always append
+- If any quality check fails and can't be fixed, **STOP** and inform the user

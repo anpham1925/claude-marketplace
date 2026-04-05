@@ -1,97 +1,105 @@
 ---
 name: sdlc-implement
-description: "TRIGGER when: user says 'implement this', 'start coding', 'build the solution', 'TDD', or references the implementation stage. DO NOT trigger for: full SDLC pipeline, analyze, design, or other stages."
+description: "Internal stage of the sdlc pipeline — implements the solution using TDD in dependency waves. Invoke directly only via /basic-engineering:sdlc-implement when explicitly requested by name. For general requests like 'implement this' or 'start coding', use prt:sdlc which routes here automatically."
 argument-hint: '[TICKET-ID]'
-model: sonnet
+model: opus
 ---
 
-> **Recommended model: Sonnet** — Code generation — high volume, pattern-following.
-
-## Purpose
-
-Build the solution using TDD, following the execution plan. This is the third stage of the SDLC pipeline but can run standalone.
-
-## Standalone Invocation
-
-```
-/basic-engineering:sdlc-implement PRT-123
-```
-
-If no ticket ID is provided, derive from the current branch name or ask the user. Expects `docs/<identifier>/prd-plans/specs.md` to exist.
-
-## State Tracking
-
-Read `docs/<identifier>/STATE.md` at start (if it exists). Update Current stage, Status, Artifacts, and Notes when done. If standalone (no orchestrator), derive identifier from branch name.
+> **Recommended model: Opus** — Deep reasoning for implementation decisions.
 
 ## Agent: Implementer
 
-**Mission**: Build the solution using TDD, following the execution plan.
-**Model**: sonnet
+**Mission**: Build the solution using TDD, following the Architect's design. Organize work into dependency waves.
 
-**Subagent type**: `general-purpose` (multi-step implementation)
-
-### Inputs
-- Execution plan (`specs.md`) with task breakdown
-
-### Outputs
-- Code changes with passing unit tests
-
-### Responsibilities
-- Read each task's `read_first` files before starting
-- Execute the concrete `action` for each task
-- Follow TDD: Red -> Green -> Refactor for each behavior
-- Verify each task's `acceptance_criteria` after completing it
-- Commit after each Green phase
-- Follow codebase conventions (naming, imports, error handling, logging)
-- Apply deviation rules (auto-fix bugs/security, STOP for architectural changes)
+**Inputs**: Solution Design from Design stage
+**Outputs**: Code changes with passing unit tests
+**Subagent type**: `general-purpose` — each wave component gets its own subagent with fresh context
 
 ## Steps
 
-- **Read the execution plan** (`specs.md`)
-  - For each task, read the `read_first` files before starting
-  - Follow task order respecting `depends_on` relationships
-  - Verify each task's `acceptance_criteria` after completing it
+### Check State
 
-- **TDD loop** (for each task/behavior):
-  - **Red** — Write a failing test
-    - Test file next to the implementation file (`.spec.ts`)
-    - Use AAA pattern: Arrange, Act, Assert
-    - Test the specific behavior from acceptance criteria
-    - Run the test — verify it fails for the right reason
-  - **Green** — Write minimum code
-    - Only enough code to make the test pass
-    - Don't optimize or generalize yet
-    - Run the test — verify it passes
-  - **Refactor** — Clean up
-    - Remove duplication
-    - Improve naming
-    - Extract functions if needed
-    - Run tests — verify still green
-  - **Commit** — Save progress
-    - Commit after each Green phase
-    - Message: `feat: [TICKET] {what behavior was added}`
+Read `docs/<identifier>/state.md`. Verify Design is completed. Load the Solution Design from `docs/<identifier>/prd-plans/specs.md`. See [shared reference](../sdlc/reference/shared.md) for state.md format.
 
-- **Self-verify each task**
-  - After completing a task, run its `acceptance_criteria` check (grep, test, etc.)
-  - Mark the task as done in specs.md only if the check passes
+### Create Branch
 
-## Deviation Rules
+If not already on a feature branch, create one before starting implementation. See [SDLC shared reference](../sdlc/reference/shared.md#git-branch-naming) for branch naming convention and Helm length limit.
 
-The Implementer has clear authority boundaries for handling unexpected situations:
+### Transition Ticket
 
-| Rule | Situation | Action |
-|------|-----------|--------|
-| **Rule 1** | Bug discovered during implementation | Auto-fix, commit separately with `fix:` prefix |
-| **Rule 2** | Missing error handling, validation, or security check critical to the task | Auto-add — these are implicit requirements |
-| **Rule 3** | Blocking issue prevents current task from working | Auto-fix if ≤3 attempts, then document and move on |
-| **Rule 4** | Architectural change, scope expansion, or design disagreement | **STOP and ask** — surface at next checkpoint |
+Before starting implementation:
 
-**Scope boundary**: only fix issues directly caused by current task's changes. Don't fix pre-existing issues you happen to notice.
+- **Move to In Progress**: Use `getTransitionsForJiraIssue` to find the transition ID for "In Progress", then call `transitionJiraIssue`.
+- **Assign to current user**: Use `lookupJiraAccountId` with the user's email (ask if unknown), then call `editJiraIssue` to set the assignee.
 
-## Guards
+If any Jira operation fails (transition not available, user not found, etc.), warn the user and continue — never block the workflow for a Jira update.
 
-- **Analysis Paralysis Guard**: if 5+ consecutive Read/Grep/Glob calls without any Write/Edit, you are stuck. Stop, document the specific blocker, and surface it to the orchestrator.
-- **Fix Attempt Limit**: max 3 auto-fix attempts per blocking issue. After 3, document the issue and move to the next task.
+### Organize into Waves
+
+Analyze the acceptance criteria and Solution Design file plan. Group components by dependency:
+
+- **Wave 1**: Foundational components with no internal dependencies (e.g., domain models, value objects, DTOs)
+- **Wave 2**: Components depending on Wave 1 (e.g., services, handlers, repositories)
+- **Wave 3+**: Components depending on previous waves (e.g., controllers, integration wiring)
+
+For small tickets (1-2 components), a single wave is fine — don't force artificial parallelism.
+
+Present the wave plan to the user before starting.
+
+**Wave Example** — for a ticket adding a new "refund" feature:
+```
+Wave 1 (parallel):  Refund entity + RefundCreatedEvent + CreateRefundCommand DTO
+Wave 2 (parallel):  CreateRefundHandler + RefundRepository
+Wave 3 (sequential): RefundController wiring
+```
+
+### Execute Each Wave
+
+Within a wave, **launch parallel Implementer subagents** for independent components:
+- Each subagent receives: Solution Design + relevant existing code only (not full conversation)
+- Each subagent follows the TDD loop below
+- Wait for all subagents in a wave to complete before starting the next wave
+- After each wave, run all tests to verify no conflicts between parallel work
+
+### TDD Loop (for each behavior within a component)
+
+- **Red** — Write a failing test
+  - Test file next to the implementation file (`.spec.ts`)
+  - Use AAA pattern: Arrange, Act, Assert
+  - Test the specific behavior from acceptance criteria
+  - Run the test — verify it fails for the right reason
+- **Green** — Write minimum code
+  - Only enough code to make the test pass
+  - Don't optimize or generalize yet
+  - Run the test — verify it passes
+- **Refactor** — Clean up
+  - Remove duplication
+  - Improve naming
+  - Extract functions if needed
+  - Run tests — verify still green
+- **Commit** — Save progress
+  - Commit after each Green phase
+  - Message: `feat: [TICKET] {what behavior was added}`
+
+### Follow the Design
+
+- Use the file structure from the Solution Design
+- Implement the interfaces/contracts as defined
+- Don't deviate from the design without flagging it
+
+### Handle Deviations
+
+- If the design doesn't work in practice, document why
+- Suggest an alternative and flag to user at next checkpoint
+- Don't silently change the approach
+
+### Update Jira
+
+Post implementation summary as a comment (see [shared reference](../sdlc/reference/shared.md) for comment format).
+
+### Update State
+
+After each wave completes, update `docs/<identifier>/state.md`.
 
 ## Implementation Rules
 
@@ -104,12 +112,11 @@ The Implementer has clear authority boundaries for handling unexpected situation
 
 ## Rules
 
-- **NEVER** implement without an execution plan (`specs.md`)
-- **NEVER** skip TDD — write tests first
-- **ALWAYS** read `read_first` files before starting each task
-- **ALWAYS** verify `acceptance_criteria` after each task
+- **NEVER** implement without reading the Solution Design first
+- **NEVER** skip TDD — write tests first, always
+- **ALWAYS** use subagents for implementation — never execute inline in the main conversation
 - **ALWAYS** commit after each Green phase
-- **ALWAYS** follow existing codebase patterns
-- **ALWAYS** update STATE.md after completion
-- If stuck (5+ reads without writing), **STOP** and surface the blocker
-- If a blocking issue persists after 3 fix attempts, document and move on
+- **ALWAYS** update `docs/<identifier>/state.md` after each wave
+- **ALWAYS** run all tests after each wave to catch conflicts
+- **ALWAYS** post a Jira comment after completing implementation
+- If the design doesn't work in practice, flag it — don't silently deviate
