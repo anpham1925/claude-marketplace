@@ -1,20 +1,50 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "anpham-marketplace",
-  "description": "Claude Code plugins for software engineering workflows — SDLC, git pipelines, NestJS patterns, and engineering methodology",
+  "description": "Claude Code plugins for software engineering workflows — AI-DLC lifecycle, git pipelines, framework toolkits, and engineering methodology",
   "owner": {
     "name": "An Pham",
     "email": "anpham1925@gmail.com"
   },
   "plugins": [
     {
-      "name": "basic-engineering",
-      "description": "Engineering toolkit — SDLC workflow, git pipeline, NestJS patterns, and engineering methodology. Includes 4 skills: sdlc (7-stage SDLC with Jira), ship-n-check (8-stage git workflow), nestjs-stack (NestJS + TypeORM + DDD patterns), engineering-foundations (TDD, domain modeling, code review, requirements, architecture, ADRs).",
+      "name": "engineering-toolkit",
+      "description": "Core engineering toolkit — 32 skills, 8 agents, 18 rules, 7 hooks. AI-DLC (adaptive intent-to-production lifecycle) and ship-n-check (git pipeline). Mode switching, harness engineering, language-specific rules for TypeScript/Python/Go.",
+      "version": "6.0.0",
+      "author": {
+        "name": "An Pham"
+      },
+      "source": "./plugins/engineering-toolkit",
+      "category": "development"
+    },
+    {
+      "name": "nestjs-toolkit",
+      "description": "NestJS-specific implementation of DDD, Hexagonal Architecture, and CQRS patterns. 9 reference topics: code structure, API design, error handling, TypeORM, auth, config, domain modeling, logging.",
       "version": "1.0.0",
       "author": {
         "name": "An Pham"
       },
-      "source": "./plugins/basic-engineering",
+      "source": "./plugins/nestjs-toolkit",
+      "category": "development"
+    },
+    {
+      "name": "django-toolkit",
+      "description": "Django + DRF patterns for models, views, serializers, security, testing, and performance. 5 reference topics.",
+      "version": "1.0.0",
+      "author": {
+        "name": "An Pham"
+      },
+      "source": "./plugins/django-toolkit",
+      "category": "development"
+    },
+    {
+      "name": "nextjs-toolkit",
+      "description": "Next.js 14+ patterns for App Router, Server Components, Server Actions, data fetching, and performance. 5 reference topics.",
+      "version": "1.0.0",
+      "author": {
+        "name": "An Pham"
+      },
+      "source": "./plugins/nextjs-toolkit",
       "category": "development"
     }
   ]
