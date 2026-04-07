@@ -1,0 +1,8 @@
+{
+  "name": "nestjs-toolkit",
+  "description": "NestJS-specific implementation of DDD, Hexagonal Architecture, and CQRS patterns. 1 skill with 9 reference topics: code structure, API design, error handling, TypeORM queries, TypeORM migrations, auth guards, config modules, NestJS domain modeling (@nestjs/cqrs), and structured logging. For language-agnostic DDD theory, use engineering-toolkit.",
+  "version": "1.0.0",
+  "author": {
+    "name": "An Pham"
+  }
+}

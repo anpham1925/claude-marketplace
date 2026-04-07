@@ -1,0 +1,8 @@
+{
+  "name": "django-toolkit",
+  "description": "Django + DRF patterns for models, views, serializers, security, testing, and performance. 1 skill with 5 reference topics.",
+  "version": "1.0.0",
+  "author": {
+    "name": "An Pham"
+  }
+}

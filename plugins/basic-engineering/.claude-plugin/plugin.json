@@ -1,8 +1,0 @@
-{
-  "name": "basic-engineering",
-  "description": "Engineering toolkit — 40 composable skills, 7 agents, 15 rules, 7 hooks. Three orchestrators: SDLC (8 stages), ship-n-check (6 stages), AI-DLC (8 phases — adaptive intent-to-production lifecycle). Framework stacks: NestJS, Next.js, Django. Mode switching (dev/research/review). Daily summary, review learning, context budget, strategic compaction, continuous learning, autonomous loops. Language-specific rules for TypeScript, Python, Go. Always-on git conventions. Git safety and quality hooks.",
-  "version": "4.3.1",
-  "author": {
-    "name": "An Pham"
-  }
-}
