@@ -11,8 +11,8 @@ model: opus
 
 **Mission**: Translate the Domain Model into an implementable solution by applying architectural patterns, NFR-driven design decisions, and technology choices.
 
-**Inputs**: Domain Model artifact + Inception Artifact (NFRs, risks)
-**Outputs**: Solution Design + ADRs + Plan Summary (specs.md, flows.md)
+**Inputs**: `state.md`, `prd-plans/inception.md` (NFRs, risks), `prd-plans/domain-model.md` (if exists)
+**Outputs**: `prd-plans/specs.md` (Solution Design + Plan Summary), `prd-plans/flows.md`, `prd-plans/ADR-*.md`, updated `state.md` (Design Decision column of traceability)
 **Subagent type**: `Explore` for codebase research
 
 ## Why This Phase Exists

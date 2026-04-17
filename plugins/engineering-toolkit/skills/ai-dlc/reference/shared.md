@@ -68,9 +68,10 @@ The pipeline maintains a state file at `docs/<identifier>/state.md` for resumabi
 - {Blocker or question — status}
 
 ## Artifacts
-- `specs.md` — {created | pending}
-- `flows.md` — {created | pending}
-- `domain-model.md` — {created | pending}
+- `prd-plans/inception.md` — {created | pending}
+- `prd-plans/domain-model.md` — {created | pending}
+- `prd-plans/specs.md` — {created | pending}
+- `prd-plans/flows.md` — {created | pending}
 - `review-feedback.md` — {created | pending}
 ```
 
@@ -87,8 +88,48 @@ Every ai-dlc phase skill MUST follow these rules. Phase-specific SKILL.md files 
 - **ALWAYS** use AI-initiated recommendation at the checkpoint (see [protocol below](#ai-initiated-recommendation-protocol))
 - **ALWAYS** check for `state.md` at the start — resume if a previous session was interrupted
 - **ALWAYS** update the traceability matrix as phases complete (see [Traceability Matrix Protocol](#traceability-matrix-protocol))
+- **ALWAYS** ask open questions one at a time with multiple-choice options (see [Open Questions Protocol](#open-questions-protocol))
 - **NEVER** auto-fix debatable items — always ask the user
+- **NEVER** dump a long list of open questions on the user — ask one at a time
 - If the phase fails or gets stuck, **STOP** and inform the user — don't retry endlessly
+
+---
+
+## Open Questions Protocol
+
+When a phase ends with open questions for the user (clarifications, tradeoffs, ambiguous scope), **never** present them as a flat list — users lose track, skip items, or answer with vague batch responses.
+
+Instead, ask **one question at a time** in an interactive prompt with:
+- **At least 3 concrete options** the phase considers plausible (A, B, C, …)
+- **One "free input" option** for the user to write their own answer
+- A recommended default marked with `(recommended)` when the phase has a clear lean
+
+Wait for the user's answer before moving to the next question. Record each answer inline in the relevant artifact (e.g., `prd-plans/inception.md` "Open Questions" section, `state.md` "Key Decisions") as it's resolved — don't batch writes.
+
+### Template
+
+```
+**Question {N} of {total}: {short question}**
+
+{1-2 sentence context — why this matters, what depends on it}
+
+Options:
+A) {option 1 — concrete, actionable}
+B) {option 2 — concrete, actionable} (recommended)
+C) {option 3 — concrete, actionable}
+D) Something else — please describe
+
+Which option do you choose?
+```
+
+### Rules
+
+- **ALWAYS** surface the total count upfront so the user knows the scope (e.g., "I have 3 questions before we proceed")
+- **ALWAYS** give at least 3 substantive options — if you can't think of 3, the question probably isn't ready to ask yet
+- **ALWAYS** include option D (or equivalent) for free-form input
+- **NEVER** chain multiple questions in one prompt — one at a time, wait for the answer
+- **NEVER** use yes/no framing when a spectrum of options exists
+- Mark a recommendation when the phase has a clear lean, but still let the user override
 
 ---
 
@@ -173,8 +214,8 @@ See [ship-n-check shared reference](../../ship-n-check/reference/shared.md#branc
 
 See [artifacts.md](artifacts.md) for:
 - Handoff chain (which files flow between phases)
-- Inception Artifact Format (template for specs.md)
-- Domain Model Artifact Format (template for domain-model.md)
+- Inception Artifact Format (template for `prd-plans/inception.md`)
+- Domain Model Artifact Format (template for `prd-plans/domain-model.md`)
 - Artifact rules (append-only, file paths not content, session-death safe)
 - Traceability Matrix Protocol (AC columns, populated-by, validation rules)
 
@@ -205,9 +246,10 @@ The Release phase delegates to ship-n-check, which uses its own `stage-gate.md` 
 All files for the pipeline stored under `docs/<identifier>/`:
 
 **Durable design knowledge (keep after merge):**
-- `prd-plans/specs.md` — consolidated specifications, NFR targets, design rationale
-- `prd-plans/flows.md` — flow diagrams (Mermaid)
+- `prd-plans/inception.md` — Inception Artifact (ACs, NFRs, risks, Observability Plan, code elevation for brown-field)
 - `prd-plans/domain-model.md` — domain model artifact
+- `prd-plans/specs.md` — Solution Design + Plan Summary (consolidated specs, NFR-to-design mapping, design rationale)
+- `prd-plans/flows.md` — flow diagrams (Mermaid)
 - `prd-plans/fix-report.md` — root cause, fix, regression prevention (bug-fix intents)
 - `prd-plans/ADR-*.md` — architecture decision records
 - `review-feedback.md` — review findings for cross-ticket pattern detection via `/engineering-toolkit:review-learning`

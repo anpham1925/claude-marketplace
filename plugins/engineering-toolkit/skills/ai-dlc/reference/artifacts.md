@@ -10,13 +10,15 @@ Each phase produces a structured artifact **file** that feeds into the next. The
 
 ```
 Planner --[state.md: Level 1 Plan]--> Inceptor
-Inceptor --[specs.md: Inception Artifact]--> Domain Designer
+Inceptor --[prd-plans/inception.md: Inception Artifact]--> Domain Designer
 Domain Designer --[prd-plans/domain-model.md]--> Logical Designer
-Logical Designer --[prd-plans/specs.md + prd-plans/flows.md]--> Constructor
+Logical Designer --[prd-plans/specs.md + prd-plans/flows.md + prd-plans/ADR-*.md]--> Constructor
 Constructor --[Code + Tests + state.md: Traceability]--> Verifier
 Verifier --[review-feedback.md + state.md]--> Releaser
-Releaser --[Merged PR]--> Observer
+Releaser --[Merged PR + state.md]--> Observer
 Observer --[state.md: Observation Report]--> DONE
+
+**Note**: Inception writes `prd-plans/inception.md` (ACs, NFRs, risks, Observability Plan). Logical Design writes `prd-plans/specs.md` (Solution Design + Plan Summary). These are distinct artifacts — do not confuse them.
 ```
 
 ### Inception Artifact Format

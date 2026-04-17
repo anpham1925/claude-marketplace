@@ -11,8 +11,8 @@ model: opus
 
 **Mission**: Build the solution using TDD in dependency waves, write e2e tests, and maintain traceability from ACs through code to tests.
 
-**Inputs**: Solution Design from Logical Design (specs.md, flows.md), Domain Model (if produced)
-**Outputs**: Code + unit tests + e2e tests + updated traceability matrix
+**Inputs**: `state.md`, `prd-plans/specs.md` (Solution Design), `prd-plans/flows.md`, `prd-plans/domain-model.md` (if produced)
+**Outputs**: Code + unit tests + e2e tests + updated `state.md` (Code Files / Test Files columns of traceability matrix)
 **Subagent type**: `general-purpose` — each wave component gets its own subagent with fresh context
 
 ## Why This Phase Exists

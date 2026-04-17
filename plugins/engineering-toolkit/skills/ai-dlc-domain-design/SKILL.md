@@ -11,8 +11,8 @@ model: opus
 
 **Mission**: Model the core business logic independently of infrastructure using Domain-Driven Design principles.
 
-**Inputs**: Inception Artifact (requirements, NFRs, code elevation if brown-field)
-**Outputs**: Domain Model artifact (`docs/<identifier>/prd-plans/domain-model.md`)
+**Inputs**: `state.md`, `prd-plans/inception.md` (requirements, NFRs, code elevation if brown-field)
+**Outputs**: `docs/<identifier>/prd-plans/domain-model.md` + updated `state.md` (Domain Model column of traceability)
 **Subagent type**: `Explore` for codebase research
 
 ## Why This Phase Exists

@@ -11,8 +11,8 @@ model: sonnet
 
 **Mission**: Get verified, reviewed code merged by invoking the existing ship-n-check pipeline stages.
 
-**Inputs**: Verified code from Verify phase
-**Outputs**: Merged PR, Jira updated
+**Inputs**: `state.md`, verified code from Verify phase
+**Outputs**: Merged PR + updated `state.md` (Release status, PR URL), Jira updated
 **Delegation**: Invokes existing ship-* stage skills via the Skill tool
 
 ## Why This Phase Exists

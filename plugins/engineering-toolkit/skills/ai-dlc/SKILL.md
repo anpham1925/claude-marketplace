@@ -63,18 +63,20 @@ For each phase, spawn an Agent with:
 - **prompt**: What to do, which inputs to read, which artifacts to write
 - **subagent_type**: Match to the best agent type for the work
 
-| Phase | Subagent Type | Model | Inputs (read from docs/) | Outputs (write to docs/) |
-|-------|-------------|-------|-------------------------|------------------------|
+All paths are relative to `docs/<identifier>/`. Every phase also updates `state.md` — the "Outputs" column lists phase-specific artifacts on top of that.
+
+| Phase | Subagent Type | Model | Inputs | Outputs |
+|-------|-------------|-------|--------|---------|
 | Discovery | `general-purpose` | opus | Ticket/intent | `discovery.md`, `state.md` |
-| Plan | `general-purpose` | opus | Ticket/intent, `discovery.md` (if exists) | `state.md` |
-| Investigate | `general-purpose` | opus | `state.md`, symptoms/errors | `investigation.md` |
-| Inception | `codebase-explorer` | opus | `state.md`, `investigation.md` (if exists) | `specs.md` |
-| Domain Design | `general-purpose` | opus | `state.md`, `specs.md` | `domain-model.md` |
-| Logical Design | `general-purpose` | opus | `state.md`, `specs.md`, `domain-model.md` | `flows.md` |
-| Construct | `general-purpose` | opus | `specs.md`, `flows.md` | Code + tests |
-| Verify | `code-reviewer` | opus | `specs.md`, code diff | `review-feedback.md` |
-| Release | `general-purpose` | sonnet | `state.md` | PR URL |
-| Observe | `general-purpose` | sonnet | `state.md`, `specs.md` | Health report |
+| Plan | `planner` | opus | Ticket/intent, `discovery.md` (if exists) | `state.md` (Level 1 Plan) |
+| Investigate | `debugger` | opus | `state.md`, symptoms/errors | `investigation.md`, `state.md` |
+| Inception | `general-purpose` | opus | `state.md`, `investigation.md` (if exists) | `prd-plans/inception.md`, `state.md` (ACs, NFRs, risks, traceability scaffold) |
+| Domain Design | `general-purpose` | opus | `state.md`, `prd-plans/inception.md` | `prd-plans/domain-model.md`, `state.md` (traceability: Domain Model column) |
+| Logical Design | `general-purpose` | opus | `state.md`, `prd-plans/inception.md`, `prd-plans/domain-model.md` (if exists) | `prd-plans/specs.md`, `prd-plans/flows.md`, `prd-plans/ADR-*.md`, `state.md` (traceability: Design Decision column) |
+| Construct | `general-purpose` | sonnet | `state.md`, `prd-plans/specs.md`, `prd-plans/flows.md`, `prd-plans/domain-model.md` (if exists) | Code + tests, `state.md` (traceability: Code Files, Test Files columns) |
+| Verify | `code-reviewer` | opus | `state.md`, `prd-plans/inception.md`, `prd-plans/specs.md`, code diff | `review-feedback.md`, `state.md` |
+| Release | `general-purpose` | sonnet | `state.md` | Merged PR, `state.md` |
+| Observe | `general-purpose` | sonnet | `state.md`, `prd-plans/inception.md` (Observability Plan) | `state.md` (Observation Report) |
 
 ### Prompt Template for Phase Subagents
 
@@ -102,7 +104,7 @@ Read your inputs:
 - docs/PROJ-123/state.md (contains Level 1 Plan from previous phase)
 
 Write your outputs:
-- docs/PROJ-123/specs.md (Inception Artifact)
+- docs/PROJ-123/prd-plans/inception.md (Inception Artifact)
 - Update docs/PROJ-123/state.md (mark Inception complete, populate ACs/NFRs/risks)
 
 Ticket: PROJ-123
@@ -111,7 +113,7 @@ Ticket: PROJ-123
 ### What the Orchestrator Does Between Phases
 
 After each subagent completes:
-1. **Read the artifact files** — read `state.md` and the phase's output artifact (e.g., `specs.md`, `domain-model.md`). Do NOT rely on the subagent's return text for context.
+1. **Read the artifact files** — read `state.md` and the phase's output artifact (e.g., `prd-plans/inception.md`, `prd-plans/domain-model.md`, `prd-plans/specs.md`). Do NOT rely on the subagent's return text for context.
 2. **Build the checkpoint summary** from the artifact files — extract key findings, counts, decisions
 3. Present the checkpoint to the user using the [AI-initiated recommendation protocol](#ai-initiated-flow)
 4. On user approval, spawn the next subagent (passing only file paths)
@@ -220,7 +222,7 @@ On first use, check for `${CLAUDE_PLUGIN_DATA}/config.json`. If missing, ask the
 Common failure modes — if you catch yourself doing any of these, stop and correct:
 
 - **Switching pipelines mid-flow** — If the user started with `/engineering-toolkit:ai-dlc`, stay on AI-DLC. Never switch to `/engineering-toolkit:ship-n-check` directly without asking. The Release phase delegates to ship-* internally.
-- **Skipping artifacts for "small" tasks** — Always produce state.md, specs.md, and traceability matrix. If a task seems too small, ASK the user: "This is a small change — should I produce full artifacts or skip?" Never decide unilaterally.
+- **Skipping artifacts for "small" tasks** — Always produce state.md, inception.md, and traceability matrix. If a task seems too small, ASK the user: "This is a small change — should I produce full artifacts or skip?" Never decide unilaterally.
 - **Skipping the Plan phase** — Always classify intent first. Even for "obvious" bug fixes, Plan determines the pipeline.
 - **Running all 8 phases for a bug fix** — Use the adaptive pipeline. Plan determines what's needed.
 - **Stopping silently after a checkpoint** — Always recommend the next action (AI-initiated flow).
@@ -246,6 +248,7 @@ Common failure modes — if you catch yourself doing any of these, stop and corr
 - **ALWAYS** pass file paths to subagents, never raw content — subagents read everything from files
 - **ALWAYS** read artifact files after subagent completes — build checkpoint summaries from files, not return text
 - **ALWAYS** follow the AI-initiated flow — recommend next action after every checkpoint
+- **ALWAYS** ask open questions one at a time with 3+ options + a free-input option — never dump a list (see [Open Questions Protocol](reference/shared.md#open-questions-protocol))
 - **ALWAYS** follow the adaptive pipeline from Plan — skip phases the Plan excludes
 - **ALWAYS** post Jira comments after each phase
 - **ALWAYS** update `docs/<identifier>/state.md` after completing each phase

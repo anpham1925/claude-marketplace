@@ -11,8 +11,8 @@ model: opus
 
 **Mission**: Confirm every acceptance criterion is met, review code quality, validate traceability completeness, and verify NFR compliance.
 
-**Inputs**: Code + tests from Construct, Inception Artifact (ACs, NFRs), Traceability Matrix
-**Outputs**: Verification Report + Review Feedback
+**Inputs**: Code + tests from Construct, `prd-plans/inception.md` (ACs, NFRs, risks), `prd-plans/specs.md` (Solution Design), Traceability Matrix from `state.md`
+**Outputs**: `review-feedback.md` (Review Feedback) + updated `state.md` (Verification Report, AC status)
 **Subagent type**: `general-purpose` — **MUST be a fresh subagent** (context-isolated from the Constructor to avoid bias)
 
 ## Why This Phase Exists
@@ -24,9 +24,9 @@ AI-DLC's verification combines Verify + Review into a single phase, adding trace
 ### Check State
 
 Read `docs/<identifier>/state.md`. Verify Construct is completed. Load:
-- Inception Artifact (ACs, NFRs, risks)
-- Traceability Matrix
-- Solution Design (specs.md)
+- Inception Artifact from `docs/<identifier>/prd-plans/inception.md` (ACs, NFRs, risks)
+- Traceability Matrix from `state.md`
+- Solution Design from `docs/<identifier>/prd-plans/specs.md`
 
 See [shared reference](../ai-dlc/reference/shared.md) for format.
 

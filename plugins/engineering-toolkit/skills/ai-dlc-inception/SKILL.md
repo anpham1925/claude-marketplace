@@ -11,9 +11,9 @@ model: opus
 
 **Mission**: Understand the intent and produce a comprehensive Inception Artifact covering requirements, NFRs, risks, measurement criteria, and code elevation (for brown-field).
 
-**Inputs**: Jira ticket ID + Level 1 Plan from Plan phase
-**Outputs**: Inception Artifact
-**Subagent type**: Use `codebase-explorer` if defined in `.claude/agents/`, otherwise `Explore`
+**Inputs**: Jira ticket ID + Level 1 Plan from Plan phase (`state.md`), `investigation.md` (if bug-fix flow)
+**Outputs**: `docs/<identifier>/prd-plans/inception.md` (Inception Artifact) + updated `state.md`
+**Subagent type**: `general-purpose`
 
 ## Why This Phase Exists
 
@@ -204,7 +204,7 @@ If the ticket is an epic or the intent spans multiple bounded contexts:
 
 ### Produce Inception Artifact
 
-See [artifacts reference](../ai-dlc/reference/artifacts.md) for the full Inception Artifact format. Key sections:
+Write to `docs/<identifier>/prd-plans/inception.md`. See [artifacts reference](../ai-dlc/reference/artifacts.md) for the full Inception Artifact format. Key sections:
 - Goal, Acceptance Criteria, Scope, Affected Modules, Existing Patterns
 - NFRs table
 - **Observability Plan** (SLIs/SLOs, instrumentation, alerts)

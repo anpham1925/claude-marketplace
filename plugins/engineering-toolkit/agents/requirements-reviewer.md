@@ -2,7 +2,7 @@
 name: requirements-reviewer
 description: Cross-check code changes against original requirements. Spawn during the Requirements Review stage of the workflow to validate that all acceptance criteria are covered and no over-scope changes exist. Challenges the developer on mismatches.
 tools: Read, Grep, Glob, Bash
-model: opus
+model: sonnet
 maxTurns: 15
 ---
 

@@ -11,8 +11,8 @@ model: sonnet
 
 **Mission**: Verify the deployment is healthy by checking observability data against NFR targets and baseline metrics.
 
-**Inputs**: Deployed code (from Release), Inception Artifact (NFRs, measurement criteria), Honeycomb config
-**Outputs**: Observation Report
+**Inputs**: `state.md`, `prd-plans/inception.md` (NFRs, Observability Plan, measurement criteria), Honeycomb config
+**Outputs**: Observation Report written to `state.md`
 
 ## Why This Phase Exists
 
@@ -28,13 +28,13 @@ AI-DLC includes an Operations phase because shipping code isn't the finish line 
 
 ### Check State
 
-Read `docs/<identifier>/state.md` and `docs/<identifier>/specs.md`. Verify Release is completed. Load:
+Read `docs/<identifier>/state.md` and `docs/<identifier>/prd-plans/inception.md`. Verify Release is completed. Load:
 - NFRs from Inception (performance targets, reliability targets)
-- **Observability Plan** from `specs.md` (full SLI targets, instrumentation points, alert conditions)
+- **Observability Plan** from `prd-plans/inception.md` (full SLI targets, instrumentation points, alert conditions)
 - Measurement criteria
 - Affected services/modules
 
-`state.md` has a brief summary of the plan; `specs.md` has the full details (specific SLI targets like "P95 < 500ms", instrumentation locations, alert thresholds). Use `specs.md` to drive what to query — don't guess which SLIs matter, validate the ones that were explicitly planned.
+`state.md` has a brief summary of the plan; `prd-plans/inception.md` has the full details (specific SLI targets like "P95 < 500ms", instrumentation locations, alert thresholds). Use `prd-plans/inception.md` to drive what to query — don't guess which SLIs matter, validate the ones that were explicitly planned.
 
 See [shared reference](../ai-dlc/reference/shared.md) for format.
 
