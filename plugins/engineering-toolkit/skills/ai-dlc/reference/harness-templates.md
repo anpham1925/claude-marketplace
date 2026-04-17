@@ -14,7 +14,7 @@ Different service types need different controls. During the **Plan** and **Incep
 
 ### HTTP API Service
 
-**Examples**: REST APIs, GraphQL services, BFF layers
+**Examples**: REST APIs, backend-for-frontend services, public APIs
 
 | Type | Control |
 |---|---|
@@ -29,11 +29,11 @@ Different service types need different controls. During the **Plan** and **Incep
 
 ### Event Consumer
 
-**Examples**: Kafka consumers, RabbitMQ handlers, SQS processors
+**Examples**: Kafka consumers, RabbitMQ consumers, SQS/SNS consumers
 
 | Type | Control |
 |---|---|
-| **Guide** | Retry patterns (exponential backoff, DLQ) |
+| **Guide** | Kafka retry patterns (exponential backoff, DLQ) |
 | **Guide** | Idempotency patterns (dedup by event ID) |
 | **Guide** | Event schema validation (Avro/JSON schema) |
 | **Sensor** | Event processing latency SLO |
@@ -44,7 +44,7 @@ Different service types need different controls. During the **Plan** and **Incep
 
 ### Worker / Cron Job
 
-**Examples**: Background workers, scheduled jobs, batch processors
+**Examples**: Background workers, cron jobs, batch processors
 
 | Type | Control |
 |---|---|
@@ -59,7 +59,7 @@ Different service types need different controls. During the **Plan** and **Incep
 
 ### Frontend (React / React Native / Remix)
 
-**Examples**: Web apps, mobile apps, admin UIs
+**Examples**: Mobile apps, web SPAs, admin dashboards
 
 | Type | Control |
 |---|---|
@@ -76,7 +76,7 @@ Different service types need different controls. During the **Plan** and **Incep
 
 ## Combining Archetypes
 
-A single repo may contain multiple archetypes (e.g., an app with an HTTP API, event consumer, and workers). When this happens:
+A single repo may contain multiple archetypes (e.g., a monorepo with an HTTP API, event consumer, and workers). When this happens:
 
 - Apply each archetype's controls to the relevant `apps/` directory
 - Shared controls (maintainability rules) apply globally

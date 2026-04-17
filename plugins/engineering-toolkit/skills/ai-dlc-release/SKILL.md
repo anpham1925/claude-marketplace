@@ -114,9 +114,10 @@ After release completes:
 
 ## Rules
 
+See [common phase rules](../ai-dlc/reference/shared.md#common-phase-rules) for state updates, Jira comments, and checkpoint protocol.
+
+Phase-specific:
 - **ALWAYS** delegate to ship-* stage skills — never reimplement shipping logic
 - **ALWAYS** follow ship-n-check checkpoints and gates
 - **ALWAYS** transition Jira ticket to "Done" after merge
-- **ALWAYS** update `docs/<identifier>/state.md`
-- **ALWAYS** use AI-initiated recommendation after completion
 - If any ship stage fails, follow its error handling (e.g., CI fix-and-retry loop)

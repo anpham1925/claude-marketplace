@@ -15,7 +15,7 @@ Validate that changes match requirements AND meet code quality standards — bef
 
 ### Gate Check
 
-Read `docs/<identifier>/stage-gate.md`. Verify "Branch & Commit" is checked. See [shared reference](../ship-n-check/reference/shared.md) for stage-gate protocol.
+Follow the [stage workflow template](../ship-n-check/reference/shared.md#stage-workflow-template). Verify "Branch & Commit" is checked.
 
 ---
 

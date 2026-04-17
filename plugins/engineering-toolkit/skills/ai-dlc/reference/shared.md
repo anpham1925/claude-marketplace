@@ -9,7 +9,7 @@ Cross-cutting concerns shared by all AI-DLC phase skills. Each phase skill links
 The pipeline maintains a state file at `docs/<identifier>/state.md` for resumability across sessions.
 
 **Location**: `docs/<identifier>/state.md`
-- Use the ticket number if available (e.g., `docs/PRT-123/state.md`)
+- Use the ticket number if available (e.g., `docs/PROJ-123/state.md`)
 - Otherwise use the branch name (e.g., `docs/fix-auth-bug/state.md`)
 
 **When to update**: After completing each phase and after each checkpoint.
@@ -50,6 +50,12 @@ The pipeline maintains a state file at `docs/<identifier>/state.md` for resumabi
 ## Measurement Criteria
 - {How we measure success — e.g., "Error rate <0.1% after deploy"}
 
+## Observability Plan
+- **Archetype**: {HTTP API | Event Consumer | Worker | Frontend}
+- **SLIs/SLOs**: {count} defined — {brief list}
+- **Instrumentation**: {count} points — {brief list}
+- **Alerts**: {new alerts / covered by existing}
+
 ## Traceability Matrix
 | AC | Domain Model | Design Decision | Code Files | Test Files |
 |----|-------------|-----------------|------------|------------|
@@ -69,6 +75,20 @@ The pipeline maintains a state file at `docs/<identifier>/state.md` for resumabi
 ```
 
 **Resuming**: When starting any phase, check for `state.md` first. If it exists, read it and resume from the current position. Present the state summary to the user before continuing.
+
+---
+
+## Common Phase Rules
+
+Every ai-dlc phase skill MUST follow these rules. Phase-specific SKILL.md files link here instead of repeating them.
+
+- **ALWAYS** update `docs/<identifier>/state.md` after completing the phase
+- **ALWAYS** post a Jira comment with phase summary after completing (see [Jira Integration](#jira-integration) for format)
+- **ALWAYS** use AI-initiated recommendation at the checkpoint (see [protocol below](#ai-initiated-recommendation-protocol))
+- **ALWAYS** check for `state.md` at the start — resume if a previous session was interrupted
+- **ALWAYS** update the traceability matrix as phases complete (see [Traceability Matrix Protocol](#traceability-matrix-protocol))
+- **NEVER** auto-fix debatable items — always ask the user
+- If the phase fails or gets stuck, **STOP** and inform the user — don't retry endlessly
 
 ---
 
@@ -143,116 +163,20 @@ Artifacts:
 
 ---
 
-## Git Conventions
+## Git Branch Naming
 
-Branch naming, commit convention, and git safety rules are defined in the **always-on `git-conventions` rule** (`rules/git-conventions.md`). That rule is the single source of truth.
-
----
-
-## Handoff Contracts
-
-Each phase produces a structured artifact that feeds into the next:
-
-```
-Planner --[Level 1 Plan]--> Inceptor
-Inceptor --[Inception Artifact (Reqs + NFRs + Risks + Measurements)]--> Domain Designer
-Domain Designer --[Domain Model]--> Logical Designer
-Logical Designer --[Solution Design + Plan Summary]--> Constructor
-Constructor --[Code + Tests + Traceability]--> Verifier
-Verifier --[Verified Code + Review Feedback]--> Releaser
-Releaser --[Merged PR]--> Observer
-Observer --[Observation Report]--> DONE
-```
-
-### Inception Artifact Format
-
-```markdown
-## Goal
-{One sentence}
-
-## Acceptance Criteria
-- [ ] AC-1: {criterion}
-
-## Scope
-**In scope**: ...
-**Out of scope**: ...
-
-## Affected Modules
-- `modules/{name}` — {what changes}
-
-## Existing Patterns
-- {Similar implementation at path:line}
-
-## NFRs
-| ID | Category | Requirement | Target |
-|----|----------|-------------|--------|
-
-## Risk Assessment
-| ID | Risk | Impact | Likelihood | Mitigation |
-|----|------|--------|------------|------------|
-
-## Measurement Criteria
-- {How we know this succeeded}
-
-## Code Elevation (brown-field only)
-### Static Model
-- {Components, responsibilities, relationships}
-### Dynamic Model
-- {Interaction flows for key use cases}
-
-## Open Questions
-- {Question — who can answer}
-```
-
-### Domain Model Artifact Format
-
-```markdown
-## Aggregates
-### {AggregateName}
-- **Root Entity**: {name}
-- **Entities**: {list}
-- **Value Objects**: {list}
-- **Invariants**: {business rules that must hold}
-
-## Domain Events
-- `{EventName}` — triggered when {condition}
-
-## Repository Interfaces
-- `{RepoName}` — {operations}
-
-## State Transitions
-{Mermaid state diagram}
-
-## Component Interactions
-{Mermaid sequence diagram}
-```
-
-### Rules
-
-- **Never skip a handoff** — each phase needs the previous artifact
-- **Artifacts are append-only** — later phases can add but not remove
-- **Checkpoint artifacts** — Plan, Inception, Domain Design, and Logical Design outputs must be user-approved before handoff
-- **Traceability is cumulative** — each phase adds its column to the traceability matrix
-- **AI recommends after every checkpoint** — never just stop silently
+See [ship-n-check shared reference](../../ship-n-check/reference/shared.md#branch-naming) for branch naming convention and Helm length limit.
 
 ---
 
-## Traceability Matrix Protocol
+## Handoff Contracts, Artifact Formats & Traceability
 
-The traceability matrix links every acceptance criterion through the full pipeline:
-
-| Column | Populated By | Content |
-|--------|-------------|---------|
-| **AC** | Inception | Acceptance criterion text |
-| **Domain Model** | Domain Design | Entity/aggregate/event that implements it |
-| **Design Decision** | Logical Design | Chosen pattern/option |
-| **Code Files** | Construct | File paths of implementation |
-| **Test Files** | Construct | File paths of tests |
-
-**Rules**:
-- Every AC MUST have entries in all columns by the end of Verify
-- Verify phase validates completeness — gaps are flagged as FAIL
-- Matrix is stored in `state.md` and updated after each phase
+See [artifacts.md](artifacts.md) for:
+- Handoff chain (which files flow between phases)
+- Inception Artifact Format (template for specs.md)
+- Domain Model Artifact Format (template for domain-model.md)
+- Artifact rules (append-only, file paths not content, session-death safe)
+- Traceability Matrix Protocol (AC columns, populated-by, validation rules)
 
 ---
 
@@ -299,15 +223,15 @@ All files for the pipeline stored under `docs/<identifier>/`:
 
 ## Config
 
-Reads config from `${CLAUDE_PLUGIN_DATA}/config.json` (shared with sdlc/ship skills). Fields:
+Reads config from `${CLAUDE_PLUGIN_DATA}/config.json` (shared with ship skills). Fields:
 
-- `jiraProjectPrefix` — e.g., `PRT`, `PSR`, `MOX`
 - `testCommands` — e.g., `yarn test`, `yarn test:e2e`
 - `lintCommands` — e.g., `yarn lint --fix`, `yarn type-check`
-- `branchConvention` — e.g., `{ticket}` or `{type}/{ticket}-{slug}`
 - `reviewBot` — name of GitHub review bot
 - `honeycombDataset` — dataset name for Observe phase queries
 - `honeycombEnvironment` — environment for Observe phase
+
+Branch naming and Jira project prefix are derived from the ticket ID at runtime — not stored in config. This supports working across multiple projects without reconfiguration.
 
 If config is missing, fall back to auto-detecting from `package.json` scripts.
 
@@ -316,18 +240,41 @@ If config is missing, fall back to auto-detecting from `package.json` scripts.
 ## Context Freshness Rules
 
 - **Every phase agent MUST be a subagent** — never execute a phase inline
-- **Subagents receive only their inputs** — pass the structured artifact, not full history
-- **Wave subagents are independent** — each gets Solution Design + relevant files only
+- **Subagents receive file paths, not content** — the prompt contains methodology path + input/output artifact paths. No raw text, no summaries, no context blobs from the orchestrator
+- **Subagents read all context from files** — state.md for pipeline position, previous artifact files for input context. If it's not in a file, the subagent doesn't need it
+- **Subagents write all outputs to files** — artifact files ARE the deliverable. The subagent's return text to the orchestrator is incidental, not authoritative
+- **Orchestrator reads files after each phase** — build checkpoint summaries from state.md and output artifacts, not from subagent return text
+- **Session-death safe** — if the session dies between phases, all completed work is in artifact files. The next session reads state.md and resumes with zero context loss
+- **Wave subagents are independent** — each gets Solution Design path + relevant file paths only
 - **Fresh subagents for verification** — Verifier MUST NOT be the Constructor
-- **Main session stays lean** — hold only: state.md contents, phase summaries, checkpoint decisions
-- **AI-initiated recommendations** use findings from the just-completed phase, not recalled history
+- **Main session stays lean** — hold only: file paths, checkpoint decisions, user approvals
 
 ---
 
 ## Review Feedback Format
 
-See [ship-n-check shared reference](../../ship-n-check/reference/shared.md#review-feedback-format) for the entry format, pattern detection protocol, and template.
+See [ship-n-check shared reference](../../ship-n-check/reference/shared.md#review-feedback-format) for the full protocol.
 
-**Summary**: Every feedback entry is written to `docs/<identifier>/review-feedback.md` (committed into the PR, kept after merge for cross-ticket pattern detection).
+**Summary**: Every feedback entry is written to `docs/<identifier>/review-feedback.md` (committed into the PR, deleted after merge).
 
 Sources: `self-review | verify | ci-fix | pr-review`
+
+```markdown
+---
+
+## [YYYY-MM-DD] TICKET — source: self-review | verify | ci-fix | pr-review
+
+### AUTO-FIX
+- [ ] [file:line] Description of issue and fix applied
+
+### NEEDS-INPUT
+- [ ] [file:line] Description of issue — options: A) ... B) ...
+
+### INFO
+- [file:line] Observation (no action needed)
+
+### Summary
+- **Auto-fixed**: N issues
+- **Needs input**: N issues
+- **Info**: N observations
+```

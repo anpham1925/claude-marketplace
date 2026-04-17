@@ -60,24 +60,26 @@ Run these in parallel — they're independent:
 
 Launch 3 independent data-gathering efforts. Use subagents where possible for speed.
 
-### 2a. GitHub — PRs across hipagesgroup
+### 2a. GitHub — PRs across your org
+
+Replace `YOUR_ORG` with your GitHub org (or remove `--owner=` entirely to search across all your PRs).
 
 ```bash
 # Merged on target date
 gh search prs --author=@me --merged=TARGET_DATE..TARGET_DATE \
-  --owner=hipagesgroup --json title,number,repository,url,state --limit 50
+  --owner=YOUR_ORG --json title,number,repository,url,state --limit 50
 
 # Created on target date
 gh search prs --author=@me --created=TARGET_DATE..TARGET_DATE \
-  --owner=hipagesgroup --json title,number,repository,url,state --limit 50
+  --owner=YOUR_ORG --json title,number,repository,url,state --limit 50
 
 # Open PRs (in review) — only include if updatedAt falls on target date
 gh search prs --author=@me --state=open \
-  --owner=hipagesgroup --json title,number,repository,url,state,updatedAt --limit 50
+  --owner=YOUR_ORG --json title,number,repository,url,state,updatedAt --limit 50
 
 # PRs I reviewed on target date
 gh search prs --reviewed-by=@me --updated=TARGET_DATE..TARGET_DATE \
-  --owner=hipagesgroup --json title,number,repository,url,state --limit 50
+  --owner=YOUR_ORG --json title,number,repository,url,state --limit 50
 ```
 
 Classify:
@@ -87,7 +89,7 @@ Classify:
 
 ### 2b. Jira — Tickets and comments
 
-Use `searchJiraIssuesUsingJql` with `cloudId: "hipages.atlassian.net"`, `responseContentFormat: "markdown"`.
+Use `searchJiraIssuesUsingJql` with `cloudId: "<your-org>.atlassian.net"`, `responseContentFormat: "markdown"`.
 
 **Query 1 — Assigned tickets updated on target date:**
 ```

@@ -17,13 +17,13 @@ This agent runs and fixes tests. For test *design* guidance, consult the skill.
 
 ## Workflow
 
-1. Detect the project's package manager and test framework from config files (package.json, Makefile, pyproject.toml, etc.)
-2. Run the requested checks (lint, type-check, tests, or all)
-3. If anything fails, analyze the error output
-4. Fix the issue — read the relevant source/test file, apply the minimal fix
-5. Re-run to verify the fix works
-6. Repeat up to 3 fix attempts per failure
-7. Return a concise summary of what passed, what failed, and what you fixed
+- Detect the project's package manager and test framework from config files (package.json, Makefile, pyproject.toml, etc.)
+- Run the requested checks (lint, type-check, tests, or all)
+- If anything fails, analyze the error output
+- Fix the issue — read the relevant source/test file, apply the minimal fix
+- Re-run to verify the fix works
+- Repeat up to 3 fix attempts per failure
+- Return a concise summary of what passed, what failed, and what you fixed
 
 ## Auto-Detection
 

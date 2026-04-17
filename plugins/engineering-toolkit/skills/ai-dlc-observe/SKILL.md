@@ -28,10 +28,13 @@ AI-DLC includes an Operations phase because shipping code isn't the finish line 
 
 ### Check State
 
-Read `docs/<identifier>/state.md`. Verify Release is completed. Load:
+Read `docs/<identifier>/state.md` and `docs/<identifier>/specs.md`. Verify Release is completed. Load:
 - NFRs from Inception (performance targets, reliability targets)
+- **Observability Plan** from `specs.md` (full SLI targets, instrumentation points, alert conditions)
 - Measurement criteria
 - Affected services/modules
+
+`state.md` has a brief summary of the plan; `specs.md` has the full details (specific SLI targets like "P95 < 500ms", instrumentation locations, alert thresholds). Use `specs.md` to drive what to query — don't guess which SLIs matter, validate the ones that were explicitly planned.
 
 See [shared reference](../ai-dlc/reference/shared.md) for format.
 
@@ -163,7 +166,7 @@ Update `docs/<identifier>/state.md`:
 - Mark Observe as completed
 - Record observation results
 
-### Pipeline Complete
+### CHECKPOINT — Observation Summary
 
 > **Observe complete. AI-DLC pipeline finished.**
 >
@@ -191,9 +194,10 @@ If Honeycomb MCP tools are not available or the workspace isn't configured:
 
 ## Rules
 
+See [common phase rules](../ai-dlc/reference/shared.md#common-phase-rules) for state updates, Jira comments, and checkpoint protocol.
+
+Phase-specific:
 - **NEVER** auto-rollback — always present findings and let the user decide
 - **ALWAYS** compare against baseline (not just absolute values)
 - **ALWAYS** check NFR targets from Inception (not just general health)
-- **ALWAYS** update `docs/<identifier>/state.md`
-- **ALWAYS** post a Jira comment with observation results
 - If Honeycomb is unavailable, fall back to manual checklist — don't skip observation entirely

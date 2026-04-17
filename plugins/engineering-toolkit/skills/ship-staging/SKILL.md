@@ -13,7 +13,7 @@ Find the staging pod, port-forward, and verify the deployment with health and en
 
 ### Gate Check
 
-Read `docs/<identifier>/stage-gate.md`. Verify "CI/CD (build/deploy)" is checked. See [shared reference](../ship-n-check/reference/shared.md) for stage-gate protocol.
+Follow the [stage workflow template](../ship-n-check/reference/shared.md#stage-workflow-template). Verify "CI/CD (build/deploy)" is checked.
 
 ### Detect Configuration
 
@@ -40,7 +40,7 @@ BRANCH=$(git branch --show-current)
 BRANCH_SLUG=$(echo "$BRANCH" | tr '[:upper:]' '[:lower:]' | tr '_' '-')
 ```
 
-- master/main → repo name (e.g., "partnership" repo → `partnership` namespace)
+- master/main → repo name (e.g., `my-app` repo → `my-app` namespace)
 - Feature branch → check AGENTS.md for shared namespace
 
 ### Find the Pod

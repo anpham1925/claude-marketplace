@@ -7,8 +7,6 @@
 #   session_start    # Call at the beginning of a session
 #   session_end      # Call at the end of a session
 
-set -euo pipefail
-
 SESSION_STATE_DIR=".claude"
 SESSION_STATE_FILE="${SESSION_STATE_DIR}/session-state.json"
 

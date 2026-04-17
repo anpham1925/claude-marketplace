@@ -1,0 +1,11 @@
+{
+  "commands": {
+    "lint": "yarn lint --fix",
+    "typeCheck": "yarn type-check",
+    "test": "yarn test",
+    "testE2e": "yarn test:e2e",
+    "testCoverage": "yarn test:cov"
+  },
+  "reviewBot": "github-actions[bot]",
+  "coverageTarget": 70
+}

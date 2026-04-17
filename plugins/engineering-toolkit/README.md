@@ -130,7 +130,7 @@ The plugin has **two orchestrators** that handle most workflows. You rarely need
 
 ```bash
 # Structured investigation with hypothesis testing
-/engineering-toolkit:investigate "API returns 500 on /partners endpoint"
+/engineering-toolkit:investigate "API returns 500 on /users endpoint"
 
 # Spawns a debugger subagent that:
 #   1. Scopes the investigation (module, entry point, dependencies)
@@ -286,7 +286,7 @@ Context-triggered rules that activate when matching files are edited:
 | **Test Fixtures** | `*.spec.ts`, `*.e2e-spec.ts` | Use existing factories before creating inline test data |
 | **Rule Authoring** | `rules/**/*.md` | File extension coverage checklist + version bump rules |
 
-## Hooks (7)
+## Hooks (8)
 
 Deterministic guardrails — hooks enforce rules that prompt instructions follow only ~80% of the time:
 
@@ -295,10 +295,15 @@ Deterministic guardrails — hooks enforce rules that prompt instructions follow
 | **skill-first** | UserPromptSubmit | Enforces skill usage before manual code changes |
 | **block-no-verify** | PreToolUse (Bash) | Blocks `--no-verify` and force pushes to main/master |
 | **git-safety** | PreToolUse (Bash) | Blocks `reset --hard`, `clean -f`, `checkout .`, `branch -D main` |
+| **ship-conventions** | PreToolUse (Bash) | Config-driven git/gh guardrails: feature-branch-only commits, draft-PR enforcement, blocked `git add -A`, blocked process substitution. Rules live in `hooks/conventions.json` — edit the JSON, not the script. |
 | **sensitive-file-warning** | PreToolUse (Read) | Warns when reading `.env`, `.pem`, `.key`, credentials |
 | **auto-format-check** | PostToolUse (Bash) | Detects formatting issues in build/lint output |
 | **console-log-detection** | PostToolUse (Write/Edit) | Warns on `console.log`, `debugger`, `import pdb` (skips test/markdown) |
 | **session-context** | Session lifecycle | Saves/loads session state for continuity |
+
+### Configuring conventions
+
+The `ship-conventions` hook reads `hooks/conventions.json` as its single source of truth. To change rules, edit the JSON — not the script. See `config.example.json` for per-repo AI-DLC overrides (default branch, deploy workflow name, staging context, etc.).
 
 ## Opinions
 

@@ -1,6 +1,6 @@
 ---
 name: mode-review
-description: "TRIGGER when: user says 'review mode', 'quality mode', 'audit mode', or wants to SWITCH TO adversarial review behavior. DO NOT trigger for: performing a code review on changes (use ai-dlc verify), implementation, research exploration, or quick fixes."
+description: "TRIGGER when: user says 'review mode', 'quality mode', 'audit mode', or wants to SWITCH TO adversarial review behavior. DO NOT trigger for: performing a code review on changes (use ai-dlc-verify), implementation, research exploration, or quick fixes."
 model: opus
 ---
 

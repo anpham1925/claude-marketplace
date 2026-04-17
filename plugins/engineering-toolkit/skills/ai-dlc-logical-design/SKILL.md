@@ -184,9 +184,9 @@ Update `docs/<identifier>/state.md`:
 - Update Traceability Matrix (add Design Decision column)
 - Record key decisions
 
-### CHECKPOINT — AI-Initiated Recommendation
+### CHECKPOINT — Approve Solution Design
 
-Present the solution design and recommend next phase:
+Present the solution design and recommend next phase (see [AI-initiated recommendation protocol](../ai-dlc/reference/shared.md#ai-initiated-recommendation-protocol)):
 
 > **Logical Design complete.**
 >
@@ -213,11 +213,11 @@ Present the solution design and recommend next phase:
 
 ## Rules
 
+See [common phase rules](../ai-dlc/reference/shared.md#common-phase-rules) for state updates, Jira comments, and checkpoint protocol.
+
+Phase-specific:
 - **NEVER** design in a vacuum — always read existing code first
 - **ALWAYS** present 2-3 options with trade-offs for significant decisions
 - **ALWAYS** map every NFR to an architectural pattern
 - **ALWAYS** generate ADRs for significant decisions
 - **ALWAYS** write Plan Summary (specs.md + flows.md) after design approval
-- **ALWAYS** post a Jira comment after completing design
-- **ALWAYS** update `docs/<identifier>/state.md` and traceability matrix
-- **ALWAYS** use AI-initiated recommendation at the checkpoint

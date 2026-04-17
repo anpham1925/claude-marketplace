@@ -17,7 +17,7 @@ model: opus
 
 ## Why This Phase Exists
 
-AI-DLC's Construction phase is the "Bolt" — an intense, rapid implementation cycle. It combines what the existing SDLC separates into Implement + Test, producing a cohesive deliverable with full test coverage and traceability to acceptance criteria.
+AI-DLC's Construction phase is the "Bolt" — an intense, rapid implementation cycle. It combines Implement + Test into a single phase, producing a cohesive deliverable with full test coverage and traceability to acceptance criteria.
 
 ## Steps
 
@@ -197,16 +197,16 @@ Update `docs/<identifier>/state.md`:
 
 ## Rules
 
+See [common phase rules](../ai-dlc/reference/shared.md#common-phase-rules) for state updates, Jira comments, and checkpoint protocol.
+
+Phase-specific:
 - **NEVER** implement without reading the Solution Design first
 - **NEVER** skip TDD — write tests first, always
 - **NEVER** skip the Validate step — lint + type-check after every Green, not just at the end
 - **NEVER** retry a failing test blindly — each attempt must use a different approach based on the error
 - **ALWAYS** use subagents for implementation — never execute inline
 - **ALWAYS** commit after each Green phase
-- **ALWAYS** update traceability matrix after each wave
 - **ALWAYS** run all tests after each wave to catch conflicts
-- **ALWAYS** update `docs/<identifier>/state.md` after each wave
-- **ALWAYS** post a Jira comment after completing construction
 - **ALWAYS** use existing test factories/fixtures before creating inline test data
 - If the design doesn't work in practice, flag it — don't silently deviate
 - If the self-correction loop exhausts 3 attempts, STOP and flag to user

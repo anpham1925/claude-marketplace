@@ -21,7 +21,7 @@ model: sonnet
 
 ```
 /engineering-toolkit:ship-n-check              # Full pipeline from branch to merge
-/engineering-toolkit:ship-n-check PRT-123      # Full pipeline with ticket number
+/engineering-toolkit:ship-n-check PROJ-123      # Full pipeline with ticket number
 ```
 
 Individual stages can also be invoked directly (e.g., `/engineering-toolkit:ship-cicd`, `/engineering-toolkit:ship-staging`).
@@ -33,8 +33,8 @@ When finished coding and ready to submit, invoke each stage skill sequentially v
 ```
 [ship-branch]  -->  [ship-quality]  -->  /simplify  -->  [ship-push-pr]
                                                               |
-                                                         [ship-cicd]
-                                                              |
+                                                         [ship-cicd]        ← BLOCKING (10-30 min)
+                                                              |               Monitor inline, report progress
                                                         [ship-staging]
                                                               |
                                                        [ship-pr-review]
@@ -69,7 +69,7 @@ See [reference/shared.md](reference/shared.md) for full stage-gate protocol, git
 
 ## Setup
 
-This skill reads config from `${CLAUDE_PLUGIN_DATA}/config.json` if it exists (shared with sdlc skill). See [reference/shared.md](reference/shared.md) for config fields.
+This skill reads config from `${CLAUDE_PLUGIN_DATA}/config.json` if it exists (shared with ai-dlc skill). See [reference/shared.md](reference/shared.md) for config fields.
 
 If config is missing, fall back to auto-detecting from `package.json` scripts.
 
@@ -84,6 +84,7 @@ Common failure modes — if you catch yourself doing any of these, stop and corr
 - **Using `$()` in commit commands** — Write message to file first, then `git commit -F`.
 - **Skipping requirements review** — It's a blocking gate regardless of confidence.
 - **Polling CI with sleep loops** — Use `gh run watch --exit-status`.
+- **Delegating CI to a background agent** — CI monitoring must run inline. Never spawn a ci-watcher and go silent.
 - **Creating PR as non-draft** — Always `--draft`.
 - **Amending commits** — Default is always a NEW commit.
 - **Force-pushing** — Never, unless user explicitly asks. Never to master/main.

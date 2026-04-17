@@ -53,7 +53,7 @@ Present the scope to the user before proceeding. The scope constrains where the 
 
 ### 3. Run the Investigation
 
-**Spawn a `debugger` subagent** via the Agent tool. Include in the prompt:
+**Spawn a `debugger` subagent** via the Agent tool with `subagent_type: "engineering-toolkit:debugger"`. Include in the prompt:
 - The scoped module boundary
 - Symptom description and any error messages/stack traces
 - Entry points and dependencies identified in step 2
@@ -69,6 +69,7 @@ The debugger agent will:
 **If Honeycomb access is relevant** (production issue, latency regression, error spike):
 Include in the debugger prompt:
 - "Use Honeycomb MCP tools for evidence gathering"
+- "Reference `honeycomb:production-investigation` skill for query patterns"
 - The affected service name and environment
 
 ### 4. Review Investigation Results
@@ -127,7 +128,7 @@ Write `docs/<identifier>/investigation.md` with the debugger's report, plus any 
 - [ ] {Specific action items}
 ```
 
-### 6. CHECKPOINT — Handoff Decision
+### CHECKPOINT — Investigation Handoff
 
 Present the investigation results and recommend next steps:
 
@@ -169,7 +170,7 @@ This skill integrates with the ai-dlc pipeline at two points:
 ## Standalone Usage
 
 ```
-/engineering-toolkit:investigate TICKET-123            # Investigate a Jira ticket
+/engineering-toolkit:investigate PROJ-123            # Investigate a Jira ticket
 /engineering-toolkit:investigate "API returns 500 on /partners endpoint"  # Investigate a symptom
 /engineering-toolkit:investigate                    # Asks what to investigate
 ```

@@ -127,7 +127,7 @@ When an instinct reaches confidence ≥ 0.8 AND has been observed in 2+ projects
 
 - **Engineering Foundations**: Instincts inform the proactive checklist
 - **Code Review**: High-confidence instincts become review checklist items
-- **SDLC Design**: Instincts about architecture inform option evaluation
+- **AI-DLC Logical Design**: Instincts about architecture inform option evaluation
 - **Ship-n-Check**: Instincts about CI failures inform fix strategies
 
 ## Anti-Patterns

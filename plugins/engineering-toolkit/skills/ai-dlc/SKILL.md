@@ -1,6 +1,6 @@
 ---
 name: ai-dlc
-description: "AI-Driven Development Lifecycle — the primary development orchestrator for end-to-end workflows. Use whenever the user mentions a Jira ticket ID, wants to start development, analyze requirements, design a solution, implement features, write tests, verify acceptance criteria, review code, or release. Adaptively plans which phases to run based on intent type (green-field, brown-field, refactor, bug-fix, spike). AI recommends, human validates. Triggers for 'ai-dlc TICKET-123', 'start TICKET-123', 'work on this ticket', 'plan this ticket', 'analyze this ticket', 'design the solution', 'implement this', 'write tests', 'verify ACs', 'review the code', 'full lifecycle', 'start development', 'quick fix for TICKET'. Also use for 'sdlc' — the SDLC pipeline has been merged into AI-DLC."
+description: "AI-Driven Development Lifecycle — unified intent-to-production orchestrator with adaptive planning, design, implementation, verification, release, and observability. Use whenever the user mentions a Jira ticket ID, wants to start development, or says 'ai-dlc'. This orchestrator adaptively plans which phases to run based on intent type (green-field, brown-field, refactor, bug-fix, spike), then drives the conversation proactively — AI recommends, human validates. Phases: Plan → Inception → Domain Design → Logical Design → Construct → Verify → Release → Observe. Triggers for 'ai-dlc PROJ-123', 'start ai-dlc', 'plan this ticket', 'full lifecycle'. The Release phase delegates to ship-n-check internally for the full git workflow."
 argument-hint: '[phase] [TICKET-ID]'
 model: opus
 ---
@@ -22,19 +22,13 @@ model: opus
 | Release | `/engineering-toolkit:ai-dlc-release` | Branch → PR → CI/CD → staging → merge (delegates to ship-*) |
 | Observe | `/engineering-toolkit:ai-dlc-observe` | Post-deploy health + Honeycomb observability |
 
-### Utility Phases
-
-| Phase | Skill | What It Does |
-|-------|-------|-------------|
-| Breakdown | `/engineering-toolkit:sdlc-breakdown` | Split large tickets into independent deployable sub-tasks with Jira tickets |
-
 ## Invocation
 
 ```
-/engineering-toolkit:ai-dlc TICKET-123           # Full adaptive pipeline
+/engineering-toolkit:ai-dlc PROJ-123              # Full adaptive pipeline
 /engineering-toolkit:ai-dlc discovery            # Discovery only (challenge the problem before planning)
-/engineering-toolkit:ai-dlc plan TICKET-123      # Plan phase only
-/engineering-toolkit:ai-dlc investigate TICKET-123  # Investigate only (root-cause debugging)
+/engineering-toolkit:ai-dlc plan PROJ-123         # Plan phase only
+/engineering-toolkit:ai-dlc investigate PROJ-123  # Investigate only (root-cause debugging)
 /engineering-toolkit:ai-dlc inception            # Inception only (uses Plan output)
 /engineering-toolkit:ai-dlc domain-design        # Domain Design only
 /engineering-toolkit:ai-dlc logical-design       # Logical Design only
@@ -42,40 +36,26 @@ model: opus
 /engineering-toolkit:ai-dlc verify               # Verify only
 /engineering-toolkit:ai-dlc release              # Release only
 /engineering-toolkit:ai-dlc observe              # Observe only
-/engineering-toolkit:ai-dlc breakdown            # Decompose a large ticket into sub-tasks
 ```
 
 Phases are composable. Run individually or let the adaptive pipeline run with checkpoints.
 
 ## Parsing Arguments
 
-- If `$ARGUMENTS` contains `breakdown`, invoke `/engineering-toolkit:sdlc-breakdown` directly (standalone utility)
 - If `$ARGUMENTS` contains a phase name (`discovery`, `plan`, `investigate`, `inception`, `domain-design`, `logical-design`, `construct`, `verify`, `release`, `observe`), **spawn that phase as a subagent via the Agent tool**
-- If `$ARGUMENTS` contains a ticket ID (matches pattern like `PROJ-123`, `FEAT-456`), pass it to the phase subagent
+- If `$ARGUMENTS` contains a ticket ID (matches pattern like `PROJ-123`, `PROJ2-456`, `PROJ3-789`), pass it to the phase subagent
 - If no phase specified, run the **Full Adaptive Pipeline** starting from Plan
 - If no ticket ID and phase requires one, **ask the user**
-
-### SDLC Backward Compatibility
-
-If `$ARGUMENTS` contains old SDLC stage names, map them:
-- `analyze` → `inception`
-- `design` → `logical-design`
-- `implement` → `construct`
-- `test` → `construct` (e2e tests are bundled)
-- `verify` → `verify`
-- `review` → `verify` (code review is bundled)
-- `release` → `release`
-- `quick` → Treat as a normal invocation — the Plan phase auto-adapts for small fixes
 
 ## Phase Execution
 
 Each phase runs as an **isolated subagent** via the Agent tool. The subagent:
-1. Receives a focused prompt with its inputs (state.md path, artifact paths)
-2. Reads the phase skill file for methodology (e.g., `ai-dlc-inception/SKILL.md`)
+1. Receives a prompt with **file paths only** — methodology path, input artifact paths, output artifact paths
+2. Reads all context from files (skill methodology, state.md, previous artifacts) — never from raw text in the prompt
 3. Does the work — reads code, makes decisions, writes artifacts
-4. Returns a summary to the orchestrator
+4. Writes all outputs to artifact files — the files ARE the deliverable, not the subagent's return text
 
-The orchestrator stays lean — it only holds state.md contents, phase summaries, and checkpoint decisions.
+The orchestrator stays lean — after each subagent completes, it reads `state.md` and the output artifact files to build the checkpoint summary. **Never rely on the subagent's return text for context** — if the session dies mid-pipeline, artifact files must contain everything needed to resume.
 
 ### Spawning a Phase Subagent
 
@@ -94,41 +74,53 @@ For each phase, spawn an Agent with:
 | Construct | `general-purpose` | opus | `specs.md`, `flows.md` | Code + tests |
 | Verify | `code-reviewer` | opus | `specs.md`, code diff | `review-feedback.md` |
 | Release | `general-purpose` | sonnet | `state.md` | PR URL |
-| Observe | `general-purpose` | sonnet | `state.md`, NFRs | Health report |
+| Observe | `general-purpose` | sonnet | `state.md`, `specs.md` | Health report |
 
 ### Prompt Template for Phase Subagents
 
-When spawning a phase subagent, include in the prompt:
-1. **Phase skill path**: Tell it to read the skill file for full methodology: `Read /path/to/skills/ai-dlc-{phase}/SKILL.md for the detailed steps.`
+When spawning a phase subagent, pass **file paths only** — no raw content, no summaries, no context blobs. The subagent reads everything it needs from files.
+
+Include in the prompt:
+1. **Phase skill path**: The methodology file to read first
 2. **Identifier**: The docs directory (e.g., `docs/PROJ-123/`)
-3. **Input artifacts**: Which files to read from the docs directory
-4. **Output contract**: Which files to write to the docs directory
+3. **Input artifact paths**: Which files to read from the docs directory
+4. **Output artifact paths**: Which files to write to the docs directory
 5. **Ticket ID**: If applicable
-6. **Context from previous phase**: Brief summary (not full history)
+
+**Do NOT include:**
+- Summaries or context from previous phases (subagent reads state.md and artifact files instead)
+- Raw text excerpts from artifacts
+- Your interpretation of what the previous phase found
 
 Example prompt for Inception:
 ```
 You are the Inception agent for ticket PROJ-123.
 
 Read the methodology: /path/to/skills/ai-dlc-inception/SKILL.md
-Read your inputs: docs/PROJ-123/state.md (contains Level 1 Plan)
 
-Your job: Analyze the ticket, research the codebase, and produce the Inception Artifact.
-Write your output to: docs/PROJ-123/specs.md
-Update: docs/PROJ-123/state.md (mark Inception complete, populate ACs/NFRs/risks)
+Read your inputs:
+- docs/PROJ-123/state.md (contains Level 1 Plan from previous phase)
 
-Context from Plan phase: {brief summary of plan findings}
+Write your outputs:
+- docs/PROJ-123/specs.md (Inception Artifact)
+- Update docs/PROJ-123/state.md (mark Inception complete, populate ACs/NFRs/risks)
+
+Ticket: PROJ-123
 ```
 
 ### What the Orchestrator Does Between Phases
 
 After each subagent completes:
-1. Read the updated `state.md` and output artifact
-2. Present the **checkpoint summary** to the user (AI-initiated flow)
-3. Recommend the next phase
-4. On user approval, spawn the next subagent
+1. **Read the artifact files** — read `state.md` and the phase's output artifact (e.g., `specs.md`, `domain-model.md`). Do NOT rely on the subagent's return text for context.
+2. **Build the checkpoint summary** from the artifact files — extract key findings, counts, decisions
+3. Present the checkpoint to the user using the [AI-initiated recommendation protocol](#ai-initiated-flow)
+4. On user approval, spawn the next subagent (passing only file paths)
+
+**Why files over return text**: If the session dies between phases, artifact files persist. The next session reads `state.md`, sees which phase completed last, and resumes. No context is lost.
 
 **When running a specific phase** (direct invocation like `/engineering-toolkit:ai-dlc inception`): Even for single-phase invocation, spawn it as a subagent. The user gets the same clean artifact-based contract.
+
+**Resuming a dead session**: Read `state.md` to find the last completed phase. Read the output artifacts for that phase. Present the summary and recommend the next phase. No need to re-run completed phases — their output is in the files.
 
 ## Pipeline Overview
 
@@ -197,10 +189,6 @@ Example:
 
 **Never just stop after a phase** — always recommend the next action.
 
-## Harness Engineering
-
-AI-DLC is structured as a harness with **guides** (feedforward controls that steer before acting) and **sensors** (feedback controls that observe after acting). See [reference/harness.md](reference/harness.md) for the full classification and [reference/harness-templates.md](reference/harness-templates.md) for service archetype templates.
-
 ## Checkpoint Rules
 
 - **ALWAYS** pause after Discovery (if run) — reframing + approach must be approved
@@ -212,6 +200,10 @@ AI-DLC is structured as a harness with **guides** (feedforward controls that ste
 - **ALWAYS** pause after Verify — review results presented, NEEDS-INPUT items resolved
 - Release has its own checkpoints via ship-* stages
 - Observe runs automatically after Release (unless skipped by Level 1 Plan)
+
+## Harness Engineering
+
+AI-DLC is structured as a harness with **guides** (feedforward controls that steer before acting) and **sensors** (feedback controls that observe after acting). See [reference/harness.md](reference/harness.md) for the full classification and [reference/harness-templates.md](reference/harness-templates.md) for service archetype templates.
 
 ## Session State
 
@@ -227,6 +219,8 @@ On first use, check for `${CLAUDE_PLUGIN_DATA}/config.json`. If missing, ask the
 
 Common failure modes — if you catch yourself doing any of these, stop and correct:
 
+- **Switching pipelines mid-flow** — If the user started with `/engineering-toolkit:ai-dlc`, stay on AI-DLC. Never switch to `/engineering-toolkit:ship-n-check` directly without asking. The Release phase delegates to ship-* internally.
+- **Skipping artifacts for "small" tasks** — Always produce state.md, specs.md, and traceability matrix. If a task seems too small, ASK the user: "This is a small change — should I produce full artifacts or skip?" Never decide unilaterally.
 - **Skipping the Plan phase** — Always classify intent first. Even for "obvious" bug fixes, Plan determines the pipeline.
 - **Running all 8 phases for a bug fix** — Use the adaptive pipeline. Plan determines what's needed.
 - **Stopping silently after a checkpoint** — Always recommend the next action (AI-initiated flow).
@@ -235,6 +229,8 @@ Common failure modes — if you catch yourself doing any of these, stop and corr
 - **Skipping code elevation for brown-field** — If modifying existing code, Inception must produce static + dynamic models.
 - **Forgetting to update traceability matrix** — Every phase adds its column.
 - **Running phases inline instead of as subagents** — Always spawn phases via the Agent tool.
+- **Passing raw context to subagents** — Never include summaries, excerpts, or your interpretation in the subagent prompt. Pass file paths only. The subagent reads everything from files.
+- **Relying on subagent return text** — After a subagent completes, read the artifact files. Don't use the return text as authoritative context. If the session dies, only files survive.
 - **Forgetting NFR validation in Verify** — Each NFR from Inception must have corresponding implementation.
 - **Skipping Observe for features with NFRs** — If Inception identified performance/reliability NFRs, always Observe.
 
@@ -244,7 +240,11 @@ Common failure modes — if you catch yourself doing any of these, stop and corr
 - **NEVER** skip checkpoints — always get user approval at defined points
 - **NEVER** implement without a design — Domain Design for new concepts, Logical Design for all features
 - **NEVER** skip TDD in the Construct phase — write tests first
+- **NEVER** switch to ship-n-check mid-flow — Release delegates internally
+- **NEVER** skip artifacts without asking the user — even for 1-line changes, ask before skipping
 - **ALWAYS** spawn phases as subagents via the Agent tool — the main session only orchestrates checkpoints
+- **ALWAYS** pass file paths to subagents, never raw content — subagents read everything from files
+- **ALWAYS** read artifact files after subagent completes — build checkpoint summaries from files, not return text
 - **ALWAYS** follow the AI-initiated flow — recommend next action after every checkpoint
 - **ALWAYS** follow the adaptive pipeline from Plan — skip phases the Plan excludes
 - **ALWAYS** post Jira comments after each phase

@@ -68,7 +68,7 @@ For each significant state change:
 For each acceptance criterion, identify:
 - **State transitions**: What states can the entity be in? What transitions are valid?
 - **Invariants**: What must always be true? (e.g., "Refund amount cannot exceed original payment")
-- **Policies**: What happens when an event occurs? (e.g., "When RefundApproved, credit the tradie's balance")
+- **Policies**: What happens when an event occurs? (e.g., "When RefundApproved, credit the customer's balance")
 
 Create a Mermaid state diagram for complex state machines:
 ```mermaid
@@ -108,7 +108,7 @@ Cross-check the new domain model with:
 
 Write to `docs/<identifier>/prd-plans/domain-model.md`:
 
-See [shared reference](../ai-dlc/reference/shared.md) for the Domain Model Artifact format.
+See [artifacts reference](../ai-dlc/reference/artifacts.md) for the Domain Model Artifact format.
 
 ### Update Jira
 
@@ -120,9 +120,9 @@ Update `docs/<identifier>/state.md`:
 - Mark Domain Design as completed
 - Update Traceability Matrix (add Domain Model column mapping ACs to domain concepts)
 
-### CHECKPOINT — AI-Initiated Recommendation
+### CHECKPOINT — Approve Domain Model
 
-Present the domain model and recommend next phase:
+Present the domain model and recommend next phase (see [AI-initiated recommendation protocol](../ai-dlc/reference/shared.md#ai-initiated-recommendation-protocol)):
 
 > **Domain Design complete.**
 >
@@ -149,12 +149,12 @@ Present the domain model and recommend next phase:
 
 ## Rules
 
+See [common phase rules](../ai-dlc/reference/shared.md#common-phase-rules) for state updates, Jira comments, and checkpoint protocol.
+
+Phase-specific:
 - **NEVER** include infrastructure concerns — no databases, no HTTP, no message brokers
 - **NEVER** design in a vacuum — always check existing domain models first
 - **ALWAYS** present options for non-obvious aggregate boundaries
 - **ALWAYS** map every AC to domain concepts (traceability)
 - **ALWAYS** use Mermaid diagrams for state transitions and interactions
 - **ALWAYS** validate against existing codebase patterns
-- **ALWAYS** post a Jira comment after completing domain design
-- **ALWAYS** update `docs/<identifier>/state.md` and traceability matrix
-- **ALWAYS** use AI-initiated recommendation at the checkpoint

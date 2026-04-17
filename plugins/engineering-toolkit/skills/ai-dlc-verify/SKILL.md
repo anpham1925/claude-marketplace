@@ -17,7 +17,7 @@ model: opus
 
 ## Why This Phase Exists
 
-AI-DLC's verification combines what the existing SDLC separates into Verify + Review, adding traceability validation and NFR compliance checks. A fresh subagent prevents the "works on my machine" bias that comes from the same agent verifying its own work.
+AI-DLC's verification combines Verify + Review into a single phase, adding traceability validation and NFR compliance checks. A fresh subagent prevents the "works on my machine" bias that comes from the same agent verifying its own work.
 
 ## Steps
 
@@ -72,7 +72,7 @@ For each NFR from Inception:
 | Scalability | Check for stateless design, connection pooling |
 | Reliability | Check for retry logic, circuit breakers, error handling |
 | Compliance | Check for data handling, logging, audit trails |
-| Observability | Check for structured logging, metrics, correlation IDs |
+| Observability | Validate against the **Observability Plan** from Inception: are the planned SLIs measurable, instrumentation points implemented, structured logging present with correlation IDs? |
 
 Mark each NFR as: **ADDRESSED** (pattern implemented), **PARTIAL** (incomplete), or **NOT ADDRESSED**.
 
@@ -86,9 +86,9 @@ Mark each NFR as: **ADDRESSED** (pattern implemented), **PARTIAL** (incomplete),
 
 This enables the code-reviewer's adversarial section to automatically calibrate depth — deep analysis for high-risk changes, light checks for routine work.
 
-Generate the full diff:
+Generate the full diff (detect default branch per `rules/git-conventions.md`):
 ```bash
-git diff origin/master...HEAD
+git diff ${DEFAULT_BRANCH}...HEAD
 ```
 
 The code-reviewer will apply its full checklist (architecture, quality, error handling, testing, security, adversarial). In addition, verify these domain-specific checks inline:
@@ -175,9 +175,9 @@ Update `docs/<identifier>/state.md`:
 - Update any traceability gaps that were fixed
 - Record review decisions
 
-### CHECKPOINT — AI-Initiated Recommendation
+### CHECKPOINT — Review Verification Results
 
-Present results and recommend next phase:
+Present results and recommend next phase (see [AI-initiated recommendation protocol](../ai-dlc/reference/shared.md#ai-initiated-recommendation-protocol)):
 
 > **Verification complete.**
 >
@@ -194,14 +194,13 @@ Present results and recommend next phase:
 
 ## Rules
 
+See [common phase rules](../ai-dlc/reference/shared.md#common-phase-rules) for state updates, Jira comments, and checkpoint protocol.
+
+Phase-specific:
 - **ALWAYS** use a fresh subagent for verification — never verify inline
 - **ALWAYS** validate traceability completeness — every AC must trace through all columns
 - **ALWAYS** validate NFR compliance — every NFR must be addressed
 - **NEVER** skip code review — even for small changes
-- **NEVER** auto-fix debatable items — always ask the user
 - Max 2 fix-and-verify cycles per deliverable
 - PARTIAL items must be explicitly flagged at the checkpoint
-- **ALWAYS** update `docs/<identifier>/state.md`
-- **ALWAYS** post a Jira comment after completing verification
-- **ALWAYS** use AI-initiated recommendation at the checkpoint
 - **NEVER** proceed past the Review Feedback gate without writing feedback — this is a blocking requirement, not optional cleanup

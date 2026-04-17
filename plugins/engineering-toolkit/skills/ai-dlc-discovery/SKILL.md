@@ -69,7 +69,7 @@ Why: Specific examples reveal the actual problem. Hypotheticals reveal what some
 
 Why: "Everyone" means nobody. Narrow to a specific persona and frequency.
 
-- Push for specificity: "Which specific user type is affected?"
+- Push for specificity: "Which user persona — end users, admins, internal ops, partners?"
 - Push for frequency: "Once a week? Once a day? Every transaction?"
 - Push for severity: "Is it annoying or blocking? Do they have a workaround?"
 
@@ -211,9 +211,9 @@ Create or update `docs/<identifier>/state.md`:
 - Record the recommended approach
 - List open questions for the Plan phase
 
-### CHECKPOINT — AI-Initiated Recommendation
+### CHECKPOINT — Approve Reframing
 
-Present results and recommend next phase:
+Present results and recommend next phase (see [AI-initiated recommendation protocol](../ai-dlc/reference/shared.md#ai-initiated-recommendation-protocol)):
 
 > **Discovery complete.**
 >
@@ -228,6 +228,9 @@ Present results and recommend next phase:
 
 ## Rules
 
+See [common phase rules](../ai-dlc/reference/shared.md#common-phase-rules) for state updates, Jira comments, and checkpoint protocol.
+
+Phase-specific:
 - **ALWAYS** use AskUserQuestion for each forcing question — don't batch
 - **ALWAYS** push back on solution-first thinking — redirect to problems
 - **ALWAYS** push for specific examples over hypotheticals
@@ -238,5 +241,3 @@ Present results and recommend next phase:
 - **NEVER** skip the reframing step — even if the original request seems clear
 - **NEVER** recommend the full vision as the starting point
 - **ALWAYS** write `discovery.md` with structured output
-- **ALWAYS** update `docs/<identifier>/state.md`
-- **ALWAYS** use AI-initiated recommendation at the checkpoint

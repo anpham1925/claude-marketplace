@@ -13,7 +13,7 @@ Create a branch and commit changes following git conventions. This is the first 
 
 ### Gate Check
 
-Read `docs/<identifier>/stage-gate.md`. If this is the first stage, create the file. See [shared reference](../ship-n-check/reference/shared.md) for stage-gate protocol.
+Follow the [stage workflow template](../ship-n-check/reference/shared.md#stage-workflow-template). This is the first stage — create `stage-gate.md` if it doesn't exist.
 
 ### Check Current State
 
@@ -31,7 +31,7 @@ If not provided, ask the user. This is recommended for branch naming and commit 
 
 ### Create Branch
 
-See `rules/git-conventions.md` for branch naming convention and Helm length limit.
+See [ship-n-check shared reference](../ship-n-check/reference/shared.md#branch-naming) for branch naming convention and Helm length limit.
 
 ```bash
 git checkout -b <branch-name>
@@ -51,17 +51,13 @@ Before staging files, check if project documentation has drifted due to the code
 
 ### Stage Specific Files
 
-```bash
-git add path/to/file1.ts path/to/file2.ts
-```
+Stage code files and design artifacts from `docs/<identifier>/`. Do NOT stage temp working files (`commit-msg.txt`, `pr-body.md`).
 
-**NEVER** use `git add -A` or `git add .` — always stage specific files only.
+If the doc update step modified project documentation, stage those too.
 
-**Include SDLC docs**: Stage design artifacts from `docs/<identifier>/` (state.md, prd-plans/specs.md, prd-plans/flows.md, stage-gate.md, review-feedback.md). **Do NOT stage temp working files** (`commit-msg.txt`, `pr-body.md`) — these are used by the git workflow and should not be committed.
+See [git rules](../ship-n-check/reference/shared.md#git-rules) for staging conventions.
 
-**Include updated docs**: If the doc update step modified any project documentation (README.md, CONTRIBUTING.md, .env.example, etc.), stage those files too. They get committed together with the code changes in a single commit.
-
-### CHECKPOINT
+### CHECKPOINT — Approve Commit
 
 Present to user and **WAIT for approval before committing**:
 - Branch name
@@ -70,49 +66,15 @@ Present to user and **WAIT for approval before committing**:
 
 ### Commit
 
-Use the Write tool to create `docs/<identifier>/commit-msg.txt` with the message, then:
+Use the Write tool to create `docs/<identifier>/commit-msg.txt` with the message, then `git commit -F docs/<identifier>/commit-msg.txt`.
 
-```bash
-git commit -F docs/<identifier>/commit-msg.txt
-```
-
-See [shared reference](../ship-n-check/reference/shared.md) for commit convention. Always include `Co-Authored-By` tag.
+See [commit convention](../ship-n-check/reference/shared.md#commit-convention) for format and `Co-Authored-By` requirement.
 
 ### Gate Write
 
 Check off "Branch & Commit" in `docs/<identifier>/stage-gate.md`.
 
-## Git Commands Reference
-
-### Create branch
-```bash
-git checkout -b <branch-name>
-```
-
-### Stage specific files
-```bash
-git add path/to/file1.ts path/to/file2.ts
-```
-
-### Commit with file
-```bash
-# First: use Write tool to create docs/<identifier>/commit-msg.txt
-git commit -F docs/<identifier>/commit-msg.txt
-```
-
-### Push with upstream tracking
-```bash
-git push -u origin <branch-name>
-```
-
-### Create PR (always as draft)
-```bash
-# First: use Write tool to create docs/<identifier>/pr-body.md
-gh pr create --draft --title "<action>: <short title>" --body-file docs/<identifier>/pr-body.md
-```
-
 ## Rules
 
-All git safety rules from `rules/git-conventions.md` apply. Additionally:
-
 - **NEVER** commit without user approval at the checkpoint
+- All other git rules (staging, commit format, branch safety) are in [ship-n-check shared reference](../ship-n-check/reference/shared.md#git-rules) and [git-conventions rule](../../rules/git-conventions.md) — follow those, don't duplicate here

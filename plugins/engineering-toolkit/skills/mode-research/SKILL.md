@@ -1,6 +1,6 @@
 ---
 name: mode-research
-description: "TRIGGER when: user says 'research mode', 'exploration mode', or wants to SWITCH TO read-only exploration behavior. DO NOT trigger for: debugging/investigating bugs (use investigate), analyzing a specific Jira ticket (use ai-dlc), implementation requests, quick fixes, or code review."
+description: "TRIGGER when: user says 'research mode', 'investigation mode', or wants to SWITCH TO read-only exploration behavior. DO NOT trigger for: analyzing a specific Jira ticket (use ai-dlc-inception), implementation requests, quick fixes, or code review."
 model: opus
 ---
 

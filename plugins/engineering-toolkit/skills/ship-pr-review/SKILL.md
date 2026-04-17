@@ -13,7 +13,7 @@ Mark PR ready for review, wait for review workflows, read all feedback, and addr
 
 ### Gate Check
 
-Read `docs/<identifier>/stage-gate.md`. Verify "Staging" is checked. See [shared reference](../ship-n-check/reference/shared.md) for stage-gate protocol.
+Follow the [stage workflow template](../ship-n-check/reference/shared.md#stage-workflow-template). Verify "Staging" is checked.
 
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: ai-dlc-plan
-description: "Internal phase of the ai-dlc pipeline — classifies intent type and generates an adaptive Level 1 Plan. Invoke directly only via /engineering-toolkit:ai-dlc-plan when explicitly requested by name. For general requests like 'plan this ticket' or 'start PRT-123', use engineering-toolkit:ai-dlc which routes here automatically."
+description: "Internal phase of the ai-dlc pipeline — classifies intent type and generates an adaptive Level 1 Plan. Invoke directly only via /engineering-toolkit:ai-dlc-plan when explicitly requested by name. For general requests like 'plan this ticket' or 'start PROJ-123', use engineering-toolkit:ai-dlc which routes here automatically."
 argument-hint: '<TICKET-ID or intent description>'
 model: opus
 ---
@@ -16,7 +16,7 @@ model: opus
 
 ## Why This Phase Exists
 
-Traditional SDLC runs every stage for every task. AI-DLC adapts — a bug fix doesn't need Domain Design, a spike doesn't need Release. The Plan phase ensures the right amount of process for the task at hand.
+Traditional development lifecycles run every stage for every task. AI-DLC adapts — a bug fix doesn't need Domain Design, a spike doesn't need Release. The Plan phase ensures the right amount of process for the task at hand.
 
 ## Steps
 
@@ -126,9 +126,9 @@ Classify the target service type. This determines which harness template applies
 
 | Archetype | Target |
 |---|---|
-| **HTTP API** | REST controllers, GraphQL resolvers, BFF layers |
-| **Event Consumer** | Kafka handlers, RabbitMQ consumers, SQS processors |
-| **Worker/Cron** | Background workers, cron jobs, batch processors |
+| **HTTP API** | `apps/api/`, controllers, REST endpoints |
+| **Event Consumer** | `apps/event-consumer/`, Kafka handlers, event processors |
+| **Worker/Cron** | `apps/workers/`, cron jobs, batch processors |
 | **Frontend** | React, React Native, Remix apps |
 
 Include the archetype in the Level 1 Plan. If the ticket touches multiple archetypes (e.g., API + consumer), list all.
@@ -141,23 +141,6 @@ If modifying existing code, check:
 - Would the Inception phase benefit from code elevation (reverse-engineering existing code into models)?
 
 Mark brown-field if existing code needs to be understood before changes can be designed.
-
-### Evaluate Breakdown Need
-
-For **high complexity** tickets, evaluate whether the ticket should be decomposed before implementation:
-
-| Signal | Threshold |
-|---|---|
-| Modules touched | 3+ |
-| File changes | 5+ new/modified |
-| Independent ACs | 4+ |
-| Estimated diff size | >400 lines |
-
-If any threshold is met, include **Breakdown** as an optional step after Inception in the pipeline and recommend it to the user:
-
-> **This ticket is large enough to benefit from decomposition** — {N} modules, {N} files, {N} independent ACs.
->
-> I recommend running **Breakdown** after Inception to split it into independently deployable sub-tasks.
 
 ### Generate Level 1 Plan
 
@@ -176,7 +159,6 @@ Based on intent type and complexity, produce the adaptive pipeline:
 1. [x] **Plan** — (this phase)
 1a. [ ] **Investigate** — {included: root cause unclear | skipped: root cause known}
 2. [ ] **Inception** — {light | standard | with code elevation}
-2a. [ ] **Breakdown** — {included: high complexity | skipped: small scope}
 3. [ ] **Domain Design** — {included | skipped: reason}
 4. [ ] **Logical Design** — {standard | lightweight}
 5. [ ] **Construct** — TDD waves
@@ -199,9 +181,9 @@ Based on intent type and complexity, produce the adaptive pipeline:
 
 Create `docs/<identifier>/state.md` with the Level 1 Plan. See [shared reference](../ai-dlc/reference/shared.md) for format.
 
-### CHECKPOINT — AI-Initiated Recommendation
+### CHECKPOINT — Approve Level 1 Plan
 
-Present the Level 1 Plan and proactively recommend the next phase:
+Present the Level 1 Plan and proactively recommend the next phase (see [AI-initiated recommendation protocol](../ai-dlc/reference/shared.md#ai-initiated-recommendation-protocol)):
 
 > **Plan complete.** I classified this as a **{type}** intent with **{complexity}** complexity.
 >
@@ -214,10 +196,11 @@ Present the Level 1 Plan and proactively recommend the next phase:
 
 ## Rules
 
+See [common phase rules](../ai-dlc/reference/shared.md#common-phase-rules) for state updates, Jira comments, and checkpoint protocol.
+
+Phase-specific:
 - **NEVER** skip classification — always determine intent type before generating a plan
 - **NEVER** generate a one-size-fits-all pipeline — adapt to the intent
 - **ALWAYS** read the full Jira ticket (not just the title) when a ticket ID is provided
 - **ALWAYS** present the Level 1 Plan for user approval
-- **ALWAYS** use AI-initiated recommendation after the checkpoint
-- **ALWAYS** update `docs/<identifier>/state.md`
 - If intent type is ambiguous, ask the user — don't guess silently

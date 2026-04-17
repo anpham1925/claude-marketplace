@@ -13,7 +13,7 @@ paths:
 - **Discriminated unions over optional properties**: Model state variants as `{ status: 'loading' } | { status: 'success', data: T }` not optional fields
 - **Prefer `readonly`**: Use `readonly` arrays and properties where mutation is not needed
 - **Use `satisfies` operator**: Validate types without widening — `const config = { ... } satisfies Config`
-- **Template literal types**: Use for string patterns — `type Route = \`/api/${string}\``
+- **Template literal types**: Use for string patterns — `type Route = `/api/${string}``
 - **No `enum`**: Use `as const` objects instead — they are tree-shakeable with no runtime cost
 - **Prefer `Map`/`Set`**: Use over plain objects for dynamic keys
 - **Use `using` keyword**: Apply TC39 explicit resource management for cleanup patterns

@@ -113,6 +113,8 @@ If Honeycomb access is available, use it for evidence gathering:
 - Use `run_bubbleup` to find what differentiates failing vs succeeding requests
 - Check `get_triggers` for recently fired alerts
 
+When using Honeycomb tools, reference the `honeycomb:production-investigation` skill for structured query patterns.
+
 ## Rules
 
 - **NEVER** edit source files — you investigate, you don't fix

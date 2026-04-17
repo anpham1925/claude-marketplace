@@ -215,7 +215,7 @@ RFC Document
 | One-off automation | 1. Simple Pipeline |
 | Fix CI failures | 2. Fix Loop |
 | Multiple independent features | 3. Worktree Parallelism |
-| Full SDLC workflow | 4. State Machine |
+| Full AI-DLC workflow | 4. State Machine |
 | Complex feature with subtasks | 5. Supervisor + Workers |
 | Large multi-team initiative | 6. DAG Orchestration |
 

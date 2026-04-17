@@ -13,7 +13,7 @@ Push the branch to remote and create a draft PR with proper conventions.
 
 ### Gate Check
 
-Read `docs/<identifier>/stage-gate.md`. Verify "Simplify" is checked. See [shared reference](../ship-n-check/reference/shared.md) for stage-gate protocol and PR rules.
+Follow the [stage workflow template](../ship-n-check/reference/shared.md#stage-workflow-template). Verify "Simplify" is checked. See [PR rules](../ship-n-check/reference/shared.md#pr-rules).
 
 ### Present for Approval
 
@@ -63,9 +63,5 @@ Check off "Push & PR" with PR number in `stage-gate.md`.
 
 ## Rules
 
-- **ALWAYS** create PRs as draft (`--draft` flag)
-- **ALWAYS** use `gh pr create` (not GitHub web UI)
 - **NEVER** push without user approval
-- **NEVER** force push to any branch unless user explicitly asks
-- PR title under 70 chars, matches commit convention
-- PR body must have Summary and Test plan sections
+- All other rules (draft PRs, PR format, force push safety) are in [ship-n-check shared reference](../ship-n-check/reference/shared.md#pr-rules) and [git-conventions rule](../../rules/git-conventions.md)

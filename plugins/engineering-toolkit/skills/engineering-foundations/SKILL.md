@@ -1,14 +1,12 @@
 ---
 name: engineering-foundations
-description: "Language-agnostic engineering methodology — DDD, Hexagonal Architecture, TDD, architecture planning, requirements gathering, code review, and ADR writing. Use when the user asks HOW to approach something at the pattern/theory level, regardless of framework. This is the source of truth for DDD concepts (aggregates, domain events, rich models), architecture layers (presentation, application, domain, infrastructure), and testing methodology. Framework-specific implementations live in separate plugins (nestjs-toolkit, django-toolkit, nextjs-toolkit). Triggers for 'how should I test this', 'what is DDD', 'explain domain modeling', 'write an ADR', 'plan this feature', 'what are aggregates', 'hexagonal architecture'. DO NOT use for executing development work (use ai-dlc) or framework-specific questions (use the relevant framework plugin)."
+description: Language-agnostic engineering methodology — DDD, Hexagonal Architecture, TDD, architecture planning, requirements gathering, code review, and ADR writing. Use when the user asks HOW to approach something at the pattern/theory level, regardless of framework. This is the source of truth for DDD concepts (aggregates, domain events, rich models), architecture layers (presentation, application, domain, infrastructure), and testing methodology. Framework-specific implementations live in separate plugins (nestjs-toolkit, django-toolkit, nextjs-toolkit). Triggers for 'how should I test this', 'what is DDD', 'explain domain modeling', 'write an ADR', 'plan this feature', 'what are aggregates', 'hexagonal architecture'. DO NOT use for executing development work (use ai-dlc) or framework-specific questions (use the relevant framework plugin).
 model: opus
 ---
 
 > **Recommended model: Opus** — This skill involves deep reasoning, architecture decisions, or code review.
 
-Language-agnostic engineering methodology. This is the **source of truth for DDD, Hexagonal Architecture, TDD, and architecture planning** — the patterns themselves, independent of any framework. Framework-specific implementations live in separate plugins (`nestjs-toolkit`, `django-toolkit`, `nextjs-toolkit`).
-
-Before applying any topic, read its reference file in `reference/`.
+Opinionated, language-agnostic engineering methodology. Before applying any topic, read its reference file in `reference/`.
 
 ## Topics
 

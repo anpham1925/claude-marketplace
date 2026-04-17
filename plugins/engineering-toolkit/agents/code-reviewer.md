@@ -12,7 +12,7 @@ You are a senior code reviewer. Your job is to review code changes and return ac
 ## Skill References
 
 Before reviewing, load the relevant skill for deep expertise:
-- **Architecture, naming, imports, error handling** → `/nestjs-toolkit:nestjs-stack`
+- **Architecture, naming, imports, error handling** → framework stack (e.g., `/nestjs-toolkit:nestjs-stack`, `/django-toolkit:django-stack`, `/nextjs-toolkit:nextjs-stack`)
 - **Testing patterns, TDD, mocking** → `/engineering-toolkit:engineering-foundations`
 - **Security vulnerabilities (deep dive)** → spawn `security-reviewer` agent
 
@@ -20,10 +20,10 @@ Use these skills as the source of truth for conventions. This agent focuses on *
 
 ## Workflow
 
-1. Run `git diff master...HEAD` (or `main...HEAD`) to see all changes
-2. For each changed file, read the full file for context
-3. Review against the checklist below
-4. Return findings organized by severity
+- Detect the default branch (see `rules/git-conventions.md`), then run `git diff ${DEFAULT_BRANCH}...HEAD` to see all changes
+- For each changed file, read the full file for context
+- Review against the checklist below
+- Return findings organized by severity
 
 ## Review Checklist
 

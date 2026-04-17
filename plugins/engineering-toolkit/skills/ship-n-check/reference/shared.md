@@ -7,7 +7,7 @@ Cross-cutting concerns shared by all ship-n-check stage skills.
 ## Working Directory
 
 All temporary and generated files for this workflow are stored under `docs/<identifier>/` in the repo root:
-- Use the ticket number if available (e.g., `docs/PRT-123/`)
+- Use the ticket number if available (e.g., `docs/PROJ-123/`)
 - Otherwise use the branch name (e.g., `docs/fix-auth-bug/`)
 
 Create the directory if it doesn't exist. Files stored here:
@@ -23,15 +23,57 @@ Create the directory if it doesn't exist. Files stored here:
 
 ---
 
-## Git Conventions
+## Branch Naming
 
-Branch naming, commit convention, PR convention, and git safety rules are defined in the **always-on `git-conventions` rule** (`rules/git-conventions.md`). That rule is the single source of truth — do not duplicate those rules here.
+**User-provided names always take precedence.** If the user gives a specific branch name, use it exactly as-is — do not validate, add prefixes, or apply conventions on top. Skip all naming guidance below.
 
-Key points for quick reference:
-- Branch format: `<ticket-or-feature>` — user-provided names take precedence
-- Commit format: `<type>: [TICKET] <description>` — always include `Co-Authored-By`
-- PRs always as `--draft` — use `gh pr create`
-- Use Write tool + `git commit -F` — never `$()` substitution
+**When no name is provided**, derive one from the ticket or context:
+- Jira ticket: `PROJ-123`, `PROJ-456-short-desc`
+- No ticket: kebab-case description like `fix-auth-bug`, `add-user-endpoint`
+
+**Branch naming ≠ commit conventions.** Commit types (`feat`, `fix`, `chore`) belong in commit messages, not branch names. Never derive branch prefixes from commit conventions.
+
+**Length limit**: Helm release names are derived as `<repo-name>-<branch-name>` and must be **<= 53 characters** (Helm/Kubernetes constraint). Before creating a branch, verify that `<repo-name>-<branch-name>` does not exceed 53 chars. If it does, shorten the branch name.
+
+---
+
+## Commit Convention
+
+Format: `[action]: [TICKET] message` (ticket optional if no ticket system)
+
+| Action      | When                                       |
+| ----------- | ------------------------------------------ |
+| `feat:`     | New feature                                |
+| `fix:`      | Bug fix                                    |
+| `chore:`    | Maintenance, config, dependencies          |
+| `refactor:` | Code restructuring without behavior change |
+| `docs:`     | Documentation changes                      |
+| `test:`     | Adding or updating tests                   |
+
+Always include `Co-Authored-By` tag. Use `-F` with a temp file for commit messages (avoid `$()` command substitution).
+
+---
+
+## PR Rules
+
+- **Always** create PRs as draft (`--draft` flag)
+- **Always** use `gh pr create` (not GitHub web UI)
+- PR body must have Summary and Test plan sections
+- PR title under 70 chars, matches commit convention
+
+---
+
+## Git Rules
+
+- **NEVER** force push to `master`/`main`
+- **NEVER** use `git add -A` or `git add .` — stage specific files only
+- **NEVER** stage files unrelated to the current task
+- **NEVER** commit `.env`, credentials, or secrets
+- **NEVER** use `--no-verify` unless user explicitly asks
+- **NEVER** amend commits unless user explicitly asks — always NEW commits
+- **NEVER** use `$()` or `<()` process substitution in commit commands — write the message to `docs/<identifier>/commit-msg.txt` using the Write tool, then `git commit -F docs/<identifier>/commit-msg.txt`
+- **ALWAYS** create a new branch — never commit directly to `master`/`main`
+- **ALWAYS** use `gh pr create` for PRs
 
 ---
 
@@ -40,6 +82,20 @@ Key points for quick reference:
 Every stage writes a completion marker to `docs/<identifier>/stage-gate.md`. Every stage verifies the previous marker exists before starting.
 
 **If the previous gate is missing, STOP and complete the missing stage first.**
+
+### Stage Workflow Template
+
+Every ship-* stage follows the same entry/exit pattern. Individual SKILL.md files link here instead of repeating it.
+
+**On entry:**
+1. Read `docs/<identifier>/stage-gate.md`
+2. Verify the previous stage is checked off (if not first stage)
+3. If `stage-gate.md` doesn't exist and this is `ship-branch`, create it
+4. If `stage-gate.md` doesn't exist and this is NOT `ship-branch`, STOP — run the missing stage first
+
+**On exit:**
+1. Check off the completed stage in `docs/<identifier>/stage-gate.md`
+2. Write a brief note and timestamp next to the checkmark
 
 ### Gate Format
 
@@ -131,12 +187,41 @@ Before writing a new entry, scan `docs/**/review-feedback.md` (glob across all t
 
 ---
 
+## Long-Running Operations
+
+Some pipeline stages take 10-30+ minutes (CI/CD, staging deploy). Rules for these:
+
+### Never Go Silent
+
+- **Before starting**: Tell the user what's happening and the expected wait time
+- **During**: Report status changes as they happen (e.g., job completions)
+- **If >2 minutes pass with no change**: Proactively update the user ("Still waiting on e2e tests...")
+- **On completion**: Immediately report the full results
+
+### Inline vs Background
+
+| Context | Approach | Why |
+|---------|----------|-----|
+| **No parallel work** | Run inline (blocking) | You keep an active turn, can report immediately |
+| **Has parallel work** | Background agent + do the parallel work | Useful, but set user expectations first |
+| **Background + nothing to do** | **DON'T** — run inline instead | User sees silence, no progress, bad experience |
+
+Background agents CAN notify the main agent via `<task-notification>`. The issue isn't technical — it's UX. During the wait, the user sees no spinner, no progress, no indication anything is happening. The main agent can't proactively update between turns.
+
+### The "I'll Be Notified" Anti-Pattern
+
+If you catch yourself saying "I'll be notified when it's done" with nothing else to do — STOP. You're about to go idle while the user waits in silence. Instead:
+1. Run the monitoring command inline
+2. Report each status change as it happens
+3. Summarize results when complete
+
+---
+
 ## Config
 
-This skill reads config from `${CLAUDE_PLUGIN_DATA}/config.json` if it exists (shared with sdlc skill). Relevant fields:
+This skill reads config from `${CLAUDE_PLUGIN_DATA}/config.json` if it exists (shared with ai-dlc skill). Relevant fields:
 
 - `testCommands` — commands for lint, type-check, tests
-- `branchConvention` — branch naming pattern
 - `reviewBot` — name of the review bot to watch for in PR comments
 
 If config is missing, fall back to auto-detecting from `package.json` scripts.

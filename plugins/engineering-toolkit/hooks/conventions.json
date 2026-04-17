@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$comment": "Single source of truth for ship-conventions.sh hook. Edit here, not in the script.",
+
+  "branch": {
+    "$comment": "Branch naming is advisory — enforced by skill instructions, not hooks. User-provided names always take precedence.",
+    "recommendedPatterns": [
+      "^[A-Z]+-[0-9]+(-[a-z0-9-]+)?$",
+      "^[a-z][a-z0-9]*(-[a-z0-9]+)+$"
+    ],
+    "guidanceMessage": "Recommended: Jira ticket (e.g., PROJ-123, PROJ-456-short-desc) or kebab-case (e.g., fix-auth-bug). Commit types (feat/, fix/) belong in commit messages, not branch names."
+  },
+
+  "commit": {
+    "blockProcessSubstitution": true,
+    "processSubstitutionMessage": "Never use $() or <() in git commit commands. Use the Write tool to create docs/<identifier>/commit-msg.txt, then run: git commit -F docs/<identifier>/commit-msg.txt",
+    "requireFeatureBranch": true,
+    "featureBranchMessage": "Never commit directly on main/master. Create a feature branch first (git checkout -b <branch-name>).",
+    "protectedBranches": ["main", "master"]
+  },
+
+  "staging": {
+    "blockedArgs": ["-A", "--all", "."],
+    "blockMessage": "Stage specific files by name (git add path/to/file1 path/to/file2). Never use git add -A, git add --all, or git add .",
+    "blockedFilePatterns": ["(^|\\s|/)commit-msg[^/\\s]*\\.txt(\\s|$)"],
+    "blockedFileMessage": "commit-msg*.txt files are in .gitignore and must not be staged. They are throwaway build artifacts used only by git commit -F."
+  },
+
+  "pr": {
+    "requireDraft": true,
+    "draftMessage": "PRs must be created as drafts. Add --draft flag to gh pr create."
+  }
+}

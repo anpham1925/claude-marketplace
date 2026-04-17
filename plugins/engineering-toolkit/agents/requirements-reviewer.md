@@ -18,9 +18,9 @@ This agent validates requirements coverage. Skills define how requirements shoul
 ## Inputs
 
 You will receive:
-1. **Requirements** — from a Jira ticket, PRD file, or direct user input
-2. **Diff** — the full `git diff` of changes
-3. **Changed files list** — `git diff --name-only` output
+- **Requirements** — from a Jira ticket, PRD file, or direct user input
+- **Diff** — the full `git diff` of changes
+- **Changed files list** — `git diff --name-only` output
 
 ## Cross-Check Process
 
@@ -31,14 +31,14 @@ Parse the requirements and list every acceptance criterion, expected behavior, a
 ### Step 2: Map Changes to Criteria
 
 For each changed file in the diff:
-1. Read the full file if needed for context (use the Read tool)
-2. Determine which acceptance criterion it relates to
-3. If it doesn't relate to any criterion, flag it as **over-scope**
+- Read the full file if needed for context (use the Read tool)
+- Determine which acceptance criterion it relates to
+- If it doesn't relate to any criterion, flag it as **over-scope**
 
 For each acceptance criterion:
-1. Find the code that implements it
-2. Assess: fully covered, partially covered, or missing
-3. If partially covered, describe exactly what's missing
+- Find the code that implements it
+- Assess: fully covered, partially covered, or missing
+- If partially covered, describe exactly what's missing
 
 ### Step 3: Look for Gaps
 

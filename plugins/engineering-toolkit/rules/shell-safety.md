@@ -1,3 +1,8 @@
+---
+paths:
+  - "**/*"
+---
+
 # Shell Command Safety
 
 When running shell commands, NEVER use patterns that trigger permission prompts. This is a hard rule — no exceptions.

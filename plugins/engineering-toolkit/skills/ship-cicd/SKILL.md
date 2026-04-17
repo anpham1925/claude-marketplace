@@ -13,7 +13,7 @@ Monitor CI/CD pipelines and fix failures. Two phases: test pipelines first, then
 
 ### Gate Check
 
-Read `docs/<identifier>/stage-gate.md`. Verify "Push & PR" is checked. See [shared reference](../ship-n-check/reference/shared.md) for stage-gate protocol.
+Follow the [stage workflow template](../ship-n-check/reference/shared.md#stage-workflow-template). Verify "Push & PR" is checked.
 
 ---
 
@@ -75,6 +75,35 @@ Check off "CI/CD (build/deploy)" in `stage-gate.md`.
 
 ---
 
+## User Communication During CI
+
+CI/CD is a **long-running stage** (typically 10-30 minutes). The agent MUST keep the user informed throughout.
+
+- **Before starting**: Tell the user "CI is running. Typical wait: 10-20 minutes. I'll report as jobs complete."
+- **Phase A polling**: Report each job completion as it happens (e.g., "Lint passed, waiting on e2e tests...")
+- **Phase B blocking**: Before calling `gh run watch`, tell the user: "All tests passed. Waiting for build/deploy (~5-10 min)."
+- **On completion**: Immediately report the full results table.
+
+### Inline vs Background: Choose Based on Context
+
+| Situation | Approach |
+|-----------|----------|
+| **Nothing else to do** (typical ship-n-check flow) | Run **inline** — poll or `gh run watch`. You keep an active turn and can report immediately on completion. |
+| **Parallel work available** (e.g., writing docs, preparing PR body) | Spawn background agent with `run_in_background: true`. **But**: tell the user what you're doing in parallel, and set expectations ("CI is running in background while I prepare X. I'll report when it completes.") |
+
+### Background Agent Pitfalls
+
+Background agents CAN notify the main agent via `<task-notification>`. But:
+1. The user sees **silence** during the wait — no spinner, no progress
+2. The main agent can't proactively update the user between turns
+3. If the main agent has nothing else to do, it goes idle and the user wonders what's happening
+
+**Anti-pattern**: Spawning a background agent then saying "I'll be notified when it's done" with nothing else to do. The user sits in silence until they ask for an update.
+
+**If you choose background**: Always have meaningful parallel work. Never go idle waiting for a notification.
+
+---
+
 ## Fix-and-Retry Loop (max 3 attempts)
 
 ```
@@ -119,7 +148,11 @@ Append to `docs/<identifier>/review-feedback.md`:
 - **ALWAYS** watch test jobs first (Phase A) — fix test failures before waiting for builds
 - **ALWAYS** use job-level polling for Phase A, `gh run watch --exit-status` for Phase B
 - **ALWAYS** append CI fixes to `review-feedback.md`
+- **ALWAYS** report job completions to the user as they happen
+- **ALWAYS** tell the user expected wait time before starting Phase B
+- **ALWAYS** prefer inline monitoring when there's no parallel work to do
 - **NEVER** wait for build/deploy jobs if test jobs are still failing
 - **NEVER** poll with sleep loops — use `gh run watch` for Phase B
 - **NEVER** exceed 3 fix-and-retry attempts — stop and inform user
-- **NEVER** commit a CI fix without first documenting it in review-feedback.md — this is a blocking gate
+- **NEVER** spawn a background agent then go idle — if background, do parallel work
+- **NEVER** commit a CI fix without first documenting it in review-feedback.md — this is a blocking gate, not optional

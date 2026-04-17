@@ -75,11 +75,7 @@ if [ "$SENSITIVE" = false ]; then
 fi
 
 if [ "$SENSITIVE" = true ]; then
-  if command -v jq &>/dev/null; then
-    echo "{\"decision\": \"approve\", \"message\": \"⚠️ Reading sensitive file ($REASON): $FILE_PATH\"}"
-  else
-    echo "{\"decision\": \"approve\", \"message\": \"⚠️ Reading sensitive file ($REASON): $FILE_PATH\"}"
-  fi
+  echo "{\"decision\": \"approve\", \"message\": \"⚠️ Reading sensitive file ($REASON): $FILE_PATH\"}"
 else
   echo '{"decision": "approve"}'
 fi

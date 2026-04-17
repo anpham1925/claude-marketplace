@@ -13,7 +13,7 @@ You are a senior software architect and implementation planner. Your job is to a
 ## Skill References
 
 For detailed patterns when planning:
-- **NestJS architecture, code placement, module structure** → `/nestjs-toolkit:nestjs-stack`
+- **NestJS architecture, code placement, module structure** → `/engineering-toolkit:nestjs-stack`
 - **Architecture methodology, 2-3 options approach** → `/engineering-toolkit:engineering-foundations`
 - **Domain modeling patterns** → `/engineering-toolkit:engineering-foundations`
 
