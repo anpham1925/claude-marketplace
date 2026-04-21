@@ -99,37 +99,44 @@ Every ai-dlc phase skill MUST follow these rules. Phase-specific SKILL.md files 
 
 When a phase ends with open questions for the user (clarifications, tradeoffs, ambiguous scope), **never** present them as a flat list — users lose track, skip items, or answer with vague batch responses.
 
-Instead, ask **one question at a time** in an interactive prompt with:
-- **At least 3 concrete options** the phase considers plausible (A, B, C, …)
-- **One "free input" option** for the user to write their own answer
-- A recommended default marked with `(recommended)` when the phase has a clear lean
+**ALWAYS use the `AskUserQuestion` tool** to present each question — never plain text asking the user to reply with "A", "B", or "C". The `AskUserQuestion` tool renders an interactive arrow-key + Enter selector with a built-in free-input ("Other") option, which is the only acceptable UX for this protocol.
+
+Ask **one question at a time** (one `AskUserQuestion` invocation per question, with a single `questions` entry). Each invocation must have:
+- **2–3 concrete options** in the `options` array (the tool caps at 4 and auto-appends "Other" — do not add your own free-input option).
+- A recommended default marked by placing it **first** and suffixing the label with `(Recommended)`.
+- A `header` chip (≤12 chars) and a clear `question` ending in a question mark.
+- Rich `description` per option explaining the tradeoff.
 
 Wait for the user's answer before moving to the next question. Record each answer inline in the relevant artifact (e.g., `prd-plans/inception.md` "Open Questions" section, `state.md` "Key Decisions") as it's resolved — don't batch writes.
 
-### Template
+### Invocation shape
 
 ```
-**Question {N} of {total}: {short question}**
-
-{1-2 sentence context — why this matters, what depends on it}
-
-Options:
-A) {option 1 — concrete, actionable}
-B) {option 2 — concrete, actionable} (recommended)
-C) {option 3 — concrete, actionable}
-D) Something else — please describe
-
-Which option do you choose?
+AskUserQuestion({
+  questions: [{
+    question: "{short question ending in ?}",
+    header: "{≤12-char chip}",
+    multiSelect: false,
+    options: [
+      { label: "{option 1} (Recommended)", description: "{tradeoff + implication}" },
+      { label: "{option 2}",                description: "{tradeoff + implication}" },
+      { label: "{option 3}",                description: "{tradeoff + implication}" }
+    ]
+  }]
+})
 ```
+
+Before invoking, surface the total count in a short preamble sentence (e.g., "I have 3 questions before we proceed — walking through them one at a time."). Do not surface all the questions themselves upfront.
 
 ### Rules
 
-- **ALWAYS** surface the total count upfront so the user knows the scope (e.g., "I have 3 questions before we proceed")
-- **ALWAYS** give at least 3 substantive options — if you can't think of 3, the question probably isn't ready to ask yet
-- **ALWAYS** include option D (or equivalent) for free-form input
-- **NEVER** chain multiple questions in one prompt — one at a time, wait for the answer
-- **NEVER** use yes/no framing when a spectrum of options exists
-- Mark a recommendation when the phase has a clear lean, but still let the user override
+- **ALWAYS** call the `AskUserQuestion` tool for every open question — never inline markdown options asking the user to type "A"/"B"/"C".
+- **ALWAYS** surface the total count upfront in the preamble (e.g., "3 questions before we proceed").
+- **ALWAYS** give at least 2 substantive options — if you can't think of 2, the question probably isn't ready to ask yet. The tool adds "Other" automatically.
+- **NEVER** chain multiple questions in one `AskUserQuestion` invocation — one question per call, wait for the answer, then invoke again for the next.
+- **NEVER** use yes/no framing when a spectrum of options exists.
+- **NEVER** include a manual "D) Something else" option — the tool's built-in "Other" replaces this.
+- Mark a recommendation by making it the first option with "(Recommended)" suffix on the label.
 
 ---
 

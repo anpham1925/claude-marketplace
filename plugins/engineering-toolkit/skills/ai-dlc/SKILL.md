@@ -248,7 +248,7 @@ Common failure modes — if you catch yourself doing any of these, stop and corr
 - **ALWAYS** pass file paths to subagents, never raw content — subagents read everything from files
 - **ALWAYS** read artifact files after subagent completes — build checkpoint summaries from files, not return text
 - **ALWAYS** follow the AI-initiated flow — recommend next action after every checkpoint
-- **ALWAYS** ask open questions one at a time with 3+ options + a free-input option — never dump a list (see [Open Questions Protocol](reference/shared.md#open-questions-protocol))
+- **ALWAYS** ask open questions one at a time via the `AskUserQuestion` tool (arrow-key selector with built-in "Other"); never present plain-text A/B/C options asking the user to type a letter — see [Open Questions Protocol](reference/shared.md#open-questions-protocol)
 - **ALWAYS** follow the adaptive pipeline from Plan — skip phases the Plan excludes
 - **ALWAYS** post Jira comments after each phase
 - **ALWAYS** update `docs/<identifier>/state.md` after completing each phase
