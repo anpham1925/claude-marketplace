@@ -10,7 +10,7 @@
     {
       "name": "engineering-toolkit",
       "description": "Core engineering toolkit — 32 skills, 8 agents, 18 rules, 8 hooks. AI-DLC (adaptive intent-to-production lifecycle) and ship-n-check (git pipeline). Config-driven git conventions, mode switching, harness engineering, language-specific rules for TypeScript/Python/Go.",
-      "version": "6.2.1",
+      "version": "6.2.2",
       "author": {
         "name": "An Pham"
       },
