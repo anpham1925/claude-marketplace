@@ -138,6 +138,26 @@ Before invoking, surface the total count in a short preamble sentence (e.g., "I 
 - **NEVER** include a manual "D) Something else" option — the tool's built-in "Other" replaces this.
 - Mark a recommendation by making it the first option with "(Recommended)" suffix on the label.
 
+### Orchestrator translation of subagent-surfaced questions
+
+Phase subagents routinely identify user-facing tradeoffs during their work and return them to the orchestrator in their final message. **The subagent's prose is an intermediate representation, not the user-facing form.** The orchestrator MUST translate every such tradeoff into an `AskUserQuestion` call before the user ever sees it.
+
+**The failure mode this rule exists to prevent:** a subagent returns a checkpoint message containing "Option A (Recommended): ... Option B: ... Option C: ..." in prose. The orchestrator, trying to be efficient, relays that prose verbatim to the user and asks them to reply with "A/B/C". This is always wrong, regardless of how cleanly the subagent formatted it.
+
+**Mandatory translation procedure when a subagent returns a user-facing tradeoff:**
+1. **Identify** the tradeoff in the subagent's return text (look for "Option A/B/C", "USER-FACING", "surfaced for checkpoint", or any enumeration of user choices).
+2. **Extract** into the `AskUserQuestion` shape: a single `question`, a `header` (≤12 chars), and 2–3 `options` with `label` + `description`. Mark the subagent's recommendation (if any) with "(Recommended)" and make it the first option.
+3. **Do NOT paste the subagent's prose** into the checkpoint message — it's raw material, not user-facing copy. Summarise the context in one or two sentences, then call the tool.
+4. **If `AskUserQuestion` is a deferred tool** in the current harness (not in the default tool list), load it first: `ToolSearch({ query: "select:AskUserQuestion", max_results: 1 })`. Then call the tool. Friction from tool loading is not grounds for falling back to prose.
+5. **Record the answer** inline in both `state.md` (Key Decisions) and the owning artifact (e.g., `prd-plans/inception.md` Open Questions section) the moment it arrives — don't batch.
+
+**Phase subagents, when writing their return text, SHOULD:**
+- Clearly label any user-facing tradeoff (e.g., prefix with `USER-FACING TRADEOFF (requires AskUserQuestion):`).
+- Provide the structured ingredients the orchestrator needs: a concise question, 2–3 option labels, one-line descriptions per option, a recommendation.
+- **NOT** pre-format A/B/C prose as if it were the final checkpoint message — the orchestrator will translate.
+
+If you ever catch yourself writing "Please respond with A, B, or C" in a checkpoint, stop — that's the protocol violation. Load `AskUserQuestion` and call it.
+
 ---
 
 ## AI-Initiated Recommendation Protocol

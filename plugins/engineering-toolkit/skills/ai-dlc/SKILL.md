@@ -233,6 +233,7 @@ Common failure modes — if you catch yourself doing any of these, stop and corr
 - **Running phases inline instead of as subagents** — Always spawn phases via the Agent tool.
 - **Passing raw context to subagents** — Never include summaries, excerpts, or your interpretation in the subagent prompt. Pass file paths only. The subagent reads everything from files.
 - **Relying on subagent return text** — After a subagent completes, read the artifact files. Don't use the return text as authoritative context. If the session dies, only files survive.
+- **Relaying subagent prose tradeoffs verbatim to the user** — When a phase subagent returns A/B/C options in prose (even labeled "USER-FACING" or "surfaced for checkpoint"), **do NOT paste that prose into the checkpoint message**. The orchestrator MUST translate every user-facing tradeoff into an `AskUserQuestion` tool call — one question, 2–3 options, recommended-first with "(Recommended)" suffix. Prose-with-typed-letters is always wrong, no matter how well-formatted. See [Open Questions Protocol](reference/shared.md#open-questions-protocol) §"Orchestrator translation of subagent-surfaced questions". If the tool isn't in your current tool list, load it via `ToolSearch({ query: "select:AskUserQuestion", max_results: 1 })` — deferred-tool friction is not a valid excuse to regress to prose.
 - **Forgetting NFR validation in Verify** — Each NFR from Inception must have corresponding implementation.
 - **Skipping Observe for features with NFRs** — If Inception identified performance/reliability NFRs, always Observe.
 
@@ -249,6 +250,7 @@ Common failure modes — if you catch yourself doing any of these, stop and corr
 - **ALWAYS** read artifact files after subagent completes — build checkpoint summaries from files, not return text
 - **ALWAYS** follow the AI-initiated flow — recommend next action after every checkpoint
 - **ALWAYS** ask open questions one at a time via the `AskUserQuestion` tool (arrow-key selector with built-in "Other"); never present plain-text A/B/C options asking the user to type a letter — see [Open Questions Protocol](reference/shared.md#open-questions-protocol)
+- **ALWAYS** translate subagent-surfaced user-facing tradeoffs into `AskUserQuestion` calls before showing them to the user — never pass a subagent's prose A/B/C block through to the checkpoint message. If `AskUserQuestion` is a deferred tool in the current harness, load it via `ToolSearch` and then call it. "It's faster to just paste the prose" is a bug, not a shortcut.
 - **ALWAYS** follow the adaptive pipeline from Plan — skip phases the Plan excludes
 - **ALWAYS** post Jira comments after each phase
 - **ALWAYS** update `docs/<identifier>/state.md` after completing each phase
