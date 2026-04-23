@@ -32,3 +32,21 @@ Verify no new boundary violations were introduced. Quick check:
 ## Why
 
 These boundaries enforce the hexagonal architecture. Violations create hidden coupling that makes modules non-deployable independently.
+
+## Reference Example
+
+```ts
+// Good — app imports from module root barrel
+// File: apps/api/src/modules/order/order.controller.ts
+import { OrderService } from '@modules/order';
+
+// Good — relative import within the same module
+// File: modules/order/application/cancel-order.handler.ts
+import { Order } from '../domain/order.entity';
+
+// Bad — cross-app import (apps/* must not reach into other apps/*)
+import { something } from '@apps/worker/...';
+
+// Bad — deep path into module internals
+import { OrderEntity } from '@modules/order/domain/order.entity';
+```

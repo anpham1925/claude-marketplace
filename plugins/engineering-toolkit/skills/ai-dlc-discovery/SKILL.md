@@ -15,6 +15,14 @@ model: opus
 **Outputs**: `discovery.md` with reframed problem, approaches, and recommendation
 **Subagent type**: `general-purpose`
 
+**Definition of Done**:
+- All 6 forcing questions answered (pain, who feels it, what exists, smallest version, 10x version, what breaks if wrong)
+- Problem reframed — the original solution-shaped request is no longer the headline
+- Three approaches drafted: Narrow Wedge / Balanced / Full Vision, each with trade-offs
+- A recommended approach is called out explicitly with reasoning
+- `discovery.md` written to `docs/<identifier>/`
+- User has approved the reframing + chosen approach at the checkpoint
+
 ## Why This Phase Exists
 
 Teams often build the wrong thing — not because the engineering is bad, but because the problem wasn't questioned. Tickets describe solutions ("add a retry button") when the real pain is something deeper ("users lose work when the upload fails silently"). Discovery catches these scope issues before they become expensive rework.

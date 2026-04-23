@@ -124,6 +124,24 @@ After each subagent completes:
 
 **Resuming a dead session**: Read `state.md` to find the last completed phase. Read the output artifacts for that phase. Present the summary and recommend the next phase. No need to re-run completed phases — their output is in the files.
 
+## Effort Level per Phase
+
+Claude Code CLI effort controls how long the model will think before acting. Pick the effort level that matches the phase's reasoning demand — over-thinking adds latency without improving design-free execution, and under-thinking starves the phases where the real decisions happen.
+
+| Phase | Recommended effort | Reason |
+|---|---|---|
+| Discovery | `max` | Open-ended reframing — deep thinking pays off |
+| Plan | `xhigh` | Classification is structured; xhigh is sufficient |
+| Inception | `xhigh` | Structured extraction with clear inputs |
+| Domain Design | `max` | Architectural — aggregate/event boundaries stick for the life of the code |
+| Logical Design | `max` | Architectural — pattern + NFR trade-offs stick |
+| Construct | `xhigh` | Execution — design is already locked; `max` just burns latency |
+| Verify | `xhigh` | Structured AC/NFR checks; `max` only if findings are contentious |
+| Release | `high` | Mostly delegation to ship-* stages |
+| Observe | `high` | Query execution against known NFRs |
+
+**Rule of thumb**: default to `xhigh`; escalate to `max` only for the two Design phases or Discovery. Dropping below `high` risks missed acceptance criteria.
+
 ## Pipeline Overview
 
 ### Full Pipeline (all phases)

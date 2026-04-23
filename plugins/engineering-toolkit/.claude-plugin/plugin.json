@@ -1,7 +1,7 @@
 {
   "name": "engineering-toolkit",
   "description": "Engineering toolkit — 32 composable skills, 8 agents, 18 rules, 8 hooks. Two orchestrators: AI-DLC (adaptive intent-to-production lifecycle with product discovery, structured investigation, adaptive planning, domain/logical design split, NFR tracking, adversarial code review, traceability, task decomposition, auto doc updates, and post-deploy observability) and ship-n-check (6-stage git pipeline). Config-driven git conventions. Mode switching (dev/research/review). Harness engineering. Language-specific rules for TypeScript, Python, Go. Git safety hooks. Skill-first enforcement. Framework stacks split into separate plugins: nestjs-toolkit, django-toolkit, nextjs-toolkit.",
-  "version": "6.2.3",
+  "version": "6.2.4",
   "author": {
     "name": "An Pham"
   }

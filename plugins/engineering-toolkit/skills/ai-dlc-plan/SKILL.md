@@ -14,6 +14,13 @@ model: opus
 **Inputs**: Jira ticket ID or free-form intent description
 **Outputs**: Level 1 Plan (intent type, phases to execute, complexity assessment)
 
+**Definition of Done**:
+- `state.md` exists with intent type classified (green-field, brown-field, bug-fix, refactor, performance, spike)
+- Pipeline phase list is explicit — which phases run, which are skipped, and why
+- Complexity + estimated scope are written
+- Unclear-scope / unclear-root-cause flags are raised where applicable
+- User has approved the Level 1 Plan at the checkpoint
+
 ## Why This Phase Exists
 
 Traditional development lifecycles run every stage for every task. AI-DLC adapts — a bug fix doesn't need Domain Design, a spike doesn't need Release. The Plan phase ensures the right amount of process for the task at hand.

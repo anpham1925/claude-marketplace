@@ -15,6 +15,15 @@ model: opus
 **Outputs**: `prd-plans/specs.md` (Solution Design + Plan Summary), `prd-plans/flows.md`, `prd-plans/ADR-*.md`, updated `state.md` (Design Decision column of traceability)
 **Subagent type**: `Explore` for codebase research
 
+**Definition of Done**:
+- Every NFR maps to a concrete design decision (not left as "we'll be careful")
+- Each meaningful decision shows ≥2 options with trade-offs before a recommendation
+- Contracts defined: API signatures, event payloads, queue shapes
+- File plan lists every new/modified file with a one-line purpose
+- ADRs written for decisions that outlive the ticket (storage, auth, boundaries)
+- `specs.md` + `flows.md` produced and readable by a fresh engineer with no session context
+- User has approved at the checkpoint
+
 ## Why This Phase Exists
 
 Domain Design models pure business logic. Logical Design bridges the gap to implementation by applying architectural patterns that satisfy NFRs, making technology choices, and producing an actionable file plan. This separation ensures infrastructure doesn't contaminate domain logic.

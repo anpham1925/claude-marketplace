@@ -23,3 +23,14 @@ Before creating inline test data, search for existing factories and fixtures:
 - Factories encode valid domain state — inline objects often miss required fields or use invalid combinations
 - When a schema changes, one factory update fixes all tests — inline objects break silently
 - AI-generated test data tends toward minimal/naive objects that don't reflect real-world data shapes
+
+## Reference Example
+
+```ts
+// Good — reuse the existing factory, override only what the test cares about
+const order = OrderFactory.pending({ customerId: 'C-1', total: 150 });
+
+// Bad — inline object misses required fields (createdAt, version, currency),
+// and will silently drift when the schema adds a new required column
+const order = { id: '1', status: 'PENDING', total: 150 } as Order;
+```

@@ -15,6 +15,14 @@ model: opus
 **Outputs**: `docs/<identifier>/prd-plans/domain-model.md` + updated `state.md` (Domain Model column of traceability)
 **Subagent type**: `Explore` for codebase research
 
+**Definition of Done**:
+- Aggregates, entities, and value objects are named with ubiquitous-language terms (no tech nouns like "Record" or "Item")
+- Domain events defined in past tense (`OrderCancelled`, not `CancelOrder`)
+- Business rules (invariants) listed — each one testable without infrastructure
+- Repository interfaces described (shape only, no ORM leakage)
+- Validated against existing models — no duplicate aggregates or naming collisions
+- User has approved at the checkpoint
+
 ## Why This Phase Exists
 
 AI-DLC separates domain modeling from architectural design. This ensures business logic is modeled purely — without being influenced by infrastructure choices. The domain model becomes the foundation that Logical Design builds upon. This is the DDD flavor of AI-DLC.

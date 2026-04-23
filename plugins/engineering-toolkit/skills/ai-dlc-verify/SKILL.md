@@ -15,6 +15,15 @@ model: opus
 **Outputs**: `review-feedback.md` (Review Feedback) + updated `state.md` (Verification Report, AC status)
 **Subagent type**: `general-purpose` — **MUST be a fresh subagent** (context-isolated from the Constructor to avoid bias)
 
+**Definition of Done**:
+- Every AC is marked PASS or FAIL against an actual test run (not a hand-wave)
+- Every NFR is validated against measurable evidence (numbers, not adjectives)
+- Traceability matrix has no empty cells for shipped ACs
+- Code review covers: correctness, boundaries, naming, security, test quality
+- `review-feedback.md` exists with findings categorised as BLOCKER / IMPROVEMENT / NIT
+- Any BLOCKER is either fixed or logged as a follow-up ticket — never silently closed
+- Results presented to the user; NEEDS-INPUT items resolved before Release
+
 ## Why This Phase Exists
 
 AI-DLC's verification combines Verify + Review into a single phase, adding traceability validation and NFR compliance checks. A fresh subagent prevents the "works on my machine" bias that comes from the same agent verifying its own work.

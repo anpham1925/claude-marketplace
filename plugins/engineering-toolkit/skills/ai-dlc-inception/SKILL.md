@@ -15,6 +15,15 @@ model: opus
 **Outputs**: `docs/<identifier>/prd-plans/inception.md` (Inception Artifact) + updated `state.md`
 **Subagent type**: `general-purpose`
 
+**Definition of Done**:
+- `inception.md` written with every AC stated as a testable behaviour (not a solution)
+- Each NFR has a measurable threshold (e.g. `P95 < 200ms`, not `fast`)
+- Risks enumerated with likelihood + mitigation
+- Measurement criteria (how we know the feature worked post-deploy) captured
+- For brown-field: static model (what exists) + dynamic model (how it flows today) produced
+- Traceability matrix seeded with AC rows
+- User has approved at the checkpoint
+
 ## Why This Phase Exists
 
 AI-DLC's Inception goes beyond traditional requirements analysis. It captures the full context needed for AI-driven development: not just what to build, but how to measure success, what could go wrong, and (for brown-field) what exists today. This is the "Mob Elaboration" ritual — AI proposes a comprehensive breakdown, human refines.

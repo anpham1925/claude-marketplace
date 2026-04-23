@@ -15,3 +15,27 @@ paths:
 - **Use `__slots__`**: On classes with many instances to reduce memory footprint
 - **Prefer `functools.cache` / `lru_cache`**: Over manual memoization
 - **Context managers (`with`)**: For all resource management — files, connections, locks
+
+## Reference Example
+
+```python
+from collections.abc import Sequence
+from dataclasses import dataclass
+from pathlib import Path
+
+# Good — type hints, pathlib, dataclass, Sequence not list
+@dataclass(frozen=True, slots=True)
+class Order:
+    id: str
+    total: int
+    status: OrderStatus
+
+def load_orders(source: Path) -> Sequence[Order]:
+    with source.open() as f:
+        return [Order(**row) for row in json.load(f)]
+
+# Bad — no hints, os.path, raw dict, concrete list in signature
+def load(src):
+    f = open(os.path.join("data", src))
+    return [{"id": r["id"], "total": r["total"]} for r in json.load(f)]
+```

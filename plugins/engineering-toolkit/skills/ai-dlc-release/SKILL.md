@@ -15,6 +15,14 @@ model: sonnet
 **Outputs**: Merged PR + updated `state.md` (Release status, PR URL), Jira updated
 **Delegation**: Invokes existing ship-* stage skills via the Skill tool
 
+**Definition of Done**:
+- PR merged to the default branch via `ship-n-check` (no manual git/gh commands)
+- CI pipeline finished green on the merge commit
+- Staging verification (health + smoke endpoints) has run and passed
+- Jira ticket transitioned to the right post-merge state with a release comment
+- Pipeline artifacts archived under `docs/<identifier>/`
+- `state.md` marks Release complete
+
 ## Why This Phase Exists
 
 AI-DLC's Release phase reuses the battle-tested ship-n-check pipeline. There's no need to reinvent branch creation, quality gates, CI/CD monitoring, staging verification, or PR review — those skills already handle it well. This phase is a thin orchestrator that delegates.

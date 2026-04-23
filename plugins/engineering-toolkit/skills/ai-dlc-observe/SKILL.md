@@ -14,6 +14,14 @@ model: sonnet
 **Inputs**: `state.md`, `prd-plans/inception.md` (NFRs, Observability Plan, measurement criteria), Honeycomb config
 **Outputs**: Observation Report written to `state.md`
 
+**Definition of Done**:
+- Health endpoint returns 200 on the deployed pods
+- Error rate compared against the pre-deploy baseline (and within the NFR threshold)
+- Latency NFRs checked against actual P50/P95/P99 from Honeycomb
+- SLO burn rates reviewed; no new triggers fired by the deploy
+- Each NFR from Inception is marked PASS / FAIL / INCONCLUSIVE with evidence
+- Observation report written; rollback recommendation made if any NFR is FAIL
+
 ## Why This Phase Exists
 
 AI-DLC includes an Operations phase because shipping code isn't the finish line — observing its behavior in production is. This phase closes the loop by checking that NFR targets are met and no regressions were introduced.

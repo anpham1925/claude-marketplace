@@ -15,6 +15,14 @@ model: opus
 **Outputs**: Code + unit tests + e2e tests + updated `state.md` (Code Files / Test Files columns of traceability matrix)
 **Subagent type**: `general-purpose` — each wave component gets its own subagent with fresh context
 
+**Definition of Done**:
+- Every AC has at least one passing unit test — ACs without test coverage fail the phase
+- E2E tests cover the happy path plus the critical failure modes from Logical Design
+- Language-appropriate lint, type-check, and test suites are green locally
+- Traceability matrix updated: AC → file(s) → test(s)
+- No TODOs or commented-out code introduced; no hardcoded dates
+- For bug-fix intents: fix report written (symptom → root cause → fix → regression test)
+
 ## Why This Phase Exists
 
 AI-DLC's Construction phase is the "Bolt" — an intense, rapid implementation cycle. It combines Implement + Test into a single phase, producing a cohesive deliverable with full test coverage and traceability to acceptance criteria.
