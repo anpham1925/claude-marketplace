@@ -17,6 +17,7 @@ Opinionated, language-agnostic engineering methodology. Before applying any topi
 | **Code Review** | Reviewing PRs, validating code quality, self-review | `reference/code-review.md` |
 | **Requirements** | Gathering requirements, clarifying business logic, defining scope | `reference/requirements.md` |
 | **Architecture Planning** | Planning features, making architectural decisions, designing solutions | `reference/architecture.md` |
+| **Deep Modules** | Judging interface-vs-implementation ratio, choosing where to draw module boundaries, classifying dependencies | `reference/deep-modules.md` |
 | **ADR Writing** | Documenting significant architectural decisions | `reference/adr.md` |
 
 ## Gotchas
@@ -58,6 +59,9 @@ Need to gather or clarify requirements?
 
 Need to plan a feature or make architecture decisions?
   -> Read reference/architecture.md
+
+Need to judge a module boundary, or decide if something is "too shallow"?
+  -> Read reference/deep-modules.md
 
 Need to document a significant decision?
   -> Read reference/adr.md

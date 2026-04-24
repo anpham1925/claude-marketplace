@@ -73,6 +73,19 @@ Within a wave, **launch parallel subagents** for independent components:
 
 ### TDD Loop (for each behavior within a component)
 
+**Anti-pattern — horizontal slicing.** Do NOT write all tests first, then all implementation. Tests written in bulk verify *imagined* behavior — they test the shape of data/signatures instead of user-facing behavior, and they become insensitive to real changes. Within a wave, each component goes one test → one implementation → repeat. Each test responds to what you learned from the previous cycle.
+
+```
+WRONG (horizontal):
+  RED:   test1, test2, test3, test4, test5
+  GREEN: impl1, impl2, impl3, impl4, impl5
+
+RIGHT (vertical tracer bullets):
+  RED→GREEN: test1→impl1
+  RED→GREEN: test2→impl2
+  ...
+```
+
 - **Red** — Write a failing test
   - Test file next to implementation (`.spec.ts`)
   - AAA pattern: Arrange, Act, Assert
@@ -182,6 +195,8 @@ When the Level 1 Plan classifies the intent as **bug-fix**, produce `docs/<ident
 
 This file is **kept** after merge (same as specs.md/domain-model.md) — it's durable knowledge, not pipeline plumbing.
 
+**Durable language rule**: In the Root Cause, Fix, and Regression Prevention sections, describe **modules, behaviors, and contracts** — not file paths or line numbers. A `file.ts:42` reference rots the moment the file is renamed or split. Keep file:line references inside `investigation.md` (short-lived) but strip them from the fix-report. The fix-report should read like a spec about a durable concept ("the retry handler on the webhook consumer"), not a diff ("lines 40-58 of consumer.ts").
+
 ### Update Jira
 
 Post construction summary as a comment. For bug fixes, include the root cause and fix summary from the fix report.
@@ -212,6 +227,7 @@ Phase-specific:
 - **NEVER** skip TDD — write tests first, always
 - **NEVER** skip the Validate step — lint + type-check after every Green, not just at the end
 - **NEVER** retry a failing test blindly — each attempt must use a different approach based on the error
+- **NEVER** horizontal-slice within a wave — one test → one implementation → repeat, never test1..N then impl1..N
 - **ALWAYS** use subagents for implementation — never execute inline
 - **ALWAYS** commit after each Green phase
 - **ALWAYS** run all tests after each wave to catch conflicts
