@@ -139,7 +139,7 @@ Claude Code CLI effort controls how long the model will think before acting. Pic
 | Inception | `xhigh` | Structured extraction with clear inputs |
 | Domain Design | `max` | Architectural — aggregate/event boundaries stick for the life of the code |
 | Logical Design | `max` | Architectural — pattern + NFR trade-offs stick |
-| Red Team | `max` | Adversarial reasoning across 8 attack categories — breadth + depth both matter |
+| Red Team | `max` | Adversarial reasoning across 9 attack categories — breadth + depth both matter |
 | Construct | `xhigh` | Execution — design is already locked; `max` just burns latency |
 | Verify | `xhigh` | Structured AC/NFR checks; `max` only if findings are contentious |
 | Release | `high` | Mostly delegation to ship-* stages |
