@@ -9,7 +9,7 @@ model: opus
 
 ## Agent: Red Teamer
 
-**Mission**: Attack the design *before* it becomes code. Read the specs, ADRs, and flows as an adversary and find the classes of failure they don't cover: concurrency, partial failure, hostile inputs, error cascades, scale, time, and inherited scope. Emit structured findings that route back to the phase best equipped to fix each one. Loop until convergence, capped at 3 iterations.
+**Mission**: Attack the design *before* it becomes code. Read the specs, ADRs, and flows as an adversary and find the classes of failure they don't cover: concurrency, partial failure, hostile inputs, error cascades, scale, time, inherited scope, user behavior, and client-side provider/config wiring. Emit structured findings that route back to the phase best equipped to fix each one. Loop until convergence, capped at 3 iterations.
 
 **Inputs**: `state.md`, `prd-plans/inception.md`, `prd-plans/specs.md`, `prd-plans/flows.md`, all `prd-plans/ADR-*.md`, optionally `prd-plans/domain-model.md` (if exists)
 **Outputs**: `red-team-report.md` (findings table), updated `state.md` (Red Team iteration count + routing decisions), updated `improvements.md` (if any findings deferred)
@@ -140,13 +140,31 @@ Most valuable when the current phase modifies files from prior work:
 - Copy-paste of URLs across devices / sessions / incognito
 - Stale state: user had the page open for 2 hours, clicks a button — what's the server's state vs. the client's?
 
+#### I. Client-side provider / config wiring
+
+For every Context provider, DI container, or library-level `*Config` / `*Provider` component (`SWRConfig`, `QueryClientProvider`, `ThemeProvider`, `IntlProvider`, `ReduxProvider`, Next.js `headers()` / `cookies()` context, etc.):
+
+- **Is the provider actually mounted at the tree root?** A config module that's "defined but never imported in a layout" silently falls back to library defaults. The symptom: hard-to-diagnose behavior changes (retry storms, cache misses, wrong locale, missing auth) that don't match the intended config.
+- **Does a nested scoped override silently shadow the parent?** Nested providers typically shallow-merge, but a child that spreads `...defaultConfig` risks copying a frozen snapshot from the wrong import. A child passing `{ provider: () => new Map() }` only works if the parent provides everything else — check that the parent is actually there.
+- **Is the server/client component boundary correct?** In Next.js App Router (and any framework with SSR/RSC split), a `'use client'` provider imported from a Server Component doesn't mount in the client tree. A provider inside a Server Component that emits children into a Client Component may bail out silently.
+- **Default context value vs. missing-provider sentinel.** `React.createContext(null)` means consumers break at runtime if no provider wraps them — but at compile time everything looks fine. Is the default meaningful, or a landmine?
+- **Hydration mismatch from provider state.** SSR-rendered provider state vs. client-rendered initial state — do they agree? Persisted state (theme, locale) read from localStorage on client but not available on server is a common source of flash-of-wrong-state.
+- **Provider in ErrorBoundary/Suspense interaction.** If the provider sits above an error boundary that replaces children on error, does the replacement subtree still have access to the provider? Usually yes for context; sometimes no for providers that tie into their own lifecycle.
+
+**How to test quickly**: grep for `defaultSwrConfig`, `QueryClient`, `createContext(` — for each, grep for the `Provider`/`Config` component that wraps it, then for where THAT component is imported into the root layout. Breaks anywhere along that chain = finding.
+
+Typical findings in this category:
+- *Config module exports defaults that are never mounted at the root* — symptom: library-default behavior instead of intended config
+- *Test-only provider wrapper left in production page code* — symptom: mixed test/prod concerns, confused inheritance
+- *Provider imported into a Server Component by mistake* — symptom: runtime `null` context, non-obvious failure
+
 ### 4. Classify Each Finding
 
 For every attack hypothesis that doesn't have clear coverage in the artifacts, file a finding with:
 
 - **ID**: sequential, unique within the report (R-1, R-2, ...)
 - **Title**: one line, specific. "Concurrent analyze requests for same ticker both trigger VNDIRECT fetch" — not "concurrency issue"
-- **Category**: A–H above
+- **Category**: A–I above
 - **Severity**:
   - **CRITICAL** — ships a correctness bug or data corruption. Must fix before Construct.
   - **MAJOR** — ships a UX-degrading or resource-wasting behavior. Should fix; acceptable to defer with user approval.
@@ -194,7 +212,7 @@ Structure:
 
 ## Coverage Notes
 
-<For each of attack categories A-H: one line saying "Covered by ADR-X §Y" or "No applicable surface" or "See R-N, R-M". Demonstrates breadth, not just the list of hits.>
+<For each of attack categories A-I: one line saying "Covered by ADR-X §Y" or "No applicable surface" or "See R-N, R-M". Demonstrates breadth, not just the list of hits.>
 
 ## Loop-Back Recommendation
 
