@@ -85,6 +85,8 @@ Read the debugger's investigation report. Evaluate:
 
 Write `docs/<identifier>/investigation.md` with the debugger's report, plus any additional context from the Jira ticket or conversation.
 
+**Artifact lifespan matters.** `investigation.md` is short-lived — it exists to hand off to Construct or to a ticket. File:line references are fine here because the code is still live at the versions referenced. The **Recommended Fix Approach** section, however, should be written in durable language (modules, behaviors, contracts) — it often becomes the basis of a Jira ticket that may sit in the backlog for weeks and outlive the referenced line numbers.
+
 ```markdown
 # Investigation: {title}
 
@@ -116,8 +118,8 @@ Write `docs/<identifier>/investigation.md` with the debugger's report, plus any 
 {Clear explanation with file:line references}
 
 ## Recommended Fix Approach
-{What should change and why — NOT the actual code}
-- Affected files: {list}
+{What should change and why — NOT the actual code. Describe modules, behaviors, and contracts. Avoid coupling this section to file paths or line numbers — it may be lifted into a ticket that outlives the current layout.}
+- Affected modules: {list by responsibility, not by path}
 - Risk level: {low | medium | high}
 - Breaking changes: {yes/no}
 

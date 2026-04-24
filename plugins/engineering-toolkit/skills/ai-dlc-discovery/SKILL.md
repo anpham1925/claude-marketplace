@@ -62,6 +62,20 @@ Read `docs/<identifier>/state.md` if it exists. If Discovery is already complete
 
 Work through these interactively. Use `AskUserQuestion` for each — don't batch them. Listen to the answer before asking the next question. Adapt follow-ups based on what you learn.
 
+**Two rules that make the difference between good grilling and a script:**
+
+1. **Explore before you ask.** If the question can be answered by looking at the codebase, tickets, Honeycomb, Linear, or prior docs — explore first, then bring a grounded answer into the question. "Workarounds today" is often answerable from `git log` or existing endpoints without ever asking the user.
+2. **Recommend an answer per question.** Every `AskUserQuestion` call must include your best-guess answer, with reasoning. The user either accepts, redirects, or refines — all three are faster than answering from a blank prompt. Blank-prompt grilling produces shallow answers because users reach for the first plausible response.
+
+The `AskUserQuestion` shape for each forcing question:
+
+- **Question**: the forcing question text (below)
+- **Your recommendation**: one-sentence answer with reasoning from your exploration
+- **Alternatives you considered**: 1-2 rejected options, briefly — signals you thought about it
+
+Example (Question 3):
+> "What exists today? My recommendation: the existing `retry` button in the uploader covers ~60% of this, but fails silently on network drops — that's the gap. Alternatives considered: (a) manual re-upload workflow, unused per analytics; (b) a support-driven flow, rare. Does the ~60% estimate match your sense, and is the silent-fail on network drops the real pain?"
+
 #### 1. What's the pain?
 
 > "Give me a specific example of when this problem hurt. Not a hypothetical — a real moment."
@@ -240,6 +254,8 @@ See [common phase rules](../ai-dlc/reference/shared.md#common-phase-rules) for s
 
 Phase-specific:
 - **ALWAYS** use AskUserQuestion for each forcing question — don't batch
+- **ALWAYS** explore before asking — codebase, tickets, logs, prior docs. Only ask the user what only the user can answer
+- **ALWAYS** include your recommended answer + reasoning in every AskUserQuestion — no blank-prompt grilling
 - **ALWAYS** push back on solution-first thinking — redirect to problems
 - **ALWAYS** push for specific examples over hypotheticals
 - **ALWAYS** produce exactly 3 approaches at different scope levels
@@ -248,4 +264,5 @@ Phase-specific:
 - **NEVER** accept the first framing without questioning it
 - **NEVER** skip the reframing step — even if the original request seems clear
 - **NEVER** recommend the full vision as the starting point
+- **NEVER** ask a question you could answer by grepping — that's lazy grilling
 - **ALWAYS** write `discovery.md` with structured output
