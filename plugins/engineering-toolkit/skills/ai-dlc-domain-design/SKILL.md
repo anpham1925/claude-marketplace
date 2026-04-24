@@ -40,6 +40,16 @@ If skipped in the Level 1 Plan, this phase is not invoked.
 
 Read `docs/<identifier>/state.md`. Verify Inception is completed. Load the Inception Artifact. See [shared reference](../ai-dlc/reference/shared.md) for state.md format.
 
+### Extract Ubiquitous Language (optional but recommended)
+
+Before identifying aggregates, invoke the `engineering-toolkit:ubiquitous-language` skill to produce `docs/<identifier>/UBIQUITOUS_LANGUAGE.md`. Aggregates named with unresolved vocabulary tend to acquire drift later — this step catches "account = Customer AND User" before it becomes an entity.
+
+Skip only when:
+- The source material has no terminology ambiguity (rare — confirm with user)
+- An existing `UBIQUITOUS_LANGUAGE.md` for this identifier is already current
+
+All subsequent phase steps (aggregates, events, repository interfaces) must use the canonical terms from the glossary.
+
 ### Research Existing Domain Models
 
 Use Explore subagents to find existing domain models in the codebase:
