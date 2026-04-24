@@ -1,6 +1,6 @@
 ---
 name: ai-dlc
-description: "AI-Driven Development Lifecycle — unified intent-to-production orchestrator with adaptive planning, design, implementation, verification, release, and observability. Use whenever the user mentions a Jira ticket ID, wants to start development, or says 'ai-dlc'. This orchestrator adaptively plans which phases to run based on intent type (green-field, brown-field, refactor, bug-fix, spike), then drives the conversation proactively — AI recommends, human validates. Phases: Plan → Inception → Domain Design → Logical Design → Construct → Verify → Release → Observe. Triggers for 'ai-dlc PROJ-123', 'start ai-dlc', 'plan this ticket', 'full lifecycle'. The Release phase delegates to ship-n-check internally for the full git workflow."
+description: "AI-Driven Development Lifecycle — unified intent-to-production orchestrator with adaptive planning, design, adversarial review, implementation, verification, release, and observability. Use whenever the user mentions a Jira ticket ID, wants to start development, or says 'ai-dlc'. This orchestrator adaptively plans which phases to run based on intent type (green-field, brown-field, refactor, bug-fix, spike), then drives the conversation proactively — AI recommends, human validates. Phases: Plan → Inception → Domain Design → Logical Design → Red Team → Construct → Verify → Release → Observe. Triggers for 'ai-dlc PROJ-123', 'start ai-dlc', 'plan this ticket', 'full lifecycle'. The Release phase delegates to ship-n-check internally for the full git workflow."
 argument-hint: '[phase] [TICKET-ID]'
 model: opus
 ---
@@ -17,6 +17,7 @@ model: opus
 | Inception | `/engineering-toolkit:ai-dlc-inception` | Requirements + NFRs + risks + measurement + code elevation |
 | Domain Design | `/engineering-toolkit:ai-dlc-domain-design` | Pure DDD modeling (aggregates, events, business rules) |
 | Logical Design | `/engineering-toolkit:ai-dlc-logical-design` | Architectural patterns + NFR mapping + ADRs + plan summary |
+| Red Team | `/engineering-toolkit:ai-dlc-red-team` | Adversarially attack the design artifacts before Construct; loop back to Logical Design (or Inception/Plan) until convergence or 3-iter cap |
 | Construct | `/engineering-toolkit:ai-dlc-construct` | TDD wave implementation + e2e tests + traceability |
 | Verify | `/engineering-toolkit:ai-dlc-verify` | AC verification + code review + traceability validation |
 | Release | `/engineering-toolkit:ai-dlc-release` | Branch → PR → CI/CD → staging → merge (delegates to ship-*) |
@@ -32,6 +33,8 @@ model: opus
 /engineering-toolkit:ai-dlc inception            # Inception only (uses Plan output)
 /engineering-toolkit:ai-dlc domain-design        # Domain Design only
 /engineering-toolkit:ai-dlc logical-design       # Logical Design only
+/engineering-toolkit:ai-dlc red-team             # Red Team only (adversarial review of current design artifacts)
+/engineering-toolkit:ai-dlc red-team whole-system  # Whole-system audit (outside the phase pipeline)
 /engineering-toolkit:ai-dlc construct            # Construct only
 /engineering-toolkit:ai-dlc verify               # Verify only
 /engineering-toolkit:ai-dlc release              # Release only
@@ -42,7 +45,7 @@ Phases are composable. Run individually or let the adaptive pipeline run with ch
 
 ## Parsing Arguments
 
-- If `$ARGUMENTS` contains a phase name (`discovery`, `plan`, `investigate`, `inception`, `domain-design`, `logical-design`, `construct`, `verify`, `release`, `observe`), **spawn that phase as a subagent via the Agent tool**
+- If `$ARGUMENTS` contains a phase name (`discovery`, `plan`, `investigate`, `inception`, `domain-design`, `logical-design`, `red-team`, `construct`, `verify`, `release`, `observe`), **spawn that phase as a subagent via the Agent tool**
 - If `$ARGUMENTS` contains a ticket ID (matches pattern like `PROJ-123`, `PROJ2-456`, `PROJ3-789`), pass it to the phase subagent
 - If no phase specified, run the **Full Adaptive Pipeline** starting from Plan
 - If no ticket ID and phase requires one, **ask the user**
@@ -73,7 +76,8 @@ All paths are relative to `docs/<identifier>/`. Every phase also updates `state.
 | Inception | `general-purpose` | opus | `state.md`, `investigation.md` (if exists) | `prd-plans/inception.md`, `state.md` (ACs, NFRs, risks, traceability scaffold) |
 | Domain Design | `general-purpose` | opus | `state.md`, `prd-plans/inception.md` | `prd-plans/domain-model.md`, `state.md` (traceability: Domain Model column) |
 | Logical Design | `general-purpose` | opus | `state.md`, `prd-plans/inception.md`, `prd-plans/domain-model.md` (if exists) | `prd-plans/specs.md`, `prd-plans/flows.md`, `prd-plans/ADR-*.md`, `state.md` (traceability: Design Decision column) |
-| Construct | `general-purpose` | sonnet | `state.md`, `prd-plans/specs.md`, `prd-plans/flows.md`, `prd-plans/domain-model.md` (if exists) | Code + tests, `state.md` (traceability: Code Files, Test Files columns) |
+| Red Team | `general-purpose` | opus | `state.md`, `prd-plans/inception.md`, `prd-plans/specs.md`, `prd-plans/flows.md`, `prd-plans/ADR-*.md` | `red-team-report.md`, `state.md` (Red Team iteration count + routing decisions) |
+| Construct | `general-purpose` | sonnet | `state.md`, `prd-plans/specs.md`, `prd-plans/flows.md`, `prd-plans/domain-model.md` (if exists), `red-team-report.md` (if exists) | Code + tests, `state.md` (traceability: Code Files, Test Files columns) |
 | Verify | `code-reviewer` | opus | `state.md`, `prd-plans/inception.md`, `prd-plans/specs.md`, code diff | `review-feedback.md`, `state.md` |
 | Release | `general-purpose` | sonnet | `state.md` | Merged PR, `state.md` |
 | Observe | `general-purpose` | sonnet | `state.md`, `prd-plans/inception.md` (Observability Plan) | `state.md` (Observation Report) |
@@ -135,6 +139,7 @@ Claude Code CLI effort controls how long the model will think before acting. Pic
 | Inception | `xhigh` | Structured extraction with clear inputs |
 | Domain Design | `max` | Architectural — aggregate/event boundaries stick for the life of the code |
 | Logical Design | `max` | Architectural — pattern + NFR trade-offs stick |
+| Red Team | `max` | Adversarial reasoning across 8 attack categories — breadth + depth both matter |
 | Construct | `xhigh` | Execution — design is already locked; `max` just burns latency |
 | Verify | `xhigh` | Structured AC/NFR checks; `max` only if findings are contentious |
 | Release | `high` | Mostly delegation to ship-* stages |
@@ -151,8 +156,10 @@ Claude Code CLI effort controls how long the model will think before acting. Pic
     → [investigate] → checkpoint (if bug-fix with unclear root cause)
         → [ai-dlc-inception] → checkpoint
             → [ai-dlc-domain-design] → checkpoint → [ai-dlc-logical-design] → checkpoint
-                → [ai-dlc-construct] → [ai-dlc-verify] → checkpoint
-                    → [ai-dlc-release] → [ai-dlc-observe]
+                → [ai-dlc-red-team] → checkpoint → (loop back to Logical Design / Inception / Plan
+                                                    if findings route upstream, capped at 3 iterations)
+                    → [ai-dlc-construct] → [ai-dlc-verify] → checkpoint
+                        → [ai-dlc-release] → [ai-dlc-observe]
 ```
 
 ### Discovery Phase (Optional — Phase 0)
@@ -181,12 +188,14 @@ The Plan phase classifies the intent and determines which phases to run. Not eve
 | **Vague/broad request** | Discovery → Plan → (rest determined by Plan) |
 | **Bug fix (root cause known)** | Plan → Inception (light) → Construct → Verify → Release |
 | **Bug fix (root cause unclear)** | Plan → Investigate → Inception (light) → Construct → Verify → Release |
-| **Small feature** | Plan → Inception → Logical Design → Construct → Verify → Release |
-| **Full feature** | Plan → Inception → Domain Design → Logical Design → Construct → Verify → Release → Observe |
-| **Refactor** | Plan → Inception (code elevation) → Logical Design → Construct → Verify → Release |
-| **Performance** | Plan → Inception (+ profiling) → Logical Design → Construct → Verify → Release → Observe |
+| **Small feature** | Plan → Inception → Logical Design → Red Team → Construct → Verify → Release |
+| **Full feature** | Plan → Inception → Domain Design → Logical Design → Red Team → Construct → Verify → Release → Observe |
+| **Refactor** | Plan → Inception (code elevation) → Logical Design → Red Team → Construct → Verify → Release |
+| **Performance** | Plan → Inception (+ profiling) → Logical Design → Red Team → Construct → Verify → Release → Observe |
 | **Spike/research** | Plan → Inception → Domain Design → STOP |
-| **Brown-field** | Plan → Inception (code elevation + NFRs) → Domain Design → Logical Design → Construct → Verify → Release → Observe |
+| **Brown-field** | Plan → Inception (code elevation + NFRs) → Domain Design → Logical Design → Red Team → Construct → Verify → Release → Observe |
+
+**Red Team inclusion rule**: runs by default for anything that ships to production (small feature / full feature / refactor / performance / brown-field). Skipped for spike/research (no production impact) and bug-fix (scope is narrow enough that inception-level review is sufficient; can be invoked directly if the fix touches concurrency or state machines).
 
 The user can always override — add or skip phases at any checkpoint.
 
@@ -216,6 +225,7 @@ Example:
 - **ALWAYS** pause after Inception — requirements + NFRs must be approved
 - **ALWAYS** pause after Domain Design — domain model must be approved
 - **ALWAYS** pause after Logical Design — solution design must be approved
+- **ALWAYS** pause after Red Team — critical findings cannot be silently deferred; user picks loop-back vs. proceed vs. accept-and-defer. If Red Team loops back to an upstream phase, pause again after that phase re-runs before re-spawning Red Team
 - Construct + Verify flow without checkpoints between them (unless Verify finds unfixable failures)
 - **ALWAYS** pause after Verify — review results presented, NEEDS-INPUT items resolved
 - Release has its own checkpoints via ship-* stages
@@ -247,6 +257,9 @@ Common failure modes — if you catch yourself doing any of these, stop and corr
 - **Analyzing without reading the Jira ticket** — Always call `getJiraIssue` and read the full ticket.
 - **Designing without domain modeling first** — For new features, Domain Design comes before Logical Design.
 - **Skipping code elevation for brown-field** — If modifying existing code, Inception must produce static + dynamic models.
+- **Skipping Red Team because the design "looks fine"** — Red Team is cheap (15–30 min per iteration) and catches classes of failure (concurrency, partial-failure, inherited-scope) that are invisible to spec-correctness review. Only skip for spike or narrow bug-fix intents per the adaptive pipeline.
+- **Red Team fixing findings directly instead of routing back** — Red Team critiques; it never edits specs/ADRs/flows. Every finding routes to the cheapest upstream phase that can fix it (usually Logical Design; rarely Inception or Plan). Letting Red Team "fix while reviewing" defeats the critique/design separation.
+- **Looping Red Team more than 3 times** — The 3-iteration cap is the safety valve against analysis paralysis. At iteration 3 the orchestrator forces a user checkpoint: ship with remaining findings deferred, or another round. Never silently exceed the cap.
 - **Forgetting to update traceability matrix** — Every phase adds its column.
 - **Running phases inline instead of as subagents** — Always spawn phases via the Agent tool.
 - **Passing raw context to subagents** — Never include summaries, excerpts, or your interpretation in the subagent prompt. Pass file paths only. The subagent reads everything from files.
@@ -260,6 +273,8 @@ Common failure modes — if you catch yourself doing any of these, stop and corr
 - **NEVER** skip the Plan phase — always classify intent and generate Level 1 Plan
 - **NEVER** skip checkpoints — always get user approval at defined points
 - **NEVER** implement without a design — Domain Design for new concepts, Logical Design for all features
+- **NEVER** skip Red Team for production-bound work — adaptive pipeline includes it for small-feature / full-feature / refactor / performance / brown-field by default. Only spike and bug-fix may skip
+- **NEVER** exceed the 3-iteration Red Team cap silently — force a user checkpoint at iteration 3 listing remaining findings + loop-back vs. ship decision
 - **NEVER** skip TDD in the Construct phase — write tests first
 - **NEVER** switch to ship-n-check mid-flow — Release delegates internally
 - **NEVER** skip artifacts without asking the user — even for 1-line changes, ask before skipping
