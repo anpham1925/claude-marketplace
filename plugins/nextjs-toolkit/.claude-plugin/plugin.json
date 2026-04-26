@@ -1,7 +1,7 @@
 {
   "name": "nextjs-toolkit",
   "description": "Next.js 14+ patterns for App Router, Server Components, Server Actions, data fetching, and performance. 1 skill with 5 reference topics.",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": {
     "name": "An Pham"
   }
