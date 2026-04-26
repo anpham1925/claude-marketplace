@@ -2,7 +2,7 @@
 name: ship-quality
 description: "Internal stage of the ship-n-check pipeline — requirements review (blocking) plus lint, type-check, and tests. Invoke directly only via /engineering-toolkit:ship-quality when explicitly requested by name. For general requests like 'check quality' or 'run local checks', use engineering-toolkit:ship-n-check which routes here automatically."
 argument-hint: '[ticket-number]'
-model: sonnet
+model: claude-sonnet-4-6
 ---
 
 > **Recommended model: Sonnet** — Requirements cross-checking is judgment, not deep reasoning; sonnet handles it without the opus cost. Bump to opus only if requirements involve complex multi-system trade-offs.
