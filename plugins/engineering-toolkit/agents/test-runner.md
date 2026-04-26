@@ -2,7 +2,7 @@
 name: test-runner
 description: Run tests, analyze failures, fix and re-run. Use proactively when running unit tests, e2e tests, or verifying code changes pass all checks. Handles lint, type-check, and test execution.
 tools: Bash, Read, Grep, Glob, Edit
-model: sonnet
+model: claude-sonnet-4-6
 memory: user
 maxTurns: 30
 ---

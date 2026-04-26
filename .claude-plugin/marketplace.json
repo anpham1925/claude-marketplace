@@ -9,8 +9,8 @@
   "plugins": [
     {
       "name": "engineering-toolkit",
-      "description": "Core engineering toolkit — 32 skills, 8 agents, 18 rules, 8 hooks. AI-DLC (adaptive intent-to-production lifecycle) and ship-n-check (git pipeline). Config-driven git conventions, mode switching, harness engineering, language-specific rules for TypeScript/Python/Go.",
-      "version": "6.2.4",
+      "description": "Core engineering toolkit — 32 skills, 8 agents, 19 rules, 8 hooks. AI-DLC (adaptive intent-to-production lifecycle) and ship-n-check (git pipeline). Config-driven git conventions, mode switching, harness engineering, language-specific rules for TypeScript/Python/Go.",
+      "version": "6.6.0",
       "author": {
         "name": "An Pham"
       },
@@ -20,7 +20,7 @@
     {
       "name": "nestjs-toolkit",
       "description": "NestJS-specific implementation of DDD, Hexagonal Architecture, and CQRS patterns. 9 reference topics: code structure, API design, error handling, TypeORM, auth, config, domain modeling, logging.",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "author": {
         "name": "An Pham"
       },
@@ -30,7 +30,7 @@
     {
       "name": "django-toolkit",
       "description": "Django + DRF patterns for models, views, serializers, security, testing, and performance. 5 reference topics.",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "author": {
         "name": "An Pham"
       },
@@ -40,7 +40,7 @@
     {
       "name": "nextjs-toolkit",
       "description": "Next.js 14+ patterns for App Router, Server Components, Server Actions, data fetching, and performance. 5 reference topics.",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "author": {
         "name": "An Pham"
       },

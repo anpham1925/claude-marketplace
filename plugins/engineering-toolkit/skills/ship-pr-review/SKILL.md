@@ -2,7 +2,7 @@
 name: ship-pr-review
 description: "PR review stage — opens PR for review, waits for bots, reads ALL feedback (inline + issue-level + top-level), and addresses it. Use directly for 'check PR comments', 'check PR reviews', 'read PR feedback', 'what did reviewers say'. Also invoked by ship-n-check as the final pipeline stage."
 argument-hint: '[ticket-number]'
-model: sonnet
+model: claude-sonnet-4-6
 ---
 
 ## Purpose

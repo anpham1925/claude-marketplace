@@ -2,7 +2,7 @@
 name: ship-branch
 description: "Internal stage of the ship-n-check pipeline — creates branch and commits with team conventions. Invoke directly only via /engineering-toolkit:ship-branch when explicitly requested by name. For general requests like 'commit' or 'create a branch', use engineering-toolkit:ship-n-check which routes here automatically."
 argument-hint: '[ticket-number]'
-model: sonnet
+model: claude-sonnet-4-6
 ---
 
 ## Purpose

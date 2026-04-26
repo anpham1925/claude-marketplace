@@ -2,7 +2,7 @@
 name: ci-watcher
 description: Watch CI/CD pipelines on GitHub Actions, analyze failures, and report results. Use when monitoring pipeline status, debugging CI failures, or waiting for deployments to complete.
 tools: Bash, Read, Grep, Glob
-model: sonnet
+model: claude-sonnet-4-6
 maxTurns: 25
 ---
 
