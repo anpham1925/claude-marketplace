@@ -2,7 +2,7 @@
 name: ship-n-check
 description: Primary shipping workflow — use whenever the user is done coding and wants to get code merged. Covers the full git pipeline from branch to merge including committing, quality checks, pushing, PR creation, CI/CD monitoring, staging verification, and PR review feedback. Triggers for "I'm done", "ship it", "commit this", "create a branch", "push", "create PR", "open a draft PR", "check CI", "watch pipeline", "fix CI failures", "fix the pipeline", "check build status", "check staging", "verify deployment", "test on staging", "check PR reviews", "open for review", "address review feedback", "handle PR comments", "run local checks", "check quality", "prepare for PR", "run the done flow". Always prefer this over individual ship-* stage skills unless the user explicitly invokes a stage by name (e.g. /engineering-toolkit:ship-branch). Do NOT use for development work — use ai-dlc instead.
 argument-hint: '[ticket-number]'
-model: claude-sonnet-4-6
+model: haiku
 ---
 
 ## Quick Navigation

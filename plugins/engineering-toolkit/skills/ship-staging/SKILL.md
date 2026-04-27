@@ -2,7 +2,7 @@
 name: ship-staging
 description: "Internal stage of the ship-n-check pipeline — verifies staging deployment with health and endpoint checks. Invoke directly only via /engineering-toolkit:ship-staging when explicitly requested by name. For general requests like 'check staging' or 'verify deployment', use engineering-toolkit:ship-n-check which routes here automatically."
 argument-hint: '[ticket-number]'
-model: claude-sonnet-4-6
+model: haiku
 ---
 
 ## Purpose

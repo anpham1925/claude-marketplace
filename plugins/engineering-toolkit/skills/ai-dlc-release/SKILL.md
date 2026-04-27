@@ -2,7 +2,7 @@
 name: ai-dlc-release
 description: "Internal phase of the ai-dlc pipeline — gets code from branch to merged PR by delegating to the existing ship-n-check pipeline. Invoke directly only via /engineering-toolkit:ai-dlc-release when explicitly requested by name. For general requests, use engineering-toolkit:ai-dlc which routes here automatically."
 argument-hint: '[TICKET-ID]'
-model: sonnet
+model: haiku
 ---
 
 > **Recommended model: Sonnet** — Execution-focused, delegates to ship-* stages.
