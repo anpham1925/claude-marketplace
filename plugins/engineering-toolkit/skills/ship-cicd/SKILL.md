@@ -11,6 +11,23 @@ Monitor CI/CD pipelines and fix failures. Two phases: test pipelines first, then
 
 ## Steps
 
+### Spawn CI Watcher Subagent (recommended)
+
+CI monitoring + failure diagnosis is exactly the "isolated investigation" workload that benefits from a fresh subagent — the agent that wrote the code shouldn't be the one reading CI logs and proposing fixes (author bias kicks in immediately).
+
+Spawn a fresh `engineering-toolkit:ci-watcher` subagent via the Agent tool with:
+
+- This file's path as methodology
+- The PR number / branch name
+- The ticket identifier
+- The latest commit SHA
+
+The subagent runs the full Phase A (test pipelines) + Phase B (build/deploy) flow including the fix-and-retry loop (max 3 attempts), writes its `## [YYYY-MM-DD] TICKET — source: ci-fix` entry to `docs/<identifier>/review-feedback.md`, and updates `stage-gate.md`. It returns a short summary (CI status, fix attempts, blocking issues if any).
+
+The orchestrator (this agent) presents the summary at the next checkpoint and decides whether to proceed to staging.
+
+**Inline fallback**: if invoked directly from a fresh terminal (parent context small) and the user wants live progress streaming, run inline. The subagent path is the default for ship-n-check / ai-dlc-release flows.
+
 ### Gate Check
 
 Follow the [stage workflow template](../ship-n-check/reference/shared.md#stage-workflow-template). Verify "Push & PR" is checked.
