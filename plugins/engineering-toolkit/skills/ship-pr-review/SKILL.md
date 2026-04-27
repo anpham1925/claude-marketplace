@@ -11,6 +11,23 @@ Mark PR ready for review, wait for review workflows, read all feedback, and addr
 
 ## Steps
 
+### Spawn Code Reviewer Subagent (recommended)
+
+Reading + addressing PR feedback benefits from a fresh agent — the author is exactly the wrong person to evaluate "is this comment a real issue or a stylistic nit?" (rationalisation bias). A fresh subagent reads the PR comments, the diff, and the code with no prior commitment to the implementation.
+
+Spawn a fresh `engineering-toolkit:code-reviewer` subagent via the Agent tool with:
+
+- This file's path as methodology
+- The PR number
+- The ticket identifier
+- The branch name
+
+The subagent runs the full "Open PR for Review" + "Address Reviews" flow: marks the PR ready, waits for review-bot workflows, reads ALL feedback (inline + issue-level + top-level + bot comments), categorizes (BLOCKER / AUTO-FIX / NEEDS-INPUT / INFO), applies AUTO-FIX items with the fix-and-retry loop (max 3 attempts per item), writes its `## [YYYY-MM-DD] TICKET — source: pr-review` entry to `docs/<identifier>/review-feedback.md`, and updates `stage-gate.md`. NEEDS-INPUT items are written back to `state.md` so the orchestrator can surface them.
+
+The orchestrator (this agent) reads the review-feedback entry + state.md after the subagent returns, then presents NEEDS-INPUT items to the user.
+
+**Inline fallback**: if there's a single trivial review comment and the user wants direct visibility into the fix, run inline. The subagent path is the default for ship-n-check / ai-dlc-release flows.
+
 ### Gate Check
 
 Follow the [stage workflow template](../ship-n-check/reference/shared.md#stage-workflow-template). Verify "Staging" is checked.

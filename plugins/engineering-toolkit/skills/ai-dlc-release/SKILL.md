@@ -29,6 +29,22 @@ AI-DLC's Release phase reuses the battle-tested ship-n-check pipeline. There's n
 
 ## Steps
 
+### Spawn Release Subagent (when invoked from a long-running ai-dlc session)
+
+By the time Release runs, the parent conversation has typically accumulated Plan + Inception + Domain Design + Logical Design + (optionally Red Team) + Construct + Verify — easily 100k+ tokens. Running ship-n-check inline against that parent context blows the budget on every model tier (Haiku-200k overflows; Sonnet-1M needs paid tier).
+
+**If the parent context is large** (rule of thumb: this is being invoked from the AI-DLC orchestrator after Verify), spawn a fresh `general-purpose` subagent via the Agent tool to run the full release flow. Pass it ONLY:
+
+- This file's path as methodology
+- The identifier (e.g. `market-ta-phase-9-signal-quality`)
+- The ticket number if any
+
+The subagent reads `docs/<identifier>/state.md` for pipeline context, then executes "Check State", "Determine Ticket", "Delegate to Ship Pipeline", "Post-Release Jira", "Archive Pipeline Artifacts", and "Update State" itself. It writes a final consolidated report (PR URL, merge SHA, archived artifacts list) back to `state.md` and returns a short summary to the orchestrator.
+
+The orchestrator (this agent) then reads `state.md`, presents the result at the AI-Initiated Recommendation checkpoint, and asks about Observe.
+
+**If invoked from a fresh terminal** (no large parent context): run inline without spawning a subagent — the spawn cost outweighs the isolation benefit.
+
 ### Check State
 
 Read `docs/<identifier>/state.md`. Verify that Verify is completed. See [shared reference](../ai-dlc/reference/shared.md) for format.
