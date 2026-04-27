@@ -2,7 +2,7 @@
 name: ship-push-pr
 description: "Internal stage of the ship-n-check pipeline — pushes branch and creates a draft PR. Invoke directly only via /engineering-toolkit:ship-push-pr when explicitly requested by name. For general requests like 'push' or 'create PR', use engineering-toolkit:ship-n-check which routes here automatically."
 argument-hint: '[ticket-number]'
-model: claude-sonnet-4-6
+model: haiku
 ---
 
 ## Purpose

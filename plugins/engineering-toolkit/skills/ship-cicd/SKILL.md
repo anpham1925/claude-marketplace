@@ -2,7 +2,7 @@
 name: ship-cicd
 description: "Internal stage of the ship-n-check pipeline — monitors CI/CD pipelines and fixes failures. Invoke directly only via /engineering-toolkit:ship-cicd when explicitly requested by name. For general requests like 'check CI' or 'fix the pipeline', use engineering-toolkit:ship-n-check which routes here automatically."
 argument-hint: '[ticket-number]'
-model: claude-sonnet-4-6
+model: haiku
 ---
 
 ## Purpose
