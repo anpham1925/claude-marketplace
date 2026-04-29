@@ -7,6 +7,26 @@ model: opus
 
 > **Recommended model: Opus** — Deep reasoning for challenging assumptions and reframing problems.
 
+## Invocation Mode
+
+Follows the [skill-dispatch-pattern rule](../../rules/skill-dispatch-pattern.md#direct-invocation-dispatch).
+
+**Direct invocation** (`/engineering-toolkit:ai-dlc-discovery`): the parent MUST split the work — the **exploration prep** runs in a Task subagent, the **interactive forcing-question loop** runs in the parent (subagents cannot use `AskUserQuestion`).
+
+Subagent prompt (returns a "discovery brief" — grounded answers + recommendations for each of the 6 forcing questions, drawn from `getJiraIssue`, codebase exploration, `git log`, prior `prd-plans/`, Honeycomb where applicable):
+
+> You are the Discovery prep subagent. Read `<absolute-path-to-this-SKILL.md>` (skip the Invocation Mode block). Execute steps "Read the Intent" and the EXPLORATION portion of "Challenge with 6 Forcing Questions" — for each forcing question, produce a grounded recommended answer and 1-2 alternatives, drawn from code/tickets/logs. Do NOT call `AskUserQuestion`, do NOT write `discovery.md`, do NOT update `state.md`. Return a structured brief: per-question recommendation + evidence + alternatives.
+
+**Indirect invocation** (called by ai-dlc orchestrator): skip this block and proceed to the steps; the orchestrator already isolated you.
+
+**Parent-only after-actions**:
+- Run the 6 `AskUserQuestion` forcing questions one-by-one, using the subagent's grounded recommendation in each (per the "Recommend an answer per question" rule)
+- `AskUserQuestion` to confirm the reframed problem
+- Generate the 3 approaches (Narrow Wedge / Balanced / Full Vision) — synthesis is light enough to run in parent
+- Write `docs/<identifier>/discovery.md`
+- Update `docs/<identifier>/state.md`
+- CHECKPOINT recommending Plan
+
 ## Agent: Discovery
 
 **Mission**: Challenge the problem statement, push back on solution-first thinking, surface hidden requirements, and recommend the narrowest viable wedge before engineering begins.

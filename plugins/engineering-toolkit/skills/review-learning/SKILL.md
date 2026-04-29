@@ -7,6 +7,28 @@ model: sonnet
 
 Analyze review feedback across tickets and turn repeated patterns into durable improvements (rules, skills, agents, lint config).
 
+## Invocation Mode
+
+Follows the [skill-dispatch-pattern rule](../../rules/skill-dispatch-pattern.md#direct-invocation-dispatch).
+
+**Direct invocation** (or auto-triggered by ai-dlc-release when 3+ tickets have feedback): the parent MUST stop here and dispatch via the Task tool. Do NOT execute the steps below inline — globbing `docs/**/review-feedback.md` and reading every entry across many tickets will fill the parent context with raw feedback before any synthesis happens.
+
+Subagent prompt:
+
+> You are the review-learning subagent. Read `<absolute-path-to-this-SKILL.md>` (skip the Invocation Mode block). Execute steps 1–7 (Read Feedback Logs, Parse, Categorize, Filter Already-Addressed, Detect Repeats, Assess Severity, Generate Report). Do NOT execute step 8 (Apply Improvements), step 9 (Mark Items as Addressed), or step 10 (Mark Analysis Complete). Return ONLY:
+> - Tickets analyzed: <count>
+> - Patterns found: <list with counts + severity>
+> - Recommended actions: <prioritized list — for each, the proposed file edit + rationale>
+> - One-off issues skipped: <count>
+> - Full Report markdown: <the synthesized "Review Learning Analysis" report>
+
+**Parent-only after-actions**:
+- Present the report and recommended actions to the user
+- For each recommended action, `AskUserQuestion` to approve/skip/modify before applying any rule/skill/agent edit
+- Apply approved edits via Edit on rule/skill/agent files (step 8)
+- Mark items as addressed in the source `review-feedback.md` files (step 9 — append-only, never overwrite)
+- Write the analysis report (step 10)
+
 ## Feedback File Location
 
 Review feedback lives in the repo under `docs/<identifier>/review-feedback.md` — one file per ticket/branch. To collect feedback across all tickets, glob `docs/**/review-feedback.md`.

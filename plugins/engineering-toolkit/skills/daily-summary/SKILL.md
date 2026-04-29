@@ -16,6 +16,25 @@ model: sonnet
 
 Aggregate work activity across GitHub, Jira, and Slack for a given day, format it as a standup (Done / In Progress / Blockers), and send it as a Slack DM to yourself.
 
+## Invocation Mode
+
+Follows the [skill-dispatch-pattern rule](../../rules/skill-dispatch-pattern.md#direct-invocation-dispatch).
+
+**Direct invocation** (the only mode for this skill): the parent MUST stop here and dispatch via the Task tool. Do NOT execute the steps below inline — three external API surfaces (GitHub, Jira, Slack) returning pages of activity payloads will saturate the parent transcript on a single bad day.
+
+Subagent prompt:
+
+> You are the daily-summary subagent. Read `<absolute-path-to-this-SKILL.md>` (skip the Invocation Mode block). Execute Steps 1–3 (Resolve Identities, Gather Activity in parallel across GitHub/Jira/Slack, Synthesize Standup). Do NOT send the Slack DM in step 4 — return the formatted standup markdown to the parent. Return ONLY:
+> - Date covered: <YYYY-MM-DD>
+> - Standup markdown: <full Done/In-Progress/Blockers block>
+> - Counts: <PRs merged, tickets touched, threads scanned>
+> - Slack DM target: <user identity resolved, e.g. @anpham>
+> - Warnings (rate limits, auth issues): <list, if any>
+
+**Parent-only after-actions**:
+- Show the standup markdown to the user (single message — do not paraphrase)
+- Send the Slack DM (Step 4) only after user confirms — this is a side effect visible to the user themselves; one-click confirmation, not a full `AskUserQuestion`
+
 ## Prerequisites
 
 This skill queries 3 external systems. For each, it prefers CLI tools and falls back to MCP:

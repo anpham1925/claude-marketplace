@@ -7,6 +7,23 @@ model: opus
 
 > **Recommended model: Opus** — Deep reasoning for requirements analysis, NFR extraction, and risk assessment.
 
+## Invocation Mode
+
+Follows the [skill-dispatch-pattern rule](../../rules/skill-dispatch-pattern.md#direct-invocation-dispatch).
+
+**Direct invocation** (`/engineering-toolkit:ai-dlc-inception`): the parent MUST stop here and dispatch via the Task tool using the rule's template, then act on the returned summary. Do NOT execute the steps below inline — the heavy reads (Jira ticket, repo registry, multi-repo Explore subagents, prior `prd-plans/` scan) accumulate into the parent transcript.
+
+**Indirect invocation** (called by ai-dlc orchestrator's Agent tool with file paths only): skip this block and proceed to the steps. The orchestrator already isolated you in a subagent.
+
+**Parent-only after-actions** (only on direct invocation, after subagent returns):
+- `AskUserQuestion` to confirm proposed repo list (subagent provides recommendation grounded in repo registry)
+- `AskUserQuestion` to confirm any **inferred** NFRs (subagent flags NFRs it derived rather than read from ticket)
+- `AskUserQuestion` to confirm Observability Plan coverage
+- Write `docs/<identifier>/prd-plans/inception.md` (subagent returns content; parent writes)
+- Post Jira summary comment
+- Update `docs/<identifier>/state.md` (mark Inception complete, populate ACs/NFRs/risks/measurement, seed traceability matrix)
+- Run CHECKPOINT per [AI-initiated recommendation protocol](../ai-dlc/reference/shared.md#ai-initiated-recommendation-protocol)
+
 ## Agent: Inceptor
 
 **Mission**: Understand the intent and produce a comprehensive Inception Artifact covering requirements, NFRs, risks, measurement criteria, and code elevation (for brown-field).
