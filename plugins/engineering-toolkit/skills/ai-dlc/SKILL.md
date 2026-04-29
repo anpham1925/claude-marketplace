@@ -103,6 +103,10 @@ Example prompt for Inception:
 You are the Inception agent for ticket PROJ-123.
 
 Read the methodology: /path/to/skills/ai-dlc-inception/SKILL.md
+SKIP the `## Invocation Mode` block at the top — that gate is for direct
+slash-command invocation. You are an indirect caller (orchestrator subagent),
+so proceed straight to the **Steps** section. Dispatching another subagent
+from inside this one would be redundant nested dispatch.
 
 Read your inputs:
 - docs/PROJ-123/state.md (contains Level 1 Plan from previous phase)
@@ -113,6 +117,8 @@ Write your outputs:
 
 Ticket: PROJ-123
 ```
+
+**This skip-instruction is mandatory** for every orchestrator-spawned phase subagent. The phase SKILL.md files (Inception, Discovery, Red Team, Verify, etc.) all begin with an `## Invocation Mode` block per [skill-dispatch-pattern](../../rules/skill-dispatch-pattern.md). Without the explicit skip, the subagent will read the gate, dispatch a new subagent, and the orchestrator's subagent does no actual work.
 
 ### What the Orchestrator Does Between Phases
 

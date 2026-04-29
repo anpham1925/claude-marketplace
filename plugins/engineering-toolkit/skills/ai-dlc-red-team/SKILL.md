@@ -7,6 +7,21 @@ model: opus
 
 > **Recommended model: Opus** — Adversarial reasoning needs depth and breadth; cheaper models miss subtler failure modes.
 
+## Invocation Mode
+
+Follows the [skill-dispatch-pattern rule](../../rules/skill-dispatch-pattern.md#direct-invocation-dispatch).
+
+**Direct invocation** (`/engineering-toolkit:ai-dlc-red-team` or `... whole-system`): the parent MUST stop here and dispatch via the Task tool using the rule's template. Do NOT execute the steps below inline — Red Team reads every artifact in full (`inception.md`, `specs.md`, `flows.md`, all `ADR-*.md`, optionally `domain-model.md`, plus a code-surface spot-check) and walks 9 attack categories. That payload belongs in a subagent, not the parent.
+
+**Indirect invocation** (called by ai-dlc orchestrator's Agent tool): skip this block and proceed to the steps.
+
+**Parent-only after-actions**:
+- Write `docs/<identifier>/red-team-report.md` from subagent's returned findings table
+- Update `docs/<identifier>/improvements.md` for deferred MINOR/NIT findings
+- Update `docs/<identifier>/state.md` with iteration count + routing decision
+- `AskUserQuestion` for the loop-back / accept-and-defer / escalate decision (subagent must NEVER silently defer CRITICAL findings — it returns them with `NEEDS_USER_INPUT` and the parent surfaces the choice)
+- For whole-system mode: write `docs/red-team-audit-YYYY-MM-DD/report.md` instead
+
 ## Agent: Red Teamer
 
 **Mission**: Attack the design *before* it becomes code. Read the specs, ADRs, and flows as an adversary and find the classes of failure they don't cover: concurrency, partial failure, hostile inputs, error cascades, scale, time, inherited scope, user behavior, and client-side provider/config wiring. Emit structured findings that route back to the phase best equipped to fix each one. Loop until convergence, capped at 3 iterations.

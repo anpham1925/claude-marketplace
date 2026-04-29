@@ -7,6 +7,22 @@ model: opus
 
 > **Recommended model: Opus** — Deep reasoning for acceptance verification and code review.
 
+## Invocation Mode
+
+Follows the [skill-dispatch-pattern rule](../../rules/skill-dispatch-pattern.md#direct-invocation-dispatch).
+
+**Direct invocation** (`/engineering-toolkit:ai-dlc-verify`): the parent MUST stop here and dispatch via the Task tool. Do NOT execute the steps below inline — Verify already mandates a "fresh subagent" to avoid Constructor bias, AND it reads inception.md/specs.md/the full code diff/test runs/NFR evidence. Inlining all of that into the parent defeats both the bias-isolation goal and the context budget.
+
+**Indirect invocation** (called by ai-dlc orchestrator with file paths): skip this block and proceed.
+
+**Parent-only after-actions**:
+- For each fix candidate the subagent proposes: `AskUserQuestion` to approve before applying (subagent must NOT auto-fix; it returns proposed edits with file:line + rationale)
+- Apply approved fixes via Edit
+- Append findings to `docs/<identifier>/review-feedback.md` (subagent returns the entries; parent appends — never overwrite)
+- Update `docs/<identifier>/state.md` (Verification Report, AC status, NFR compliance)
+- Update Jira (post verification summary comment)
+- CHECKPOINT — present results, surface NEEDS-INPUT items
+
 ## Agent: Verifier
 
 **Mission**: Confirm every acceptance criterion is met, review code quality, validate traceability completeness, and verify NFR compliance.
