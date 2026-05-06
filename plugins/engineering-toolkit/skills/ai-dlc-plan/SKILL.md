@@ -27,6 +27,40 @@ Traditional development lifecycles run every stage for every task. AI-DLC adapts
 
 ## Steps
 
+### Step 0 — Deferral Debt Check
+
+Before classifying intent, surface any deferrals from prior phases so the user can decide whether this phase should pay them down. Deferrals come from two sources:
+
+1. **`docs/IMPROVEMENTS.md`** — the rolled-up open follow-ons across phases. Read the file (skip if it doesn't exist; older repos predate the convention).
+2. **Commit log markers** — `system-map-defer:` lines in commit bodies on `origin/main` or `origin/master` over the last 90 days. Run:
+
+   ```bash
+   git log --grep 'system-map-defer:' origin/main --since='90 days' --format='%h %s%n%b' 2>/dev/null \
+     || git log --grep 'system-map-defer:' origin/master --since='90 days' --format='%h %s%n%b'
+   ```
+
+   Each match is a SYSTEM.md update that was punted to a later PR. The SYSTEM-MAP-FRESH gate is a project-side convention (typically a `.husky/pre-push` hook) that consumer repos opt into — this skill only reads its output (the `system-map-defer:` markers in commit history). If the consumer repo doesn't use the convention, only `docs/IMPROVEMENTS.md` will surface deferrals here.
+
+If both sources are empty, log "no open deferrals" and continue.
+
+Otherwise, present the deferrals to the user via `AskUserQuestion`:
+
+> **{N} open deferrals from prior phases:**
+>
+> 1. {ID} — {one-line title} ({status} — {trigger})
+> 2. ...
+>
+> Which (if any) should this phase pay down?
+
+Options:
+- **Pay down 1+** (multiSelect): user picks specific IDs. Add them to the Level 1 Plan as in-scope; Inception writes ACs for each. Release will auto-close them.
+- **Pay down none**: skip — these stay open and will re-surface at the next phase's Step 0.
+- **Block this phase on a deferral**: rare path. If a deferral is a hard prerequisite (e.g., "S-6 staging measurement must happen before adding more cron"), Plan should refuse to proceed and recommend running the deferral payment as its own phase first.
+
+**Output**: append a `## Deferral Payments In Scope` section to the Level 1 Plan listing each chosen ID + the AC scaffold (e.g., "AC-X — closes IMPROVEMENTS.md S-1"). If none, write `## Deferral Payments In Scope: none`.
+
+**Why this is step 0**: Plan classifies intent and decides which downstream phases run. Open deferrals can change the classification (e.g., bumping a "small feature" into a "performance" pipeline that needs Observe). Surfacing deferrals after classification is too late — the user has already invested planning attention in a possibly-wrong frame.
+
 ### Check for Existing State
 
 Read `docs/<identifier>/state.md` if it exists. If Plan is already completed, ask the user if they want to re-plan. See [shared reference](../ai-dlc/reference/shared.md) for state.md format.
