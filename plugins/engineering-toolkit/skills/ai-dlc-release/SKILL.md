@@ -94,7 +94,7 @@ For each closed deferral ID:
 
 3. **Update the Status index** at the top of `docs/IMPROVEMENTS.md` (if it has one) to drop the row for the closed ID.
 
-4. **Verify no orphan references** — grep `docs/IMPROVEMENTS.md` for the closed ID; if any survive, that's a bug in this step. Fix or report.
+4. **Verify no orphan references** — search `docs/IMPROVEMENTS.md` for the closed ID using **exact-token / word-boundary matching** so `S-1` doesn't false-match `S-10`, `S-11`, etc. Examples: `grep -w 'S-1' docs/IMPROVEMENTS.md` or `grep -E '\bS-1\b' docs/IMPROVEMENTS.md`. If any survive, that's a bug in this step. Fix or report.
 
 Commit: `chore: [TICKET] close deferral <ID-list> in IMPROVEMENTS.md (post-merge)`
 
