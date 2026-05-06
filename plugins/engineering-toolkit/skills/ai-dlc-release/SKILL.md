@@ -76,6 +76,32 @@ After the PR is merged:
 - Transition ticket to "Done" (use `getTransitionsForJiraIssue` + `transitionJiraIssue`)
 - Post final comment with PR link and summary
 
+### Close Deferral Payments
+
+If Plan's `## Deferral Payments In Scope` section listed deferrals being paid down by this phase, close the loop now. Skip if the section says `none` or doesn't exist.
+
+For each closed deferral ID:
+
+1. **Update the originating per-phase improvements file**. The path was recorded in `docs/IMPROVEMENTS.md` as the entry's `**Source**:` line (typically `docs/_archive/<phase>/improvements.md` post-archive-migration; older repos may have it at `docs/<phase>/improvements.md`). Append to that entry's body:
+
+   ```markdown
+   **Status: Closed YYYY-MM-DD** — paid down in phase <this-phase-id> (PR #<n>).
+   ```
+
+   Use today's date and the merge PR number from the previous step.
+
+2. **Remove the entry from `docs/IMPROVEMENTS.md`** (the rolled-up living list). The rollup tracks *open* items only — closed ones live in their archived per-phase file. If the closed entry was the only one under a phase header, remove the phase header too.
+
+3. **Update the Status index** at the top of `docs/IMPROVEMENTS.md` (if it has one) to drop the row for the closed ID.
+
+4. **Verify no orphan references** — grep `docs/IMPROVEMENTS.md` for the closed ID; if any survive, that's a bug in this step. Fix or report.
+
+Commit: `chore: [TICKET] close deferral <ID-list> in IMPROVEMENTS.md (post-merge)`
+
+**Why this is here, not in Construct/Verify**: Plan put the deferral into scope as ACs; Construct + Verify confirmed the work shipped. The IMPROVEMENTS.md rollup is downstream-of-merge bookkeeping, not part of the feature itself. Doing it post-merge means the closure entry can cite the actual merge PR number.
+
+**Why this is automatic, not user-prompted**: a deferral that's been paid down is no longer open. Asking the user "should I close S-1?" after they explicitly chose to pay it down at Plan step-0 is friction tax, not a real decision.
+
 ### Archive Pipeline Artifacts
 
 After merge, separate durable knowledge from ephemeral plumbing:
