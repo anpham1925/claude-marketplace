@@ -58,17 +58,34 @@ Extract the ticket number from:
 
 ### Delegate to Ship Pipeline
 
-Invoke each ship stage skill sequentially via the Skill tool:
+Invoke each ship stage skill sequentially via the Skill tool. **All seven stages are mandatory. None may be skipped, none may be reordered.**
 
 1. **Branch & Commit**: invoke `/engineering-toolkit:ship-branch {ticket}`
 2. **Quality Checks**: invoke `/engineering-toolkit:ship-quality {ticket}`
-3. **Simplify**: invoke `/simplify`
+3. **Simplify**: invoke `/simplify` ← historically the silent-skip footgun; see Return Contract below
 4. **Push & PR**: invoke `/engineering-toolkit:ship-push-pr {ticket}`
 5. **CI/CD**: invoke `/engineering-toolkit:ship-cicd {ticket}`
 6. **Staging**: invoke `/engineering-toolkit:ship-staging {ticket}`
 7. **PR Review**: invoke `/engineering-toolkit:ship-pr-review {ticket}`
 
 Each ship stage has its own checkpoints and gates. Follow them as defined in the ship-n-check pipeline.
+
+#### Return Contract (mandatory)
+
+Your final return summary to the orchestrator MUST include a section:
+
+```
+### Executed Stages
+- [x] ship-branch
+- [x] ship-quality
+- [x] /simplify
+- [x] ship-push-pr
+- [x] ship-cicd
+- [x] ship-staging
+- [x] ship-pr-review
+```
+
+If any stage was skipped (e.g., no staging environment exists), mark it `[skipped: <reason>]` instead of removing it. **Removing a stage line is forbidden.** The orchestrator parses this checklist and rejects the Release return if any stage is absent.
 
 ### Post-Release Jira Updates
 
