@@ -120,13 +120,58 @@ Ticket: PROJ-123
 
 **This skip-instruction is mandatory** for every orchestrator-spawned phase subagent. The phase SKILL.md files (Inception, Discovery, Red Team, Verify, etc.) all begin with an `## Invocation Mode` block per [skill-dispatch-pattern](../../rules/skill-dispatch-pattern.md). Without the explicit skip, the subagent will read the gate, dispatch a new subagent, and the orchestrator's subagent does no actual work.
 
+### Release-phase spawn rule (NO STAGE PARAPHRASE)
+
+The Release phase delegates to `ship-n-check`'s 7-stage pipeline. The canonical stage list lives in `ai-dlc-release/SKILL.md` §Delegate to Ship Pipeline and includes `/simplify` between `ship-quality` and `ship-push-pr`.
+
+**When spawning the Release subagent, the orchestrator MUST NOT enumerate the ship-* stages in the spawn prompt.** Paraphrasing the list from memory has historically dropped `/simplify` (the silent-skip footgun). The spawn prompt should read:
+
+```
+You are the Release agent for AI-DLC, scoped to identifier <id>.
+
+Read the methodology FIRST, in full, and follow its 7-stage list verbatim:
+- /path/to/skills/ai-dlc-release/SKILL.md
+
+SKIP the `## Invocation Mode` block (orchestrator subagent — no nested dispatch).
+
+Do NOT use any stage list from this prompt. The methodology owns the
+stage list; this prompt only owns the identifier and the inputs.
+
+Read your inputs:
+- docs/<id>/state.md
+
+Return contract: your final summary MUST list every ship-* stage you
+executed, in order. The orchestrator will reject the return if any stage
+declared in ai-dlc-release/SKILL.md is missing (especially /simplify).
+```
+
+If you find yourself listing ship-* stages in a Release spawn prompt, **stop and delete the list** — point to the methodology instead.
+
 ### What the Orchestrator Does Between Phases
 
 After each subagent completes:
-1. **Read the artifact files** — read `state.md` and the phase's output artifact (e.g., `prd-plans/inception.md`, `prd-plans/domain-model.md`, `prd-plans/specs.md`). Do NOT rely on the subagent's return text for context.
-2. **Build the checkpoint summary** from the artifact files — extract key findings, counts, decisions
-3. Present the checkpoint to the user using the [AI-initiated recommendation protocol](#ai-initiated-flow)
-4. On user approval, spawn the next subagent (passing only file paths)
+1. **Verify artifacts exist on disk** — see [Artifact Verification](#artifact-verification) below. This is the FIRST step. REJECT the return if any declared artifact is missing.
+2. **Read the artifact files** — read `state.md` and the phase's output artifact (e.g., `prd-plans/inception.md`, `prd-plans/domain-model.md`, `prd-plans/specs.md`). Do NOT rely on the subagent's return text for context.
+3. **Build the checkpoint summary** from the artifact files — extract key findings, counts, decisions
+4. Present the checkpoint to the user using the [AI-initiated recommendation protocol](#ai-initiated-flow)
+5. On user approval, spawn the next subagent (passing only file paths)
+
+### Artifact Verification
+
+Before accepting any subagent's return, the orchestrator MUST check that the phase's declared output artifacts exist on disk. The declared outputs live in the phase table above ("Inputs/Outputs" column).
+
+For each artifact listed in the phase's Outputs cell:
+1. Resolve the path under `docs/<identifier>/`.
+2. If the artifact is a glob (e.g., `prd-plans/ADR-*.md`), check that at least one file matches.
+3. If `state.md` is in the outputs (it almost always is), additionally verify that the file's mtime is newer than the spawn time of the subagent — a stale state.md means the subagent did not update it.
+4. If ANY required artifact is missing or stale, REJECT the return:
+   - Tell the user which artifact(s) the subagent failed to produce.
+   - Ask whether to (a) re-spawn the subagent with a tightened brief, (b) hand-fix the missing artifact, or (c) abort the pipeline.
+   - Do NOT silently move on to the checkpoint summary.
+
+**Why**: subagents can return "done" with cheerful prose while having silently dropped a deliverable. This actually happens — Construct has claimed traceability-matrix updates that never landed, Release has claimed Simplify ran when it never did, etc. The orchestrator's stat-the-files step is cheap (<1s) and catches the entire class of "I forgot to write this" failures.
+
+**Exception**: artifacts marked "if exists" in the phase table (e.g., `domain-model.md (if exists)`) are optional and don't trigger rejection if absent. Required artifacts are those without an "if exists" qualifier.
 
 **Why files over return text**: If the session dies between phases, artifact files persist. The next session reads `state.md`, sees which phase completed last, and resumes. No context is lost.
 
@@ -273,6 +318,8 @@ Common failure modes — if you catch yourself doing any of these, stop and corr
 - **Relaying subagent prose tradeoffs verbatim to the user** — When a phase subagent returns A/B/C options in prose (even labeled "USER-FACING" or "surfaced for checkpoint"), **do NOT paste that prose into the checkpoint message**. The orchestrator MUST translate every user-facing tradeoff into an `AskUserQuestion` tool call — one question, 2–3 options, recommended-first with "(Recommended)" suffix. Prose-with-typed-letters is always wrong, no matter how well-formatted. See [Open Questions Protocol](reference/shared.md#open-questions-protocol) §"Orchestrator translation of subagent-surfaced questions". If the tool isn't in your current tool list, load it via `ToolSearch({ query: "select:AskUserQuestion", max_results: 1 })` — deferred-tool friction is not a valid excuse to regress to prose.
 - **Forgetting NFR validation in Verify** — Each NFR from Inception must have corresponding implementation.
 - **Skipping Observe for features with NFRs** — If Inception identified performance/reliability NFRs, always Observe.
+- **Paraphrasing the Release stage list and dropping /simplify** — The 7-stage list in `ai-dlc-release/SKILL.md` includes `/simplify` between `ship-quality` and `ship-push-pr`. If the orchestrator's spawn prompt enumerates stages from memory, `/simplify` (and `ship-staging`, and any other "lighter" stage) routinely gets dropped. The Release-spawn prompt MUST point to `ai-dlc-release/SKILL.md` verbatim and MUST require the subagent to return its executed-stages list so the orchestrator can verify nothing was skipped. See [Release-phase spawn rule](#release-phase-spawn-rule-no-stage-paraphrase). This footgun bit Phase 15a Wave 11 (cross-file SQL duplication in integration tests slipped past Release because Simplify never ran).
+- **Trusting subagent return text instead of checking artifacts on disk** — Subagents can (and do) return cheerful "done" prose while having silently dropped a deliverable. Construct has claimed traceability-matrix updates that never landed; Verify has claimed `review-feedback.md` was written when it wasn't. **The orchestrator MUST run the Artifact Verification step** ([see above](#artifact-verification)) before reading the return as authoritative. Stat the files listed in the phase table's Outputs cell; reject the return if any required artifact is missing or has an mtime older than the subagent spawn time. Cheap (<1s) and catches the entire class of "forgot to write" failures.
 
 ## Rules
 
