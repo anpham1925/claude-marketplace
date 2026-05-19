@@ -61,11 +61,24 @@ The pipeline maintains a state file at `docs/<identifier>/state.md` for resumabi
 |----|-------------|-----------------|------------|------------|
 | AC-1 | {entity/aggregate} | {option chosen} | {file paths} | {test paths} |
 
-## Key Decisions
-- {Decision 1 — made during which phase}
+## Decisions
+| ID | Phase | Decision | Status | Superseded By | Rationale |
+|----|-------|----------|--------|---------------|-----------|
+| D-1 | Logical Design | Use saga handler for hipay refund call | active | — | Domain handlers must stay synchronous; external API calls go through sagas |
+| D-2 | Logical Design | Refund as write-model aggregate | superseded | D-3 | Red Team flagged eligibility queries don't need refund state |
+| D-3 | Red Team loop 1 → Logical Design | Refund as domain event, not aggregate | active | — | Replaces D-2 after Red Team finding RT-2 |
 
 ## Blockers / Open Questions
 - {Blocker or question — status}
+
+## Activity Log
+Append-only. One row per phase completion, checkpoint, or material change. Newest at the bottom.
+
+| Timestamp | Phase | Action | Commit SHA | Notes |
+|-----------|-------|--------|------------|-------|
+| 2026-05-07T09:12Z | Plan | completed | abc1234 | Intent: brown-field; pipeline includes Red Team |
+| 2026-05-07T10:45Z | Inception | completed | def5678 | 4 ACs, 2 NFRs, 1 risk |
+| 2026-05-07T12:30Z | Red Team | iteration 1 → loop back to Logical Design | — | Finding RT-2 supersedes D-2 |
 
 ## Artifacts
 - `prd-plans/inception.md` — {created | pending}
@@ -89,9 +102,62 @@ Every ai-dlc phase skill MUST follow these rules. Phase-specific SKILL.md files 
 - **ALWAYS** check for `state.md` at the start — resume if a previous session was interrupted
 - **ALWAYS** update the traceability matrix as phases complete (see [Traceability Matrix Protocol](#traceability-matrix-protocol))
 - **ALWAYS** ask open questions one at a time with multiple-choice options (see [Open Questions Protocol](#open-questions-protocol))
+- **ALWAYS** append a row to state.md "Activity Log" when the phase completes, when a checkpoint resolves, or when a decision changes status (see [Decision Lifecycle Protocol](#decision-lifecycle-protocol))
+- **ALWAYS** add new decisions to the state.md "Decisions" table — one row per decision, never inline-edit prose
+- **NEVER** delete or rewrite a decision — supersede it by setting `Status: superseded`, `Superseded By: D-N`, and adding a new row for the replacement
 - **NEVER** auto-fix debatable items — always ask the user
 - **NEVER** dump a long list of open questions on the user — ask one at a time
 - If the phase fails or gets stuck, **STOP** and inform the user — don't retry endlessly
+
+---
+
+## Decision Lifecycle Protocol
+
+Decisions made during the pipeline (option picks, design tradeoffs, scope cuts) live in the **Decisions** table in state.md. They are append-only and never rewritten.
+
+### Why
+
+Red Team loops, scope renegotiations, and post-Verify findings routinely overturn earlier decisions. If decisions are silently rewritten, the trail of *why the design changed* disappears — future engineers (and the next AI session) lose the context they need to avoid re-litigating the same tradeoff. ADRs cover the material/architectural decisions; this table covers the medium-tier ones that don't earn an ADR but still shape the build.
+
+### What counts as a decision
+
+Add a row when:
+- A phase picks one option from 2+ alternatives that the user (or red-team) might reasonably revisit
+- A scope or interface boundary is fixed
+- An NFR target is committed to a specific number
+- A library / pattern / dependency is chosen for a new concern
+
+Do NOT add a row for:
+- Trivial naming choices already covered by team rules
+- Things already captured in an ADR (ADRs are the authoritative record — link from the Decisions row instead)
+
+### Lifecycle
+
+```
+active ──supersede──▶ superseded
+   │                     ▲
+   └─── new row added ───┘
+        with Superseded By: D-{old}
+```
+
+When a phase replaces an earlier decision (most commonly, Red Team loop-back to Logical Design):
+1. **Do not delete** the existing row.
+2. Set the existing row's `Status: superseded` and `Superseded By: D-{new ID}`.
+3. **Add a new row** for the replacement decision with its own `D-{N}` ID, `Status: active`, and a Rationale that names which finding/feedback drove the change (e.g., "Replaces D-2 after Red Team finding RT-2").
+
+### Activity Log
+
+Sister artifact in the same state.md. Append-only. One row per:
+- Phase completion (e.g., "Inception completed")
+- Red Team iteration result (e.g., "Red Team loop 1 → loop back to Logical Design")
+- Decision status change (e.g., "D-2 superseded by D-3")
+- Material checkpoint result (e.g., "User approved Logical Design v2")
+
+Include `Commit SHA` when the change was committed; `—` when in-flight. The log is the canonical resume narrative — when a session dies and resumes, the orchestrator reads the tail of this log first.
+
+### Rule of thumb
+
+If you find yourself editing an existing Decisions row to change its content (other than flipping status to `superseded` and filling in `Superseded By`), stop — that's a protocol violation. Add a new row instead.
 
 ---
 
@@ -107,7 +173,7 @@ Ask **one question at a time** (one `AskUserQuestion` invocation per question, w
 - A `header` chip (≤12 chars) and a clear `question` ending in a question mark.
 - Rich `description` per option explaining the tradeoff.
 
-Wait for the user's answer before moving to the next question. Record each answer inline in the relevant artifact (e.g., `prd-plans/inception.md` "Open Questions" section, `state.md` "Key Decisions") as it's resolved — don't batch writes.
+Wait for the user's answer before moving to the next question. Record each answer inline in the relevant artifact (e.g., `prd-plans/inception.md` "Open Questions" section, `state.md` "Decisions" table per the [Decision Lifecycle Protocol](#decision-lifecycle-protocol)) as it's resolved — don't batch writes.
 
 ### Invocation shape
 
