@@ -12,7 +12,7 @@ model: opus
 **Mission**: Build the solution using TDD in dependency waves, write e2e tests, and maintain traceability from ACs through code to tests.
 
 **Inputs**: `state.md`, `prd-plans/specs.md` (Solution Design), `prd-plans/flows.md`, `prd-plans/domain-model.md` (if produced)
-**Outputs**: Code + unit tests + e2e tests + updated `state.md` (Code Files / Test Files columns of traceability matrix)
+**Outputs**: Code + unit tests + e2e tests + `prd-plans/constraints.md` + updated `state.md` (Code Files / Test Files columns of traceability matrix)
 **Subagent type**: `general-purpose` — each wave component gets its own subagent with fresh context
 
 **Definition of Done**:
@@ -22,6 +22,7 @@ model: opus
 - Traceability matrix updated: AC → file(s) → test(s)
 - No TODOs or commented-out code introduced; no hardcoded dates
 - For bug-fix intents: fix report written (symptom → root cause → fix → regression test)
+- Every constraint in `prd-plans/constraints.md` is encoded as a CI assertion (grep, lint rule, or runtime check) that fails on violation. The constraints file itself is durable (kept after merge).
 
 ## Why This Phase Exists
 
@@ -51,6 +52,31 @@ Before starting construction:
 
 If Jira operations fail, warn and continue — never block for a Jira update.
 
+### Extract Constraints
+
+Before any code is written, scan the Solution Design (`prd-plans/specs.md`) and Logical Design for **negative requirements** — explicit prohibitions, "always X" rules, and "we deliberately do NOT do Y" rationales. These are the requirements most likely to be lost when a subagent summarizes the spec to write code from it.
+
+Search the spec for prohibitive phrases: `must not`, `never`, `do not`, `deliberately`. Pay special attention to passages of the form "Why we use X (and not Y)" — Y is a prohibition. (Note: `always` and `only` appear in both positive and negative requirements; if found, re-read the sentence to verify a prohibition before extracting it as a constraint.)
+
+Write each one to `docs/<identifier>/prd-plans/constraints.md` with this shape:
+
+```markdown
+# Construct Constraints
+
+## C-1 — Worker must run continuously as a daemon
+- **Forbidden tokens**: `--stop-when-empty`
+- **Required behavior**: `queue:work` invoked without lifecycle-exit flags
+- **Rationale (verbatim)**: "We **always** want the worker process to keep going... `--stop-when-empty` would make the worker exit when the queue empties under normal operation — wrong shape for a daemonset."
+- **Source**: `prd-plans/specs.md § Worker lifecycle`
+- **Enforcement**: CI grep `! grep -r 'stop-when-empty' helm/`
+```
+
+**Why this step exists**: Subagents that synthesize implementation from a spec reliably preserve positive requirements ("use queue:work, daemon-shaped") but lose negative ones ("never use --stop-when-empty"). Extracting constraints once, up front, into a structured machine-checkable file means every subsequent subagent and every CI check operates against the same canonical "what NOT to do" list.
+
+This file is **durable** — kept in the repo after merge, the same way `specs.md` and `domain-model.md` are kept. It's not pipeline plumbing.
+
+Present the constraints file to the user before starting waves. Each entry should be challenged: "is this enforceable?" If a constraint can't be encoded as a grep, lint rule, or runtime check, it must be reframed until it can — otherwise it's an aspiration, not a constraint.
+
 ### Organize into Dependency Waves
 
 Analyze the file plan from Logical Design. Group by dependency:
@@ -66,10 +92,12 @@ Present the wave plan to the user before starting.
 ### Execute Each Wave (TDD)
 
 Within a wave, **launch parallel subagents** for independent components:
-- Each subagent receives: Solution Design + Domain Model + relevant existing code only
+- Each subagent receives: Solution Design + Domain Model + **`prd-plans/constraints.md` verbatim (never summarized)** + relevant existing code only
+- Each subagent's prompt MUST include a **constraint acknowledgement** preamble:
+  > "Before writing code, list which constraints from `constraints.md` apply to your component and state how each will be avoided. After finishing, run `grep -r '<forbidden_tokens>' <changed files>` for every applicable constraint and report any matches as a violation."
 - Each subagent follows the TDD loop below
 - Wait for all subagents in a wave to complete before starting the next wave
-- After each wave, run all tests to verify no conflicts
+- After each wave, run all tests **and run the constraints grep across all changed files** — any match is a violation that must be fixed before the next wave starts
 
 ### TDD Loop (for each behavior within a component)
 
@@ -224,6 +252,8 @@ See [common phase rules](../ai-dlc/reference/shared.md#common-phase-rules) for s
 
 Phase-specific:
 - **NEVER** implement without reading the Solution Design first
+- **NEVER** launch a wave subagent without `constraints.md` in its prompt verbatim — summarizing it loses negative requirements, which is the primary failure mode this step prevents
+- **NEVER** complete a wave without running the constraints grep against changed files
 - **NEVER** skip TDD — write tests first, always
 - **NEVER** skip the Validate step — lint + type-check after every Green, not just at the end
 - **NEVER** retry a failing test blindly — each attempt must use a different approach based on the error
