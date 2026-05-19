@@ -107,6 +107,7 @@ Every ai-dlc phase skill MUST follow these rules. Phase-specific SKILL.md files 
 - **NEVER** delete or rewrite a decision — supersede it by setting `Status: superseded`, `Superseded By: D-N`, and adding a new row for the replacement
 - **NEVER** auto-fix debatable items — always ask the user
 - **NEVER** dump a long list of open questions on the user — ask one at a time
+- **ALWAYS** return your final message to the orchestrator in the shape defined by the [Subagent Return Contract](#subagent-return-contract) — status line, artifacts written, key decisions, assumptions, next phase. No transcript, no preamble. Prose returns force the orchestrator to guess; the contract makes assumptions surface-able and routing deterministic.
 - If the phase fails or gets stuck, **STOP** and inform the user — don't retry endlessly
 
 ---
@@ -158,6 +159,80 @@ Include `Commit SHA` when the change was committed; `—` when in-flight. The lo
 ### Rule of thumb
 
 If you find yourself editing an existing Decisions row to change its content (other than flipping status to `superseded` and filling in `Superseded By`), stop — that's a protocol violation. Add a new row instead.
+
+---
+
+## Subagent Return Contract
+
+Phase subagents return a structured handoff to the orchestrator. The contract is **not** the deliverable — artifact files in `docs/<identifier>/` remain authoritative. The contract is the *brief* the orchestrator reads to decide what to do next: route to a checkpoint, surface a blocker, or escalate to the user.
+
+### Why
+
+Without a contract, return text is free-form prose. The orchestrator has to parse narrative to answer four questions every time:
+- Did the phase succeed, fail, or stall?
+- Which artifacts actually got written (vs. mentioned in passing)?
+- What assumptions did the subagent make that the next phase will silently inherit?
+- What's the recommended next phase?
+
+Implicit answers buried in prose are how upstream defects slip past: a Construct subagent writes "I assumed the existing partner-notification SLA covers AC-2" in paragraph three, the orchestrator skims it as colour, the assumption ships unchallenged. A structured shape forces those assumptions to a labelled line where the orchestrator can surface them at the checkpoint.
+
+### The shape
+
+The subagent's return text MUST be ONLY this — no preamble, no transcript, no diffs, no artifact content:
+
+```
+- Status: COMPLETE | BLOCKED | NEEDS_USER_INPUT
+- Artifacts written: <comma-separated paths, relative to docs/<identifier>/>
+- Key decisions: <one-liner each, max 5; reference D-N from state.md Decisions table or ADR path>
+- Assumptions made: <one-liner per assumption the next phase should verify; "none" if none>
+- Blockers (if BLOCKED): <what stopped the phase + what would unblock it>
+- Open questions (if NEEDS_USER_INPUT): <one per line, with proposed options for the orchestrator to translate>
+- Next phase: <recommended phase + 1-line rationale>
+```
+
+### Status values
+
+- **COMPLETE** — required outputs produced; orchestrator moves to checkpoint + next-phase recommendation
+- **BLOCKED** — phase cannot proceed without external action (missing dep, ambiguous ticket, system failure); orchestrator STOPs and surfaces the blocker, no further dispatch until resolved
+- **NEEDS_USER_INPUT** — phase reached a fork the user must decide; orchestrator translates each open question into an `AskUserQuestion` call per the [Open Questions Protocol](#open-questions-protocol), then re-dispatches the subagent (or updates `state.md` and continues, depending on the question)
+
+### What the orchestrator does with the contract
+
+1. **Parse the status line first.** Route deterministically: COMPLETE → checkpoint; BLOCKED → user surface; NEEDS_USER_INPUT → question loop.
+2. **Verify artifact paths.** Read each file in "Artifacts written" to build the checkpoint summary. If a listed file is missing on disk, the contract is broken — treat as BLOCKED and re-dispatch with a corrective prompt.
+3. **Surface assumptions verbatim.** Every "Assumptions made" line goes into the checkpoint message so the user can challenge it before the next phase inherits it. Do not paraphrase or filter — the subagent flagged them as worth surfacing.
+4. **Translate open questions.** Per the [Open Questions Protocol](#open-questions-protocol), feed each question through `AskUserQuestion`. The subagent's option suggestions are raw material — the orchestrator owns the final user-facing shape (one question per call, options first with `(Recommended)`, etc.).
+5. **Verify decision rows exist.** Each "Key decisions" line should already have a corresponding row in `state.md` Decisions table (the subagent added it per the [Decision Lifecycle Protocol](#decision-lifecycle-protocol)). The orchestrator confirms — it does not re-add.
+
+### What the subagent MUST NOT include
+
+- Tool-call transcripts, command output, file listings
+- Verbatim artifact content (orchestrator reads files from disk)
+- Pre-formatted A/B/C prose for user questions (orchestrator owns user-facing translation per the [Open Questions Protocol](#open-questions-protocol))
+- Multi-paragraph narrative — the contract is bullet lines, not an essay
+
+### Example return
+
+```
+- Status: COMPLETE
+- Artifacts written: prd-plans/inception.md, state.md
+- Key decisions: D-1 (NFR-1 target P95<200ms, not P99 — ticket isn't customer-facing); D-2 (split AC-3 into AC-3a/AC-3b for testability)
+- Assumptions made: AC-2 ("partner notified within 5min") assumes existing partner-notification SLA holds — Construct must verify the SLA covers this code path
+- Next phase: Domain Design — Refund and Eligibility aggregates have distinct lifecycles per AC-1/AC-4, worth modelling separately
+```
+
+### Why files still win when the contract and disk disagree
+
+The contract is a *brief*, not a source of truth. If the subagent says "Key decisions: D-1 ..." but `state.md` doesn't have a D-1 row, trust the disk and surface the discrepancy. The artifact files are session-death-safe; the contract is in-memory. The contract just makes the incidental return-text part *parseable*, not authoritative.
+
+### Rules
+
+- **ALWAYS** return only the contract shape — no preamble, no transcript, no diff
+- **ALWAYS** set Status explicitly — orchestrator does not infer COMPLETE from "I think we're done"
+- **ALWAYS** list assumptions on their own line, even one-liners — assumptions buried in prose are how upstream defects survive
+- **NEVER** invent artifact paths — list only files actually written
+- **NEVER** pre-format A/B/C options as if speaking to the user — those are raw material for the orchestrator's `AskUserQuestion` translation
+- **NEVER** repeat artifact content in the return — reference by path
 
 ---
 

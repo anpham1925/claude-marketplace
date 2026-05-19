@@ -115,20 +115,40 @@ Write your outputs:
 - docs/PROJ-123/prd-plans/inception.md (Inception Artifact)
 - Update docs/PROJ-123/state.md (mark Inception complete, populate ACs/NFRs/risks)
 
+Return your final message in the Subagent Return Contract shape
+(see reference/shared.md#subagent-return-contract):
+- Status: COMPLETE | BLOCKED | NEEDS_USER_INPUT
+- Artifacts written: <paths>
+- Key decisions: <one-liners>
+- Assumptions made: <one-liners or "none">
+- Blockers (if BLOCKED): <what stopped the phase + what would unblock it>
+- Open questions (if NEEDS_USER_INPUT): <one per line>
+- Next phase: <recommended + 1-line rationale>
+No transcript, no preamble — the contract shape only.
+
+(The seven-line shape above is canonical; this example is Inception-specific
+but every orchestrator-spawned phase subagent uses the same return block.)
+
 Ticket: PROJ-123
 ```
 
 **This skip-instruction is mandatory** for every orchestrator-spawned phase subagent. The phase SKILL.md files (Inception, Discovery, Red Team, Verify, etc.) all begin with an `## Invocation Mode` block per [skill-dispatch-pattern](../../rules/skill-dispatch-pattern.md). Without the explicit skip, the subagent will read the gate, dispatch a new subagent, and the orchestrator's subagent does no actual work.
 
+**The return-contract block is also mandatory** — without it, the subagent defaults to free-form prose, the orchestrator has to parse narrative to find status/assumptions, and silent assumptions slip into the next phase. See [Subagent Return Contract](reference/shared.md#subagent-return-contract) for the full protocol.
+
 ### What the Orchestrator Does Between Phases
 
 After each subagent completes:
-1. **Read the artifact files** — read `state.md` and the phase's output artifact (e.g., `prd-plans/inception.md`, `prd-plans/domain-model.md`, `prd-plans/specs.md`). Do NOT rely on the subagent's return text for context.
-2. **Build the checkpoint summary** from the artifact files — extract key findings, counts, decisions
-3. Present the checkpoint to the user using the [AI-initiated recommendation protocol](#ai-initiated-flow)
-4. On user approval, spawn the next subagent (passing only file paths)
+1. **Parse the [Subagent Return Contract](reference/shared.md#subagent-return-contract)** — read the Status line first. COMPLETE → continue; BLOCKED → STOP and surface; NEEDS_USER_INPUT → enter the question loop (translate each open question via `AskUserQuestion` per the [Open Questions Protocol](reference/shared.md#open-questions-protocol)).
+2. **Verify artifact paths exist** — read each file listed in "Artifacts written". If a listed file is missing on disk, the contract is broken — treat as BLOCKED and re-dispatch.
+3. **Read the artifact files** — `state.md` plus the phase's output artifacts (e.g., `prd-plans/inception.md`, `prd-plans/domain-model.md`, `prd-plans/specs.md`). Disk wins over the return contract on any conflict.
+4. **Build the checkpoint summary** from the artifact files — extract key findings, counts, decisions. Surface the contract's **Assumptions made** lines verbatim in the checkpoint so the user can challenge them before the next phase inherits them.
+5. Present the checkpoint to the user using the [AI-initiated recommendation protocol](#ai-initiated-flow)
+6. On user approval, spawn the next subagent (passing only file paths, plus the contract block in the prompt)
 
-**Why files over return text**: If the session dies between phases, artifact files persist. The next session reads `state.md`, sees which phase completed last, and resumes. No context is lost.
+**Why files over return text**: If the session dies between phases, artifact files persist. The contract is in-memory only. The next session reads `state.md`, sees which phase completed last, and resumes. No context is lost.
+
+**Why the contract still matters**: It's the parseable summary that makes routing deterministic and surfaces assumptions the next phase would otherwise silently inherit. Without the contract the orchestrator has to interpret prose; with it, status/blockers/assumptions live on labelled lines.
 
 **When running a specific phase** (direct invocation like `/engineering-toolkit:ai-dlc inception`): Even for single-phase invocation, spawn it as a subagent. The user gets the same clean artifact-based contract.
 
