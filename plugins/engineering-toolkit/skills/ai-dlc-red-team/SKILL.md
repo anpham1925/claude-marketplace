@@ -28,6 +28,7 @@ Follows the [skill-dispatch-pattern rule](../../rules/skill-dispatch-pattern.md#
 
 **Inputs**: `state.md`, `prd-plans/inception.md`, `prd-plans/specs.md`, `prd-plans/flows.md`, all `prd-plans/ADR-*.md`, optionally `prd-plans/domain-model.md` (if exists)
 **Outputs**: `red-team-report.md` (findings table), updated `state.md` (Red Team iteration count + routing decisions), updated `improvements.md` (if any findings deferred)
+**Return Contract**: see [Subagent Return Contract](../ai-dlc/reference/shared.md#subagent-return-contract) — final return MUST be the 7-line structured shape, not free-form prose
 **Subagent type**: `general-purpose` (opus) — pure reading and reasoning, no code writes
 
 **Definition of Done**:

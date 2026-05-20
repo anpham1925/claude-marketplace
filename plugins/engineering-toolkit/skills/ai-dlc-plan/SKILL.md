@@ -13,6 +13,7 @@ model: opus
 
 **Inputs**: Jira ticket ID or free-form intent description
 **Outputs**: Level 1 Plan (intent type, phases to execute, complexity assessment)
+**Return Contract**: see [Subagent Return Contract](../ai-dlc/reference/shared.md#subagent-return-contract) — final return MUST be the 7-line structured shape, not free-form prose
 
 **Definition of Done**:
 - `state.md` exists with intent type classified (green-field, brown-field, bug-fix, refactor, performance, spike)

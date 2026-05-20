@@ -13,6 +13,7 @@ model: opus
 
 **Inputs**: `state.md`, `prd-plans/specs.md` (Solution Design), `prd-plans/flows.md`, `prd-plans/domain-model.md` (if produced)
 **Outputs**: Code + unit tests + e2e tests + `prd-plans/constraints.md` + updated `state.md` (Code Files / Test Files columns of traceability matrix)
+**Return Contract**: see [Subagent Return Contract](../ai-dlc/reference/shared.md#subagent-return-contract) — final return MUST be the 7-line structured shape, not free-form prose
 **Subagent type**: `general-purpose` — each wave component gets its own subagent with fresh context
 
 **Definition of Done**:

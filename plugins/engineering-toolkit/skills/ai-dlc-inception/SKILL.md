@@ -30,6 +30,7 @@ Follows the [skill-dispatch-pattern rule](../../rules/skill-dispatch-pattern.md#
 
 **Inputs**: Jira ticket ID + Level 1 Plan from Plan phase (`state.md`), `investigation.md` (if bug-fix flow)
 **Outputs**: `docs/<identifier>/prd-plans/inception.md` (Inception Artifact) + updated `state.md`
+**Return Contract**: see [Subagent Return Contract](../ai-dlc/reference/shared.md#subagent-return-contract) — final return MUST be the 7-line structured shape, not free-form prose
 **Subagent type**: `general-purpose`
 
 **Definition of Done**:
