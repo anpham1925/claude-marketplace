@@ -70,17 +70,20 @@ The Release subagent and any continuation MUST treat these files as the source o
 | File | Written by | Read by |
 |---|---|---|
 | `docs/<identifier>/commit-msg.txt` | `ship-branch` BEFORE the commit-approval checkpoint | Continuation that runs `git commit -F` |
+| `docs/<identifier>/staged-files.txt` | `ship-branch` BEFORE the commit-approval checkpoint (`git diff --cached --name-only > docs/<id>/staged-files.txt`) | Continuation, to verify git's index hasn't drifted |
 | `docs/<identifier>/pr-body.md` | `ship-push-pr` BEFORE the push-approval checkpoint | Continuation that runs `gh pr create --body-file` |
 | `docs/<identifier>/state.md` § Release stage table | every stage on completion (SHA / PR# / CI run-id) | continuation, to find the next unchecked stage |
 | `docs/<identifier>/stage-gate.md` | every stage on completion | continuation, to verify gate ordering |
 
 A continuation subagent **does NOT**:
-- Re-stage files (the staged set is already in git's index from the prior turn)
+- Re-stage files IF the current index matches `staged-files.txt` (run `git diff --cached --name-only` and `diff` against the recorded list). If it drifts (e.g., a human edit or parallel agent activity touched the working tree between subagent spawns), STOP and surface to the orchestrator — do not silently re-derive.
 - Re-write the commit message (it's in `commit-msg.txt`)
 - Re-derive the PR body (it's in `pr-body.md`)
 - Re-run completed stages (the stage table in state.md tells it which to skip)
 
 The continuation reads `state.md` § Release stage table, finds the first unchecked stage, picks up from there.
+
+**Scope note**: Patch 2 (this protocol) covers `ship-branch` and `ship-push-pr` checkpoints. `ship-pr-review` has its own pause-and-resume around reviewer feedback triage — that's out of scope for v6.21.0 and remains a follow-on. Until then, `ship-pr-review` pauses inside a Release subagent should be surfaced via the same `NEEDS_USER_INPUT` contract but the continuation reads the reviewer-comment thread fresh from `gh pr view` rather than from a durable file.
 
 #### Continuation spawn prompt (canonical shape)
 
@@ -193,13 +196,15 @@ After merge, separate durable knowledge from ephemeral plumbing:
 
 **Delete** (only useful during the active pipeline):
 - `state.md` — pipeline position tracking
-- `commit-msg.txt`, `pr-body.md` — temp files
+- `commit-msg.txt`, `pr-body.md`, `staged-files.txt` — served as durable hand-off state during ship-* checkpoint propagation (see §Checkpoint Propagation above). Now that the PR is merged, they are no longer needed.
 
 ```bash
 git rm -f docs/<identifier>/state.md
-git rm -f docs/<identifier>/commit-msg.txt docs/<identifier>/pr-body.md
+git rm -f docs/<identifier>/commit-msg.txt docs/<identifier>/pr-body.md docs/<identifier>/staged-files.txt
 # Keep: docs/<identifier>/prd-plans/
 ```
+
+"Durable" here means *durable within the pipeline* — they outlive a single subagent turn so checkpoint propagation works, but they are *not durable across pipelines* (each new feature creates new ones, the old ones are deleted at archive). This is why the table at §Checkpoint Propagation calls them "durable hand-off files" while this section calls them "no longer needed" — both framings are accurate at different scopes.
 
 Commit: `chore: [TICKET] archive pipeline artifacts, keep design docs`
 
