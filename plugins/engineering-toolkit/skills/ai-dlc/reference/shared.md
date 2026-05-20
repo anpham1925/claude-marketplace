@@ -223,7 +223,7 @@ The subagent's return text MUST be ONLY this — no preamble, no transcript, no 
 
 ### Why files still win when the contract and disk disagree
 
-The contract is a *brief*, not a source of truth. If the subagent says "Key decisions: D-1 ..." but `state.md` doesn't have a D-1 row, trust the disk and surface the discrepancy. The artifact files are session-death-safe; the contract is in-memory. The contract just makes the incidental return-text part *parseable*, not authoritative.
+The contract is a *brief*, not a source of truth. If the subagent says "Key decisions: D-1 ..." but `state.md` doesn't have a D-1 row, trust the disk and surface the discrepancy. The artifact files are session-death-safe; the contract is in-memory. This is the same reason the [Context Freshness Rules](#context-freshness-rules) say "files are the deliverable, return text is incidental" — the contract just makes the incidental part *parseable*, not authoritative.
 
 ### Rules
 

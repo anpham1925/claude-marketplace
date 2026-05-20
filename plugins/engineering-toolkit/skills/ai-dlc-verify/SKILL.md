@@ -125,7 +125,7 @@ The code-reviewer will apply its full checklist (architecture, quality, error ha
 
 ### Part 5: Docs-Code Consistency Check
 
-**Mandatory** when the diff touches any of: `README.md`, `package.json`, an exported module surface (Nest dynamic module, public class/function), or a CLI flag. PR-review bots catch these drifts almost every round; do them here instead and save the round-trip.
+**Mandatory** when the diff touches any of: `README.md`, `package.json`, an exported module surface (Nest dynamic module, public class/function), or a CLI flag. The Claude PR-review bot catches these drifts almost every round; do them here instead and save the round-trip.
 
 Walk through each of these checks; every contradiction is an AUTO-FIX finding:
 
