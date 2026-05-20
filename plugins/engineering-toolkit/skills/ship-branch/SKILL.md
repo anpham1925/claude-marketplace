@@ -59,14 +59,25 @@ See [git rules](../ship-n-check/reference/shared.md#git-rules) for staging conve
 
 ### CHECKPOINT — Approve Commit
 
-Present to user and **WAIT for approval before committing**:
+**Write the durable hand-off files BEFORE pausing.** Use the Write tool / Bash to create:
+
+- `docs/<identifier>/commit-msg.txt` — the proposed commit message
+- `docs/<identifier>/staged-files.txt` — `git diff --cached --name-only` output (so a continuation can verify the index hasn't drifted)
+
+These files are **never staged for commit** — they are temp working files within the pipeline (see [ai-dlc-release §Archive Pipeline Artifacts](../ai-dlc-release/SKILL.md) which deletes them post-merge). If a future maintainer reorders these writes earlier, ensure they remain unstaged via `.gitignore` or explicit exclusion in the staging step.
+
+The pre-checkpoint write must happen before the pause so that if the Release-orchestrator subagent terminates here (Claude Code harness has no `SendMessage` — see [ai-dlc-release §Checkpoint Propagation](../ai-dlc-release/SKILL.md)), the continuation subagent can resume by running `git commit -F docs/<identifier>/commit-msg.txt` against an unchanged index — verified against `staged-files.txt`.
+
+Then present to user and **WAIT for approval before committing**:
 - Branch name
 - Staged files list
-- Draft commit message
+- Draft commit message (the file is already on disk — show its contents)
+
+If invoked from inside a Release-orchestrator subagent that has no human in the loop, return immediately with `Status: NEEDS_USER_INPUT` per the [Subagent Return Contract](../ai-dlc/reference/shared.md#subagent-return-contract). Do NOT wait silently — the parent orchestrator will render the `AskUserQuestion` and re-spawn with the answer.
 
 ### Commit
 
-Use the Write tool to create `docs/<identifier>/commit-msg.txt` with the message, then `git commit -F docs/<identifier>/commit-msg.txt`.
+Run `git commit -F docs/<identifier>/commit-msg.txt`. The file already exists from the pre-checkpoint write.
 
 See [commit convention](../ship-n-check/reference/shared.md#commit-convention) for format and `Co-Authored-By` requirement.
 
