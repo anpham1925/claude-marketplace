@@ -267,6 +267,26 @@ The Plan phase classifies the intent and determines which phases to run. Not eve
 
 **Red Team inclusion rule**: runs by default for anything that ships to production (small feature / full feature / refactor / performance / brown-field). Skipped for spike/research (no production impact) and bug-fix (scope is narrow enough that inception-level review is sufficient; can be invoked directly if the fix touches concurrency or state machines).
 
+### Complexity-aware phase collapse
+
+Intent type alone undersells the difference between a 1-aggregate auth-extension and a 5-aggregate cross-context event-sourcing rewrite — both classify as "brown-field" but warrant very different pipeline weights. Plan classifies complexity (Small / Medium / Large) but the original adaptive pipeline didn't act on it; this collapse table does.
+
+| Complexity | Pipeline (brown-field / full-feature / refactor) |
+|---|---|
+| **Small** — 1 new aggregate at most, 1 module touched, additive migration, < 200 LOC | Plan → Inception → Logical Design (light; absorbs Domain Design in one pass) → Construct → Verify → Release |
+| **Medium** — 1-2 new aggregates, 1-2 modules touched, additive migration, single auth-or-tenancy surface | Plan → Inception → Domain Design (LIGHT) → Logical Design → Red Team → Construct → Verify → Release |
+| **Large** — 3+ new aggregates, cross-module orchestration, schema-breaking change, multi-tenant invariants, or NFR-heavy (perf / reliability targets stated explicitly) | full 8-phase pipeline (Plan → Inception → Domain Design → Logical Design → Red Team → Construct → Verify → Release → Observe) |
+
+**The Small collapse** merges Domain Design into Logical Design (the aggregate is trivial enough — one entity, one VO, no cross-aggregate orchestration — to specify in one pass) and **skips Red Team** (the surface is too narrow for the 9-category sweep to find anything that's not also a Construct-time test concern).
+
+**The Medium collapse** keeps Domain Design and Red Team, but marks them `LIGHT`:
+- Domain Design LIGHT — one-pass aggregate + VO spec, no alternative-design analysis
+- Red Team LIGHT — 9 categories sweep but single iteration unless a CRITICAL or HIGH finding fires; no exhaustive option-comparison for each finding's remediation
+
+Phase 15f (Medium brown-field, 2 aggregates, 1 module, additive migration) was the canonical Medium case — full 8-phase pipeline ran for ~12 subagent spawns + 3 Release re-spawns. With the Medium collapse and Patch 2's Release continuation protocol, the same work would run as ~7 spawns end-to-end.
+
+**At the Plan checkpoint**, present the chosen collapse to the user with the classification rationale (which complexity row, why). The user can override via `AskUserQuestion` (e.g. "Plan says Medium, user wants full Large pipeline because they expect this to grow into a multi-aggregate refactor").
+
 The user can always override — add or skip phases at any checkpoint.
 
 ## AI-Initiated Flow

@@ -59,14 +59,18 @@ See [git rules](../ship-n-check/reference/shared.md#git-rules) for staging conve
 
 ### CHECKPOINT — Approve Commit
 
-Present to user and **WAIT for approval before committing**:
+**Write the durable commit-msg file BEFORE pausing.** Use the Write tool to create `docs/<identifier>/commit-msg.txt` with the proposed commit message. This must happen before the checkpoint so that if the Release-orchestrator subagent terminates here (Claude Code harness has no `SendMessage` — see [ai-dlc-release §Checkpoint Propagation](../ai-dlc-release/SKILL.md)), the continuation subagent can resume by running `git commit -F docs/<identifier>/commit-msg.txt` without re-deriving the message.
+
+Then present to user and **WAIT for approval before committing**:
 - Branch name
 - Staged files list
-- Draft commit message
+- Draft commit message (the file is already on disk — show its contents)
+
+If invoked from inside a Release-orchestrator subagent that has no human in the loop, return immediately with `Status: NEEDS_USER_INPUT` per the [Subagent Return Contract](../ai-dlc/reference/shared.md#subagent-return-contract). Do NOT wait silently — the parent orchestrator will render the `AskUserQuestion` and re-spawn with the answer.
 
 ### Commit
 
-Use the Write tool to create `docs/<identifier>/commit-msg.txt` with the message, then `git commit -F docs/<identifier>/commit-msg.txt`.
+Run `git commit -F docs/<identifier>/commit-msg.txt`. The file already exists from the pre-checkpoint write.
 
 See [commit convention](../ship-n-check/reference/shared.md#commit-convention) for format and `Co-Authored-By` requirement.
 

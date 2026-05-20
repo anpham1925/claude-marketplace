@@ -75,6 +75,8 @@ For each FAIL:
 - Apply fix, re-verify
 - Max 2 fix-and-verify cycles per deliverable
 
+If the debug agent uses throwaway probe scripts (temp `.int-spec.ts` files, ad-hoc curl loops, SQL probes) to surface an unmapped error, follow [background-process-discipline](../../rules/background-process-discipline.md) — wait on, kill, or re-use every backgrounded probe. Abandoning a probe to try a different approach without killing it leaks DB connections and CPU; Phase 15f left one running for 2+ hours.
+
 ### Part 2: Traceability Validation
 
 Check the traceability matrix for completeness:

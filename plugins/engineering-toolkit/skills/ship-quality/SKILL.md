@@ -155,11 +155,13 @@ Categorize findings:
   yarn lint --fix      # or project equivalent
   # Type check
   yarn type-check      # or project equivalent
-  # Tests
+  # Tests (unit + integration — see below)
   yarn test            # or project equivalent
   ```
 - Re-lint if any code changed
 - Repeat until clean
+
+**Test command must match the pre-push hook.** A passing `yarn test` (unit-only) does NOT clear ship-quality if the pre-push hook also runs an integration / e2e suite. Read `.husky/pre-push` / `lefthook.yml` / `.git/hooks/pre-push` and run the same commands here. Common patterns: `INTEGRATION=1 jest`, `pnpm test:integration`, `make e2e`. Mismatching gates between ship-quality and pre-push causes a fix-and-push cycle at `ship-push-pr` — including a fixup commit that breaks PR atomicity. The few extra minutes here are dramatically cheaper.
 
 ### GATE: Quality Feedback Written
 
