@@ -13,6 +13,7 @@ model: opus
 
 **Inputs**: `state.md`, `prd-plans/inception.md` (NFRs, risks), `prd-plans/domain-model.md` (if exists)
 **Outputs**: `prd-plans/specs.md` (Solution Design + Plan Summary), `prd-plans/flows.md`, `prd-plans/ADR-*.md`, updated `state.md` (Design Decision column of traceability)
+**Return Contract**: see [Subagent Return Contract](../ai-dlc/reference/shared.md#subagent-return-contract) — final return MUST be the 7-line structured shape, not free-form prose
 **Subagent type**: `Explore` for codebase research
 
 **Definition of Done**:

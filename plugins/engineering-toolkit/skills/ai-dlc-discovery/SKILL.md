@@ -33,6 +33,7 @@ Subagent prompt (returns a "discovery brief" — grounded answers + recommendati
 
 **Inputs**: Jira ticket ID, free-form intent, or vague feature request
 **Outputs**: `discovery.md` with reframed problem, approaches, and recommendation
+**Return Contract**: see [Subagent Return Contract](../ai-dlc/reference/shared.md#subagent-return-contract) — final return MUST be the 7-line structured shape, not free-form prose
 **Subagent type**: `general-purpose`
 
 **Definition of Done**:

@@ -13,6 +13,7 @@ model: haiku
 
 **Inputs**: `state.md`, verified code from Verify phase
 **Outputs**: Merged PR + updated `state.md` (Release status, PR URL), Jira updated
+**Return Contract**: see [Subagent Return Contract](../ai-dlc/reference/shared.md#subagent-return-contract) — final return MUST be the 7-line structured shape, not free-form prose
 **Delegation**: Invokes existing ship-* stage skills via the Skill tool
 
 **Definition of Done**:

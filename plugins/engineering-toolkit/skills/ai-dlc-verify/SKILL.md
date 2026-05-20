@@ -29,6 +29,7 @@ Follows the [skill-dispatch-pattern rule](../../rules/skill-dispatch-pattern.md#
 
 **Inputs**: Code + tests from Construct, `prd-plans/inception.md` (ACs, NFRs, risks), `prd-plans/specs.md` (Solution Design), Traceability Matrix from `state.md`
 **Outputs**: `review-feedback.md` (Review Feedback) + updated `state.md` (Verification Report, AC status)
+**Return Contract**: see [Subagent Return Contract](../ai-dlc/reference/shared.md#subagent-return-contract) — final return MUST be the 7-line structured shape, not free-form prose
 **Subagent type**: `general-purpose` — **MUST be a fresh subagent** (context-isolated from the Constructor to avoid bias)
 
 **Definition of Done**:

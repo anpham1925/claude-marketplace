@@ -13,6 +13,7 @@ model: sonnet
 
 **Inputs**: `state.md`, `prd-plans/inception.md` (NFRs, Observability Plan, measurement criteria), Honeycomb config
 **Outputs**: Observation Report written to `state.md`
+**Return Contract**: see [Subagent Return Contract](../ai-dlc/reference/shared.md#subagent-return-contract) — final return MUST be the 7-line structured shape, not free-form prose
 
 **Definition of Done**:
 - Health endpoint returns 200 on the deployed pods
