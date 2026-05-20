@@ -36,6 +36,7 @@ Follows the [skill-dispatch-pattern rule](../../rules/skill-dispatch-pattern.md#
 - Every NFR is validated against measurable evidence (numbers, not adjectives)
 - Traceability matrix has no empty cells for shipped ACs
 - Code review covers: correctness, boundaries, naming, security, test quality
+- For PRs touching `README.md`, `package.json`, an exported module surface, or CLI flags: Docs-Code Consistency Check completed with no contradictions
 - `review-feedback.md` exists with findings categorised as BLOCKER / IMPROVEMENT / NIT
 - Any BLOCKER is either fixed or logged as a follow-up ticket — never silently closed
 - Results presented to the user; NEEDS-INPUT items resolved before Release
@@ -121,6 +122,34 @@ The code-reviewer will apply its full checklist (architecture, quality, error ha
 - [ ] **Scope**: no unnecessary changes beyond what was requested
 - [ ] **Domain model compliance**: implementation matches domain model
 - [ ] **Design compliance**: implementation follows logical design decisions
+
+### Part 5: Docs-Code Consistency Check
+
+**Mandatory** when the diff touches any of: `README.md`, `package.json`, an exported module surface (Nest dynamic module, public class/function), or a CLI flag. The Claude PR-review bot catches these drifts almost every round; do them here instead and save the round-trip.
+
+Walk through each of these checks; every contradiction is an AUTO-FIX finding:
+
+- **Code snippets in `README.md` must compile against current `src/`.** Extract each fenced TS/JS block and run `tsc --noEmit` (or paste-test) against the current declarations. Snippets that reference renamed/removed symbols are blockers.
+- **Every package referenced in `README.md` install / setup sections must exist in `package.json`** (`dependencies`, `peerDependencies`, or `devDependencies` as appropriate) — and the reverse: every `peerDependencies` entry must actually be imported somewhere in `src/`. A peer dep listed but never imported forces consumers to install a package they don't need; a `README` install line for a package not in `package.json` leaves consumers with a half-broken setup.
+- **Every file path referenced in `README.md` must exist** at the documented path. Broken relative links (`[X](./RUNBOOK.md)` after RUNBOOK.md was deleted) ship to GitHub and to the published package both.
+- **Every exported symbol named in `README.md` must exist with the documented signature** in the public surface. If `README.md` says `dispatcher.listStepAttempts(runId)` but the code accepts `{ workflowRunId }`, fix the README. If a table row says the module is `Global` but the dynamic module no longer sets `global: true`, fix the row — or fix the code, depending on which is correct.
+- **When the module's wiring story changes** (e.g. Global ↔ non-global, addition of a `forFeature()` static, new `forRoot` option), grep the entire `README.md` for the old pattern and confirm zero hits. Mixed-mode docs ("the example uses A but the table says B") are worse than wrong docs because they signal one is right and the reader has to guess which.
+
+How to run quickly:
+```bash
+# extract README code blocks (TS/JS) to a temp file for tsc --noEmit
+awk '/^```(ts|typescript|js|javascript)$/{f=1;next} /^```$/{f=0} f' README.md > /tmp/readme-snippets.ts
+
+# every package mentioned in install/usage commands (low-noise — anchored to install verbs)
+grep -oE '(npm install|yarn add|pnpm add|yarn workspace [^[:space:]]+ add)[^`\n]+' README.md | sort -u
+
+# every relative file link, scoped (matches ./foo, ../foo, and bare foo.md — excludes URLs)
+grep -oE '\]\(([^)]*\.md|\.{1,2}/[^)]+)\)' README.md
+```
+
+These are hints — copy-paste verbatim is fine but if your README uses a different convention (e.g. `pnpm install` instead of `pnpm add`, or `[Foo](docs/foo.md)` bare paths), tighten the regex to match. The goal is to drop false-negatives first, false-positives second.
+
+Findings here route as **AUTO-FIX** by default — they're mechanical contradictions, not judgment calls. If the README and code disagree and *which is correct* is unclear, escalate as **NEEDS-INPUT**.
 
 ### Categorize Findings
 
@@ -226,6 +255,7 @@ Phase-specific:
 - **ALWAYS** validate traceability completeness — every AC must trace through all columns
 - **ALWAYS** validate NFR compliance — every NFR must be addressed
 - **NEVER** skip code review — even for small changes
+- **ALWAYS** run the Docs-Code Consistency Check when the diff touches `README.md`, `package.json`, exported surface, or CLI flags — these drifts are the single most common late-PR feedback class
 - Max 2 fix-and-verify cycles per deliverable
 - PARTIAL items must be explicitly flagged at the checkpoint
 - **NEVER** proceed past the Review Feedback gate without writing feedback — this is a blocking requirement, not optional cleanup

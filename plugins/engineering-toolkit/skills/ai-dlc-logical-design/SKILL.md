@@ -19,6 +19,7 @@ model: opus
 - Every NFR maps to a concrete design decision (not left as "we'll be careful")
 - Each meaningful decision shows ≥2 options with trade-offs before a recommendation
 - Contracts defined: API signatures, event payloads, queue shapes
+- For shared libraries / SDKs / packages: Public API Surface Review completed with all four probes answered (see step below)
 - File plan lists every new/modified file with a one-line purpose
 - ADRs written for decisions that outlive the ticket (storage, auth, boundaries)
 - `specs.md` + `flows.md` produced and readable by a fresh engineer with no session context
@@ -86,6 +87,28 @@ Decisions that warrant options analysis:
 - **DTOs** for new endpoints
 - **Event schemas** for new domain events on the bus
 - **Database schema changes** (if any)
+
+### Public API Surface Review (mandatory for shared libraries / SDKs / packages)
+
+When the ticket ships a public symbol that other repos or teams will consume — exported class, exported function, module dynamic-module, CLI flag, env var — list every symbol in a table and walk through these four probes before locking the contract. Catches the design mistakes that only surface during a second consumer's integration.
+
+| Symbol | Kind | Source |
+|---|---|---|
+| `OpenworkflowModule.forRootAsync` | NestJS DynamicModule | `src/openworkflow.module.ts` |
+| `OpenworkflowDispatcher.listStepAttempts` | exported method | `src/openworkflow.dispatcher.ts` |
+| `openworkflow-migrate` | CLI bin | `bin/migrate.ts` |
+
+For each row, answer all four probes in writing in `specs.md` under a **Public surface** subsection:
+
+1. **Second-consumer probe.** Name a concrete consumer different from the author's POC (a sibling service, a hypothetical greenfield app). Sketch the 5-line wiring snippet a developer would write. Does it work without modifying the library? If not — surface the gap now, not after PR.
+
+2. **Cross-module probe (for NestJS DynamicModules).** If the symbol is a `DynamicModule`, can a feature module that is *not the one declaring `forRoot()`* inject the exported provider? Decide explicitly — `@Global()`, a `forFeature()` static, or "consumer must re-import" — and record the decision in an ADR. Do not leave this implicit; the default behaviour of NestJS dynamic-module providers does **not** cascade across sibling modules.
+
+3. **Symmetry probe.** For every configuration knob, list how it can be supplied: constructor arg, env var, CLI flag, ConfigService factory. Are all knobs available via the same set of channels with the same precedence (passed > env > defaults)? Asymmetry — e.g. CLI reads env vars but the module doesn't — is the single most common late-review request. Document any deliberate asymmetry as an ADR decision.
+
+4. **Echo-vs-rollup probe.** For every method that wraps a third-party API, ask: is the return shape the third-party's shape, or an opinionated derivative (auto-rollup, auto-pagination, field projection)? If derivative, justify it. **Default to echoing the underlying API** — the wrapper exists for DI and discoverability, not for opinion. The day a consumer needs the raw shape, they shouldn't have to dig into the wrapper to recover it.
+
+If any probe surfaces a gap, loop back through "Design the Approach" before continuing.
 
 ### Map File Changes
 
@@ -230,3 +253,4 @@ Phase-specific:
 - **ALWAYS** map every NFR to an architectural pattern
 - **ALWAYS** generate ADRs for significant decisions
 - **ALWAYS** write Plan Summary (specs.md + flows.md) after design approval
+- **For shared libraries/SDKs/packages**: complete the Public API Surface Review (all four probes) before locking the contract — gaps caught here cost minutes, gaps caught at PR review cost days

@@ -11,7 +11,7 @@ model: opus
 
 Follows the [skill-dispatch-pattern rule](../../rules/skill-dispatch-pattern.md#direct-invocation-dispatch).
 
-**Direct invocation** (`/engineering-toolkit:ai-dlc-red-team` or `... whole-system`): the parent MUST stop here and dispatch via the Task tool using the rule's template. Do NOT execute the steps below inline — Red Team reads every artifact in full (`inception.md`, `specs.md`, `flows.md`, all `ADR-*.md`, optionally `domain-model.md`, plus a code-surface spot-check) and walks 9 attack categories. That payload belongs in a subagent, not the parent.
+**Direct invocation** (`/engineering-toolkit:ai-dlc-red-team` or `... whole-system`): the parent MUST stop here and dispatch via the Task tool using the rule's template. Do NOT execute the steps below inline — Red Team reads every artifact in full (`inception.md`, `specs.md`, `flows.md`, all `ADR-*.md`, optionally `domain-model.md`, plus a code-surface spot-check) and walks 10 attack categories. That payload belongs in a subagent, not the parent.
 
 **Indirect invocation** (called by ai-dlc orchestrator's Agent tool): skip this block and proceed to the steps.
 
@@ -173,13 +173,29 @@ Typical findings in this category:
 - *Test-only provider wrapper left in production page code* — symptom: mixed test/prod concerns, confused inheritance
 - *Provider imported into a Server Component by mistake* — symptom: runtime `null` context, non-obvious failure
 
+#### J. Scope-leak / library responsibility (for shared libraries, SDKs, packages)
+
+When the ticket ships a published package, every artifact in the diff is paid for by every consumer forever. Walk the diff and ask, for each new file: *"if this artifact lives in the library, is the problem it solves the library's problem, or a consumer's problem dressed up as the library's?"*
+
+- **Type shims / module-resolution workarounds**: is the library mirroring an external package's types locally to accommodate a stale consumer toolchain (old TS `moduleResolution`, missing `exports` support, CJS-only consumers)? If yes — kill the shim and declare a toolchain floor in the README. The library shouldn't carry workarounds for problems consumers can fix on their end.
+- **Runbooks / operational docs**: does the doc describe operating *this library in isolation*, or operating *a deployment that uses this library*? The latter belongs in the consumer repo's runbook. Library docs cover library-intrinsic operational concerns only — migrations the library ships, env vars the library reads, lifecycle hooks it exposes — not helm charts, dashboards, or CronJob YAML.
+- **Decorative try/finally / defensive blocks**: simulate the failure mode for every try/finally in the diff. Which statement throws? Is the resource actually opened by the time the `finally` runs? If both answers are "no leak possible", the block is decorative — delete it, or move the resource acquisition inside the `try`. Patterns like `const x = await connect(); try { /* empty */ } finally { x.stop(); }` are the canonical anti-pattern.
+- **Tracking files / internal notes in published artifacts**: any path under `docs/<ticket>/`, `.claude/`, `tmp/`, draft commit messages, internal feedback logs, agent state files must NOT ship to consumers. Verify the `package.json` `files:` whitelist (or `.npmignore`) excludes them — and verify nothing under the path got accidentally committed onto the package branch.
+- **Helper functions that duplicate consumer code**: is the library providing a helper that does work the consumer is going to do anyway (their own error wrapping, their own logging shape, their own date formatting)? If the consumer already has conventions, an opinionated helper creates friction. Default to exposing primitives; let consumers compose.
+
+Typical findings:
+- *Local type-shim file mirroring upstream package surface* — symptom: 200+ LOC of declarations that go stale silently when upstream changes; consumers don't actually need it once their tsconfig is modern
+- *Runbook describing helm CronJob / dashboard setup inside a library package* — symptom: docs that consumers copy then fork; both copies drift forever
+- *try/finally where the resource acquisition sits outside the try* — symptom: cleanup never actually runs for the failure mode the try/finally was meant to handle
+- *Internal feedback / planning markdown committed under `docs/<ticket>/` inside the package* — symptom: ships to npm; reviewers ask "remove before merge" round after round
+
 ### 4. Classify Each Finding
 
 For every attack hypothesis that doesn't have clear coverage in the artifacts, file a finding with:
 
 - **ID**: sequential, unique within the report (R-1, R-2, ...)
 - **Title**: one line, specific. "Concurrent analyze requests for same ticker both trigger VNDIRECT fetch" — not "concurrency issue"
-- **Category**: A–I above
+- **Category**: A–J above
 - **Severity**:
   - **CRITICAL** — ships a correctness bug or data corruption. Must fix before Construct.
   - **MAJOR** — ships a UX-degrading or resource-wasting behavior. Should fix; acceptable to defer with user approval.
@@ -227,7 +243,7 @@ Structure:
 
 ## Coverage Notes
 
-<For each of attack categories A-I: one line saying "Covered by ADR-X §Y" or "No applicable surface" or "See R-N, R-M". Demonstrates breadth, not just the list of hits.>
+<For each of attack categories A-J: one line saying "Covered by ADR-X §Y" or "No applicable surface" or "See R-N, R-M". Demonstrates breadth, not just the list of hits.>
 
 ## Loop-Back Recommendation
 
