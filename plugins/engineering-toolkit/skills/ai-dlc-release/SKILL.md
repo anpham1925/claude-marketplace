@@ -46,6 +46,68 @@ The orchestrator (this agent) then reads `state.md`, presents the result at the 
 
 **If invoked from a fresh terminal** (no large parent context): run inline without spawning a subagent — the spawn cost outweighs the isolation benefit.
 
+### Checkpoint Propagation (CRITICAL — harness limitation)
+
+The Claude Code harness has no `SendMessage` primitive that resumes a terminated subagent. The subagent's `result` is its final turn. This breaks ship-* skills that pause at internal approval checkpoints (`ship-branch` commit-approval, `ship-push-pr` push-approval, `ship-pr-review` reviewer-comment-triage) when run *inside* the Release-orchestrator subagent.
+
+Without explicit handling, every checkpoint forces a fresh Release-subagent re-spawn — Phase 15f hit this 3 times across one release, each round re-burning subagent onboarding cost and risking stage-list drift.
+
+**The protocol — every Release subagent MUST follow this**:
+
+When a ship-* skill reaches an internal checkpoint, the Release subagent returns immediately (do NOT wait silently) with the [Subagent Return Contract](../ai-dlc/reference/shared.md#subagent-return-contract) shape:
+
+- **Status**: `NEEDS_USER_INPUT`
+- **Open questions**: one entry per checkpoint, phrased so the parent orchestrator can render it directly via `AskUserQuestion` — include the exact options (e.g. "Approve commit / Tweak first / Abort")
+- **Artifacts written**: every durable hand-off file the continuation subagent will need to resume without re-deriving (commit message, PR body, staged-file list)
+- **State snapshot**: which ship-* stages have completed (with commit SHAs / PR numbers / CI run IDs), which is currently waiting on approval
+
+The parent orchestrator reads the contract, calls `AskUserQuestion`, persists the answer into `state.md`, then spawns the **next** Release subagent with the answer pre-baked.
+
+#### Durable hand-off files (write BEFORE pausing, read AFTER resuming)
+
+The Release subagent and any continuation MUST treat these files as the source of truth — never re-derive:
+
+| File | Written by | Read by |
+|---|---|---|
+| `docs/<identifier>/commit-msg.txt` | `ship-branch` BEFORE the commit-approval checkpoint | Continuation that runs `git commit -F` |
+| `docs/<identifier>/staged-files.txt` | `ship-branch` BEFORE the commit-approval checkpoint (`git diff --cached --name-only > docs/<id>/staged-files.txt`) | Continuation, to verify git's index hasn't drifted |
+| `docs/<identifier>/pr-body.md` | `ship-push-pr` BEFORE the push-approval checkpoint | Continuation that runs `gh pr create --body-file` |
+| `docs/<identifier>/state.md` § Release stage table | every stage on completion (SHA / PR# / CI run-id) | continuation, to find the next unchecked stage |
+| `docs/<identifier>/stage-gate.md` | every stage on completion | continuation, to verify gate ordering |
+
+A continuation subagent **does NOT**:
+- Re-stage files IF the current index matches `staged-files.txt` (run `git diff --cached --name-only` and `diff` against the recorded list). If it drifts (e.g., a human edit or parallel agent activity touched the working tree between subagent spawns), STOP and surface to the orchestrator — do not silently re-derive.
+- Re-write the commit message (it's in `commit-msg.txt`)
+- Re-derive the PR body (it's in `pr-body.md`)
+- Re-run completed stages (the stage table in state.md tells it which to skip)
+
+The continuation reads `state.md` § Release stage table, finds the first unchecked stage, picks up from there.
+
+**Scope note**: Patch 2 (this protocol) covers `ship-branch` and `ship-push-pr` checkpoints. `ship-pr-review` has its own pause-and-resume around reviewer feedback triage — that's out of scope for v6.21.0 and remains a follow-on. Until then, `ship-pr-review` pauses inside a Release subagent should be surfaced via the same `NEEDS_USER_INPUT` contract but the continuation reads the reviewer-comment thread fresh from `gh pr view` rather than from a durable file.
+
+#### Continuation spawn prompt (canonical shape)
+
+When the parent orchestrator re-spawns the Release subagent after answering a checkpoint, the spawn prompt is:
+
+```
+You are the Release agent (CONTINUATION) for AI-DLC, scoped to identifier <id>.
+A prior Release subagent paused at the <ship-stage> checkpoint and surfaced
+its question via the return contract. The user has answered: <answer>.
+
+Read the methodology FIRST, in full:
+- /path/to/skills/ai-dlc-release/SKILL.md
+
+SKIP the `## Invocation Mode` block (orchestrator subagent — no nested dispatch).
+
+The durable hand-off state lives in:
+- docs/<id>/state.md (Release stage table — find the first unchecked stage)
+- docs/<id>/commit-msg.txt (if present, the commit message — do NOT re-derive)
+- docs/<id>/pr-body.md (if present, the PR body — do NOT re-derive)
+
+Resume from the first unchecked stage. If you hit another internal checkpoint,
+return NEEDS_USER_INPUT immediately — do not wait silently.
+```
+
 ### Check State
 
 Read `docs/<identifier>/state.md`. Verify that Verify is completed. See [shared reference](../ai-dlc/reference/shared.md) for format.
@@ -134,13 +196,15 @@ After merge, separate durable knowledge from ephemeral plumbing:
 
 **Delete** (only useful during the active pipeline):
 - `state.md` — pipeline position tracking
-- `commit-msg.txt`, `pr-body.md` — temp files
+- `commit-msg.txt`, `pr-body.md`, `staged-files.txt` — served as durable hand-off state during ship-* checkpoint propagation (see §Checkpoint Propagation above). Now that the PR is merged, they are no longer needed.
 
 ```bash
 git rm -f docs/<identifier>/state.md
-git rm -f docs/<identifier>/commit-msg.txt docs/<identifier>/pr-body.md
+git rm -f docs/<identifier>/commit-msg.txt docs/<identifier>/pr-body.md docs/<identifier>/staged-files.txt
 # Keep: docs/<identifier>/prd-plans/
 ```
+
+"Durable" here means *durable within the pipeline* — they outlive a single subagent turn so checkpoint propagation works, but they are *not durable across pipelines* (each new feature creates new ones, the old ones are deleted at archive). This is why the table at §Checkpoint Propagation calls them "durable hand-off files" while this section calls them "no longer needed" — both framings are accurate at different scopes.
 
 Commit: `chore: [TICKET] archive pipeline artifacts, keep design docs`
 

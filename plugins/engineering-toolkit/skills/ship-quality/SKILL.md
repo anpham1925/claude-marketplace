@@ -155,11 +155,19 @@ Categorize findings:
   yarn lint --fix      # or project equivalent
   # Type check
   yarn type-check      # or project equivalent
-  # Tests
+  # Tests (unit + integration — see below)
   yarn test            # or project equivalent
   ```
 - Re-lint if any code changed
 - Repeat until clean
+
+**Test command must match the pre-push hook.** A passing `yarn test` (unit-only) does NOT clear ship-quality if the pre-push hook also runs an integration / e2e suite. Read `.husky/pre-push` / `lefthook.yml` / `.git/hooks/pre-push` and run the same commands here. Common patterns: `INTEGRATION=1 jest`, `pnpm test:integration`, `make e2e`. Mismatching gates between ship-quality and pre-push causes a fix-and-push cycle at `ship-push-pr` — including a fixup commit that breaks PR atomicity. The few extra minutes here are dramatically cheaper.
+
+**Environment-availability GATE**: If the pre-push hook runs commands this environment cannot execute (e.g., `pnpm test:integration` requires a Postgres connection that isn't available locally, or the hook calls `docker compose run` and Docker isn't running), **STOP — flag to the user**. Two choices:
+1. Provision the missing services (start Postgres, start Docker) and re-run.
+2. Acknowledge the gap in writing (note it in `review-feedback.md`) and proceed at the user's explicit risk — knowing the hook will fail at push time anyway.
+
+Do NOT silently degrade to "ran what I could" — the whole point of matching the hook is that the gates be equivalent. A ship-quality that passed on a subset of commands is a false-pass.
 
 ### GATE: Quality Feedback Written
 

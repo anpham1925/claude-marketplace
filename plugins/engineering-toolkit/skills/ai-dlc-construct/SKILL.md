@@ -38,6 +38,7 @@ Read `docs/<identifier>/state.md`. Verify the prerequisite design phase is compl
 - Flow diagrams from `docs/<identifier>/prd-plans/flows.md`
 - Domain Model from `docs/<identifier>/prd-plans/domain-model.md` (if exists)
 - Traceability Matrix from state.md
+- **Pre-push / pre-commit hook** at `.husky/pre-push`, `.husky/pre-commit`, `lefthook.yml`, or `.git/hooks/pre-{push,commit}` — Construct's Wave Gate must run a superset of its commands (see §Wave Gate below)
 
 See [shared reference](../ai-dlc/reference/shared.md) for format.
 
@@ -147,10 +148,34 @@ Attempt 3: Read error + review design alignment → fix → re-run test
 → Still failing? STOP — flag to user with error context
 ```
 
+**Debugging-probe hygiene**: if you use throwaway probe scripts (temp `.int-spec.ts` files, ad-hoc curl loops, SQL probes) to surface an unmapped error, follow [background-process-discipline](../../rules/background-process-discipline.md) — wait on, kill, or re-use every backgrounded probe. Abandoning a probe to try a different approach without killing it leaks DB connections and CPU.
+
 Each retry MUST feed the error message back as context. Don't retry blindly — each attempt should try a different approach based on what the error reveals:
 - Attempt 1: Fix the obvious issue (typo, missing import, wrong assertion)
 - Attempt 2: Question the test — is the test correct? Does it match the AC?
 - Attempt 3: Question the design — does the implementation approach need to change?
+
+### Wave Gate (after every wave; before declaring it complete)
+
+Before declaring a wave complete, run the **full** local test surface — not just the default `pnpm test` / `yarn test` script. Many projects split fast unit tests from slower integration suites behind an env flag (`INTEGRATION=1`, `E2E=1`, `pnpm test:integration`, `make integration-test`, etc.) and the default `test` script runs the unit subset only. A passing unit run says nothing about the integration surface.
+
+Discovery order (do this once at the start of Construct; cache the discovered command set in `prd-plans/constraints.md`):
+
+1. **Read the pre-push hook** at `.husky/pre-push` / `lefthook.yml` / `.git/hooks/pre-push`. Whatever it runs is the canonical "green locally" definition. The Wave Gate MUST run a superset of these commands. **In well-maintained repos this single source is usually sufficient.**
+2. **Read the project's CI configuration** — `.github/workflows/*.yml`, `.gitlab-ci.yml`, `.circleci/config.yml`, `azure-pipelines.yml`, `Jenkinsfile` — for the non-unit test jobs. CI is the ultimate ground truth for "what counts as green" and most repos commit it.
+3. **Read the language-appropriate task runner** based on what's in the repo:
+   - **Node/TS**: `package.json` `scripts` for entries with `integration`, `e2e`, `int-spec`, or `int-test`
+   - **Python**: `Makefile`, `justfile`, `pyproject.toml` `[tool.pytest.ini_options]` markers (commonly `pytest -m integration`)
+   - **Go**: `Makefile` targets, `go test -tags integration` patterns in `scripts/`, or build-tag-gated `_test.go` files
+   - **Rust**: `Cargo.toml` `[features]` for `integration`, or `cargo test --features integration` in CI
+   - **JVM (Gradle/Maven)**: `build.gradle` task names like `integrationTest`, `pom.xml` `<phase>` bindings
+4. **Spot-check `test/integration/` / `tests/integration/` / `integration_test.go` files** — if integration tests exist but no obvious script targets them, the project gates them behind an env var, build tag, or marker; find it in the integration-suite's config.
+
+If steps 2-4 surface a command set that's missing from step 1's hook, the hook is incomplete — but Wave Gate still runs the broader set (CI catches what local doesn't, so Wave Gate should match CI not the hook).
+
+Run the discovered command set at every wave gate. If any command fails, fix before the next wave starts — accumulated integration failures are far more expensive to triage after multiple waves stack changes.
+
+**Why this is non-negotiable**: pre-push hooks are the last line of defence and they run integration suites by default in well-maintained repos. A Construct that satisfies only `pnpm test` and declares Verify PASS, then loses at `git push` to an integration-suite regression, forces a 30-60 min fix-and-push cycle on the Release path — including a fixup commit that breaks PR atomicity. The few extra minutes per wave are dramatically cheaper.
 
 ### Write E2E Tests
 

@@ -17,12 +17,14 @@ Follow the [stage workflow template](../ship-n-check/reference/shared.md#stage-w
 
 ### Present for Approval
 
+**Write the durable PR-body file BEFORE pausing.** Use the Write tool to create `docs/<identifier>/pr-body.md` with the proposed PR body. This must happen before the checkpoint so that if the Release-orchestrator subagent terminates here (harness has no `SendMessage` — see [ai-dlc-release §Checkpoint Propagation](../ai-dlc-release/SKILL.md)), the continuation can run `gh pr create --body-file docs/<identifier>/pr-body.md` without re-deriving the body.
+
 Show the user:
 - Final diff summary
 - PR title (under 70 chars, matches commit convention)
-- PR body (Summary + Test plan sections)
+- PR body (the file is already on disk — show its contents)
 
-**WAIT for user approval before pushing.**
+**WAIT for user approval before pushing.** If invoked from inside a Release-orchestrator subagent that has no human in the loop, return immediately with `Status: NEEDS_USER_INPUT` per the [Subagent Return Contract](../ai-dlc/reference/shared.md#subagent-return-contract). Do NOT wait silently.
 
 ### Push
 
@@ -32,13 +34,11 @@ git push -u origin <branch-name>
 
 ### Create Draft PR
 
-Use the Write tool to create `docs/<identifier>/pr-body.md`, then:
-
 ```bash
 gh pr create --draft --title "<action>: <short title>" --body-file docs/<identifier>/pr-body.md
 ```
 
-Return the PR URL.
+The `pr-body.md` file already exists from the pre-checkpoint write. Return the PR URL.
 
 ### Gate Write
 
