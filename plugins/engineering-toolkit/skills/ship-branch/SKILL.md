@@ -51,7 +51,7 @@ Before staging files, check if project documentation has drifted due to the code
 
 ### Stage Specific Files
 
-Stage code files and design artifacts from `docs/<identifier>/`. Do NOT stage temp working files (`commit-msg.txt`, `pr-body.md`).
+Stage code files and design artifacts from `docs/<identifier>/`. Do NOT stage temp working files (`commit-msg.txt`, `pr-body.md`, `staged-files.txt`) — all three are pipeline-internal hand-off state, removed at archive per `ai-dlc-release` §Archive Pipeline Artifacts.
 
 If the doc update step modified project documentation, stage those too.
 

@@ -38,7 +38,7 @@ Read `docs/<identifier>/state.md`. Verify the prerequisite design phase is compl
 - Flow diagrams from `docs/<identifier>/prd-plans/flows.md`
 - Domain Model from `docs/<identifier>/prd-plans/domain-model.md` (if exists)
 - Traceability Matrix from state.md
-- **Pre-push / pre-commit hook** at `.husky/pre-push`, `lefthook.yml`, or `.git/hooks/pre-push` — Construct's Wave Gate must run a superset of its commands (see §Wave Gate below)
+- **Pre-push / pre-commit hook** at `.husky/pre-push`, `.husky/pre-commit`, `lefthook.yml`, or `.git/hooks/pre-{push,commit}` — Construct's Wave Gate must run a superset of its commands (see §Wave Gate below)
 
 See [shared reference](../ai-dlc/reference/shared.md) for format.
 
