@@ -1,7 +1,7 @@
 ---
 name: django-stack
 description: "TRIGGER when: code imports from 'django', 'rest_framework', 'celery', or user asks about Django patterns, DRF, Django ORM, migrations, signals, middleware, or Django project structure. Also trigger when creating new models, views, serializers, or management commands. DO NOT trigger for: generic Python questions without Django context, Flask, or FastAPI."
-model: sonnet
+model: opus
 ---
 
 > **Recommended model: Sonnet** — Pattern application and code generation.

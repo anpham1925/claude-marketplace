@@ -1,7 +1,7 @@
 ---
 name: strategic-compaction
 description: "TRIGGER when: user says 'compact', 'compact context', 'running out of context', 'context is getting long', 'when should I compact', or asks about managing long conversations. DO NOT trigger for: code minification, file compression, or data compaction."
-model: sonnet
+model: opus
 ---
 
 # Strategic Compaction

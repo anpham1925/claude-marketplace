@@ -1,7 +1,7 @@
 ---
 name: nextjs-stack
 description: "TRIGGER when: code imports from 'next', 'next/navigation', 'next/image', '@next/', or user asks about Next.js patterns, App Router, Server Components, Server Actions, data fetching, middleware, or Next.js project structure. Also trigger when creating new pages, layouts, or API routes in a Next.js project. DO NOT trigger for: generic React questions without Next.js context, or other frameworks."
-model: sonnet
+model: opus
 ---
 
 > **Recommended model: Sonnet** — Pattern application and code generation.

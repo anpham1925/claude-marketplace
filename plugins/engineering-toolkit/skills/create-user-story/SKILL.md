@@ -2,7 +2,7 @@
 name: create-user-story
 description: "TRIGGER when: user says 'create a story', 'create a ticket', 'write a user story', 'new Jira story', or wants to create a user story in Jira. DO NOT trigger for: reading tickets, updating existing tickets, or transitioning ticket status."
 argument-hint: '[project-key]'
-model: sonnet
+model: opus
 ---
 
 # Create Jira User Story

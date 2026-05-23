@@ -1,7 +1,7 @@
 ---
 name: nestjs-stack
 description: "NestJS-specific implementation patterns for DDD, Hexagonal Architecture, and CQRS. Use when writing NestJS code, designing APIs, handling errors, structuring modules, writing TypeORM queries or migrations, adding auth guards, configuring environment variables, or adding structured logging. For language-agnostic DDD/architecture theory, use engineering-toolkit:engineering-foundations instead. This skill covers the NestJS HOW — code placement, module structure, @nestjs/cqrs, TypeORM, NestJS DI. Triggers for NestJS, TypeORM, @nestjs/cqrs, API design, auth guards, config modules, 'where should I put this code', 'how to structure this module'. DO NOT trigger for: generic DDD questions without NestJS context, Django, Next.js, or other frameworks."
-model: sonnet
+model: opus
 ---
 
 NestJS-specific implementation of DDD + Hexagonal + CQRS patterns. For the underlying theory (aggregates, domain events, architecture layers), see `engineering-toolkit:engineering-foundations`. This skill covers the NestJS-specific HOW. Before applying any topic, read its reference file in `reference/`.

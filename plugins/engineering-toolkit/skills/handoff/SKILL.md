@@ -2,7 +2,7 @@
 name: handoff
 description: "Compact the current conversation into a handoff document so a fresh Claude Code session (or another agent) can continue the work without losing context. TRIGGER when: user says 'handoff', 'hand off', 'pass this to another session', 'session handoff', 'pick this up later', 'context is too long, save state', or wants to end one session and resume in a new one. DO NOT trigger for: within-session compaction (use strategic-compaction), within-AI-DLC orchestrator-to-subagent return (use Subagent Return Contract in ai-dlc/reference/shared.md), or PR-handoff to a teammate (use update-docs + a PR description)."
 argument-hint: '[focus area or "from <agent>"]'
-model: sonnet
+model: opus
 ---
 
 # Handoff

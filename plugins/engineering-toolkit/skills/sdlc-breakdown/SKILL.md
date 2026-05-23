@@ -2,7 +2,7 @@
 name: sdlc-breakdown
 description: "Split a large plan into independent deployable sub-tasks with Jira tickets. Use when a ticket is too large for a single PR — triggers on 'break this down', 'split this ticket', 'decompose', 'too big for one PR'. Also invoked by AI-DLC when the Plan phase detects high complexity (3+ modules, 5+ files, 4+ independent ACs)."
 argument-hint: '[TICKET-ID]'
-model: haiku
+model: opus
 ---
 
 ## Dispatcher: Decomposer

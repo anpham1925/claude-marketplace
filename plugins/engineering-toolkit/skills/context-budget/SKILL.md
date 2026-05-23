@@ -1,7 +1,7 @@
 ---
 name: context-budget
 description: "TRIGGER when: user says 'context budget', 'token budget', 'optimize context', 'what's using tokens', 'reduce context usage', or asks about context window efficiency. DO NOT trigger for: general performance optimization, code size reduction, or bundle size analysis."
-model: sonnet
+model: opus
 ---
 
 # Context Budget Analyzer
