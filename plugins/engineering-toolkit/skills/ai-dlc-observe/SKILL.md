@@ -2,7 +2,7 @@
 name: ai-dlc-observe
 description: "Internal phase of the ai-dlc pipeline — post-deploy observability checks using Honeycomb, health endpoints, and NFR validation. Invoke directly only via /engineering-toolkit:ai-dlc-observe when explicitly requested by name. For general requests, use engineering-toolkit:ai-dlc which routes here automatically."
 argument-hint: '[TICKET-ID]'
-model: sonnet
+model: opus
 ---
 
 > **Recommended model: Sonnet** — Execution-focused observability queries.

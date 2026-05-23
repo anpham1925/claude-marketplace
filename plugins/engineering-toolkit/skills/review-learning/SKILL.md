@@ -2,7 +2,7 @@
 name: review-learning
 description: Analyze review feedback logs across tickets for repeated patterns, then suggest and optionally apply rule/skill/agent improvements. Use when the user wants to learn from past review mistakes, identify recurring issues across PRs, or improve coding rules based on historical feedback. Also auto-triggered by ai-dlc-release when feedback exists across 3+ tickets. Triggers for "learn from reviews", "what mistakes do we keep making", "improve our rules", "analyze review patterns", "recurring review issues".
 argument-hint: '[optional: focus area like "naming", "imports", "tests"]'
-model: sonnet
+model: opus
 ---
 
 Analyze review feedback across tickets and turn repeated patterns into durable improvements (rules, skills, agents, lint config).

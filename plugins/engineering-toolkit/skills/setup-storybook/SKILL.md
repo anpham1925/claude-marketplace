@@ -2,7 +2,7 @@
 name: setup-storybook
 description: "TRIGGER when: user says 'add storybook', 'setup storybook', 'component showcase', 'story files', or references setting up Storybook for a project. DO NOT trigger for: writing individual stories for existing Storybook setups, or general UI component questions."
 argument-hint: '[framework]'
-model: sonnet
+model: opus
 ---
 
 ## Purpose

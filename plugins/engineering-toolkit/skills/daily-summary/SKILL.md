@@ -9,7 +9,7 @@ description: >-
   'what happened yesterday'. Also use when user asks to summarize a specific
   past date's work activity.
 argument-hint: '[sod|eod|YYYY-MM-DD]'
-model: sonnet
+model: opus
 ---
 
 # Daily Summary

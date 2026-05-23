@@ -2,7 +2,7 @@
 name: update-docs
 description: "Scan existing documentation for drift against code changes, then make minimal targeted updates. Use when shipping code, after implementation, or to refresh stale docs. Triggers on: 'update docs', 'refresh docs', 'check docs', 'docs are stale'. Also invoked automatically by ship-branch before committing."
 argument-hint: '[path to scope docs check, or omit for project-wide]'
-model: sonnet
+model: opus
 ---
 
 > **Recommended model: Sonnet** — Execution-focused doc scanning and editing.
