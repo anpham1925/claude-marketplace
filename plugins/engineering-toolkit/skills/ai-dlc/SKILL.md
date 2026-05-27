@@ -71,7 +71,7 @@ All paths are relative to `docs/<identifier>/`. Every phase also updates `state.
 | Phase | Subagent Type | Model | Inputs | Outputs |
 |-------|-------------|-------|--------|---------|
 | Discovery | `general-purpose` | opus | Ticket/intent | `discovery.md`, `state.md` |
-| Plan | `planner` | opus | Ticket/intent, `discovery.md` (if exists) | `state.md` (Level 1 Plan) |
+| Plan | `general-purpose` | opus | Ticket/intent, `discovery.md` (if exists) | `state.md` (Level 1 Plan) |
 | Investigate | `debugger` | opus | `state.md`, symptoms/errors | `investigation.md`, `state.md` |
 | Inception | `general-purpose` | opus | `state.md`, `investigation.md` (if exists) | `prd-plans/inception.md`, `state.md` (ACs, NFRs, risks, traceability scaffold) |
 | Domain Design | `general-purpose` | opus | `state.md`, `prd-plans/inception.md` | `prd-plans/domain-model.md`, `state.md` (traceability: Domain Model column) |
