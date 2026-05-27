@@ -37,7 +37,7 @@ model: opus
 
 Identify what to investigate and what NOT to touch:
 
-**Spawn a `codebase-explorer` subagent** to quickly locate:
+**Spawn a `scout` subagent** via the Agent tool with `subagent_type: "engineering-toolkit:scout"` to quickly locate:
 - The affected module/service/directory
 - Entry points (API handlers, event consumers, cron jobs)
 - Dependencies (DB queries, external API calls, cache operations)

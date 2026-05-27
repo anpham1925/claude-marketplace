@@ -114,6 +114,24 @@ Re-fetch **all three** comment sources (same commands as "Read Review Comments" 
 
 **Sub-gate:** Check off `Read all comments` in stage-gate.md.
 
+### Spawn Steward Subagent — Triage Feedback
+
+Before categorizing, dispatch a fresh `engineering-toolkit:steward` subagent via the Agent tool to triage the feedback. Steward is the critical-thinker pass: it reads every comment (human and bot), evaluates each against the ticket/spec, repo patterns, and technical correctness, and returns an ACCEPT / DISCUSS / ESCALATE classification per comment — **treating AI-bot feedback with more skepticism than human feedback** (bots hallucinate issues and flag non-problems).
+
+Pass steward:
+- The PR number and repo
+- The ticket identifier (if any)
+- The comments already fetched in "Read All Comments" above
+
+Steward returns its structured report (the per-comment table + Accepted / Discussed / Escalated sections). Use it as the input to the next step:
+
+- Steward **ACCEPT** → maps to **Actionable** in the categorize step below (code change needed).
+- Steward **DISCUSS** → maps to **Debatable** / a reply-with-reasoning (no code change yet; needs user input if contentious).
+- Steward **ESCALATE** → **stop and surface to the user** — do not auto-fix; record under NEEDS-INPUT in `review-feedback.md`.
+- Steward **DISCUSS/ESCALATE on a bot comment that steward judged incorrect** → maps to **Incorrect** (reply with evidence, no code change).
+
+This is an **augmentation** — steward classifies; the existing `code-reviewer` dispatch and the AUTO-FIX loop below still apply the fixes. If steward is unavailable, the `### Categorize Feedback` step below remains the fallback path (it already says "verify the claim before categorizing" — steward strengthens that posture, it does not replace it).
+
 ### Categorize Feedback
 
 For each comment, **verify the claim before categorizing** — grep the code, check tool schemas, read the docs. Don't assume a reviewer (bot or human) is correct.

@@ -248,16 +248,18 @@ The Plan phase classifies intent and determines which phases to run:
 | Refactor | Plan --> Inception (code elevation) --> Logical Design --> Construct --> Verify --> Release |
 | Spike | Plan --> Inception --> Domain Design --> STOP |
 
-## Agents (8)
+## Agents (10)
 
 | Agent | Model | Purpose |
 |---|---|---|
-| **planner** | opus | Read-only implementation planning — 2-3 approaches with trade-offs |
+| **surveyor** | opus | Read-only workspace router — ranks repos by relevance; degrades to single-repo scan when no workspace registry exists |
+| **scout** | opus | Read-only in-repo discovery — finds relevant code, produces structured implementation briefs |
+| **inspector** | opus | TDD testing specialist — owns all test files, runs RED + VERIFY; never writes implementation code |
+| **steward** | opus | Read-only PR-feedback triage — classifies comments ACCEPT/DISCUSS/ESCALATE, treats AI-bot feedback with more skepticism |
+| **clerk** | sonnet | Jira lifecycle liaison — status transitions + phase comments via ADF (PR #15) |
 | **security-reviewer** | opus | OWASP Top 10 vulnerability scanning, secrets detection |
 | **requirements-reviewer** | opus | Adversarial cross-check of code vs acceptance criteria |
 | **code-reviewer** | opus | Quality, architecture, naming, security, adversarial analysis |
-| **test-runner** | sonnet | Run tests, analyze failures, fix and re-run (max 3 attempts) |
-| **codebase-explorer** | haiku | Fast codebase research and pattern discovery |
 | **ci-watcher** | sonnet | Monitor CI/CD pipelines, analyze failures |
 | **debugger** | opus | Hypothesis-driven debugging — investigates without fixing (max 3 rounds) |
 
