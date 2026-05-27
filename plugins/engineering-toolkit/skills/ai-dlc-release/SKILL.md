@@ -152,9 +152,20 @@ If any stage was skipped (e.g., no staging environment exists), mark it `[skippe
 
 ### Post-Release Jira Updates
 
-After the PR is merged:
-- Transition ticket to "Done" (use `getTransitionsForJiraIssue` + `transitionJiraIssue`)
-- Post final comment with PR link and summary
+After the PR is merged, dispatch the [clerk agent](../../agents/clerk.md) via the Task tool with the [Phase→Clerk brief](../ai-dlc/reference/shared.md#phase-clerk-brief). Clerk owns the comment AND the transition (post comment first, then transition — see `clerk.md` Process step 4). The transition is idempotent (clerk skips if already in Done); the comment idempotency uses the phase-stamp pre-check (ADR-002). On re-dispatch after a post-comment-success/pre-transition-failure case, the idempotency scan finds the existing stamp but clerk MUST still attempt the transition — the transition is independently idempotent and must not be skipped just because the comment was already posted. See [Failure semantics](../ai-dlc/reference/shared.md#failure-semantics-for-clerk-dispatch).
+
+Brief at this call site:
+- `state`: completed
+- `phase`: release
+- `summary`: "Released — PR #{pr_number} merged. {n_commits} commit(s)."
+- `state_md_path`: `docs/<identifier>/state.md`
+- `ac_count` / `nfr_count` / `risk_count`: from state.md (final values)
+- `files`: changed files in the merge commit
+- `branch`: the merged branch
+- `repo`: repository name or path
+- `guard_verdict`: final verdict from Verify (PASS unless explicit deferral)
+- `guard_summary`: one-line summary
+- (Clerk additionally transitions the ticket — "transition_target: Done" is passed as part of the Task description, not as a brief field.)
 
 ### Close Deferral Payments
 

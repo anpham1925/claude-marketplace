@@ -379,7 +379,7 @@ Common failure modes — if you catch yourself doing any of these, stop and corr
 - **ALWAYS** ask open questions one at a time via the `AskUserQuestion` tool (arrow-key selector with built-in "Other"); never present plain-text A/B/C options asking the user to type a letter — see [Open Questions Protocol](reference/shared.md#open-questions-protocol)
 - **ALWAYS** translate subagent-surfaced user-facing tradeoffs into `AskUserQuestion` calls before showing them to the user — never pass a subagent's prose A/B/C block through to the checkpoint message. If `AskUserQuestion` is a deferred tool in the current harness, load it via `ToolSearch` and then call it. "It's faster to just paste the prose" is a bug, not a shortcut.
 - **ALWAYS** follow the adaptive pipeline from Plan — skip phases the Plan excludes
-- **ALWAYS** post Jira comments after each phase
+- **ALWAYS** post Jira comments after each phase — dispatch the [clerk agent](../../agents/clerk.md) via the Task tool with the [Phase→Clerk brief](reference/shared.md#phase-clerk-brief). Clerk failures are warnings, not phase failures (see [Failure semantics](reference/shared.md#failure-semantics-for-clerk-dispatch))
 - **ALWAYS** update `docs/<identifier>/state.md` after completing each phase
 - **ALWAYS** check for `state.md` at the start — resume if a previous session was interrupted
 - **ALWAYS** update the traceability matrix as phases complete

@@ -253,7 +253,17 @@ This file is **kept** after merge (same as specs.md/domain-model.md) — it's du
 
 ### Update Jira
 
-Post construction summary as a comment. For bug fixes, include the root cause and fix summary from the fix report.
+Dispatch the [clerk agent](../../agents/clerk.md) via the Task tool with the [Phase→Clerk brief](../ai-dlc/reference/shared.md#phase-clerk-brief). See [Failure semantics](../ai-dlc/reference/shared.md#failure-semantics-for-clerk-dispatch) — even if clerk fails, the phase still marks completed in `state.md` (consistent with the existing "warn and continue" promise at line 53 of this file).
+
+Brief at this call site:
+- `state`: completed
+- `phase`: construct
+- `summary`: "Construct complete — {n_waves} TDD wave(s), {ac_done}/{ac_count} ACs delivered"
+- `state_md_path`: `docs/<identifier>/state.md`
+- `ac_count` / `nfr_count` / `risk_count`: from state.md tables
+- `files`: list of changed files (relative to repo root)
+- `branch`: current branch (`git rev-parse --abbrev-ref HEAD`)
+- `repo`: repository name or path
 
 ### Update State
 

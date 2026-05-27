@@ -247,6 +247,20 @@ Write `docs/<identifier>/discovery.md`:
 - {Anything unresolved that Plan/Inception should address}
 ```
 
+### Update Jira
+
+Dispatch the [clerk agent](../../agents/clerk.md) via the Task tool with the [Phase→Clerk brief](../ai-dlc/reference/shared.md#phase-clerk-brief). See [Failure semantics](../ai-dlc/reference/shared.md#failure-semantics-for-clerk-dispatch).
+
+Brief at this call site:
+- `state`: completed
+- `phase`: discovery
+- `summary`: "Discovery complete — reframed to: {reframed_problem}. Recommended approach: {approach_name}"
+- `state_md_path`: `docs/<identifier>/state.md`
+- `ac_count`: 0 (Discovery does not author ACs)
+- `nfr_count`: 0
+- `risk_count`: 0 (risks land in Inception, not Discovery)
+- (no execution-flavoured fields)
+
 ### Update State
 
 Create or update `docs/<identifier>/state.md`:

@@ -242,7 +242,15 @@ Write to `docs/<identifier>/prd-plans/inception.md`. See [artifacts reference](.
 
 ### Update Jira
 
-Post inception summary as a comment (see [shared reference](../ai-dlc/reference/shared.md) for comment format).
+Dispatch the [clerk agent](../../agents/clerk.md) via the Task tool with the [Phase→Clerk brief](../ai-dlc/reference/shared.md#phase-clerk-brief). Clerk owns ADF assembly, idempotency pre-check (per ADR-002), and post-comment ordering. The phase still marks completed in `state.md` even if clerk returns BLOCKED — clerk failures are warnings, not phase failures (see [Failure semantics](../ai-dlc/reference/shared.md#failure-semantics-for-clerk-dispatch)).
+
+Brief at this call site:
+- `state`: completed
+- `phase`: inception
+- `summary`: "Inception complete — {ac_count} ACs, {nfr_count} NFRs, {risk_count} risks"
+- `state_md_path`: `docs/<identifier>/state.md`
+- `ac_count` / `nfr_count` / `risk_count`: from the artifact's tables
+- (no execution-flavoured fields — `files`, `branch`, `repo`, `guard_*` are absent)
 
 ### Update State
 
