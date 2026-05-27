@@ -223,7 +223,18 @@ Before proceeding to the Combined Report, verify:
 
 ### Update Jira
 
-Post verification summary as a comment.
+**Task-tool dispatch is mandatory** for this phase — clerk MUST run in a fresh subagent, NOT inline via the Skill tool. Verify reads Jira ticket activity to assess the work; if clerk posted a comment in Verify's own context, that comment would pollute Verify's read of ticket state on any retry. The fresh subagent is the bias-isolation primitive (ADR-001 + Inception NFR4).
+
+Dispatch the [clerk agent](../../agents/clerk.md) via the Task tool with the [Phase→Clerk brief](../ai-dlc/reference/shared.md#phase-clerk-brief). See [Failure semantics](../ai-dlc/reference/shared.md#failure-semantics-for-clerk-dispatch).
+
+Brief at this call site:
+- `state`: completed
+- `phase`: verify
+- `summary`: "Verify complete — {ac_passed}/{ac_count} ACs verified, {n_blockers} blocker(s), {n_concerns} concern(s)"
+- `state_md_path`: `docs/<identifier>/state.md`
+- `ac_count` / `nfr_count` / `risk_count`: from state.md
+- `guard_verdict`: PASS | WARN | FAIL (from `review-feedback.md` overall verdict)
+- `guard_summary`: one-line summary from `review-feedback.md`
 
 ### Update State
 

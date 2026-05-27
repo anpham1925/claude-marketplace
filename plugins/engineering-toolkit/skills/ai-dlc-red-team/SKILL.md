@@ -300,6 +300,19 @@ After iteration 3, force a user checkpoint even if findings remain:
 
 This prevents analysis paralysis. Most phases converge in 1-2 iterations; 3 is the safety valve.
 
+### Update Jira
+
+Dispatch the [clerk agent](../../agents/clerk.md) via the Task tool with the [Phase→Clerk brief](../ai-dlc/reference/shared.md#phase-clerk-brief). Run dispatch only after the iteration's findings are captured in `red-team-report.md` (or the iteration loop-back has reached convergence). See [Failure semantics](../ai-dlc/reference/shared.md#failure-semantics-for-clerk-dispatch).
+
+Brief at this call site:
+- `state`: completed
+- `phase`: red-team
+- `iteration`: the current Red Team iteration number (1, 2, 3 — from this iteration's `red-team-report.md` / state.md). **Load-bearing for idempotency** (ADR-002): iter-2's "CONVERGED" comment must NOT be swallowed by iter-1's stamp.
+- `summary`: "Red Team iter-{iteration} complete — {n_critical} CRITICAL, {n_major} MAJOR, {n_minor} MINOR. {convergence_status}"
+- `state_md_path`: `docs/<identifier>/state.md`
+- `ac_count` / `nfr_count` / `risk_count`: unchanged from upstream (Red Team does not author them)
+- (no execution-flavoured fields)
+
 ## Rules
 
 - **NEVER** fix findings directly — route them to the upstream phase. Red Team critiques; it doesn't re-design.

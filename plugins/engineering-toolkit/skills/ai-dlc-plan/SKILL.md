@@ -219,6 +219,22 @@ Based on intent type and complexity, produce the adaptive pipeline:
 - NFR-sensitive: {yes/no}
 ```
 
+### Update Jira
+
+Dispatch the [clerk agent](../../agents/clerk.md) via the Task tool with the [Phase→Clerk brief](../ai-dlc/reference/shared.md#phase-clerk-brief). See [Failure semantics](../ai-dlc/reference/shared.md#failure-semantics-for-clerk-dispatch).
+
+Plan-phase dispatch is informational — the ticket is typically still in `Ready for Development`; this captures the intent classification and adaptive pipeline decision as durable audit-trail content. Per Inception Q4, Plan **does** dispatch clerk (the comment is high-signal context for reviewers reading the ticket cold).
+
+Brief at this call site:
+- `state`: completed
+- `phase`: plan
+- `summary`: "Plan complete — {intent_type}, {complexity} complexity. Pipeline: {phase_list}"
+- `state_md_path`: `docs/<identifier>/state.md`
+- `ac_count`: 0 (Plan does not author ACs)
+- `nfr_count`: 0
+- `risk_count`: from Plan's "Pre-identified risks" block (may be non-zero)
+- (no execution-flavoured fields)
+
 ### Update State
 
 Create `docs/<identifier>/state.md` with the Level 1 Plan. See [shared reference](../ai-dlc/reference/shared.md) for format.

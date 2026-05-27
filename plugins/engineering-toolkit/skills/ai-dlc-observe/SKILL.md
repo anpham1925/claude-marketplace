@@ -167,7 +167,16 @@ If any metric is in ALERT status:
 
 ### Update Jira
 
-Post observation summary as a comment.
+Dispatch the [clerk agent](../../agents/clerk.md) via the Task tool with the [Phase→Clerk brief](../ai-dlc/reference/shared.md#phase-clerk-brief). See [Failure semantics](../ai-dlc/reference/shared.md#failure-semantics-for-clerk-dispatch).
+
+Brief at this call site:
+- `state`: completed
+- `phase`: observe
+- `summary`: "Observe complete — {n_checks_passed}/{n_checks} health/observability checks passed"
+- `state_md_path`: `docs/<identifier>/state.md`
+- `ac_count` / `nfr_count` / `risk_count`: from state.md (post-release)
+- `guard_verdict`: PASS | WARN | FAIL based on observability check outcomes
+- `guard_summary`: one-line summary
 
 ### Update State
 

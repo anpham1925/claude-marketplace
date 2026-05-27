@@ -208,7 +208,14 @@ After design approval, write to `docs/<identifier>/prd-plans/`:
 
 ### Update Jira
 
-Post design summary as a comment.
+Dispatch the [clerk agent](../../agents/clerk.md) via the Task tool with the [Phase→Clerk brief](../ai-dlc/reference/shared.md#phase-clerk-brief). See [Failure semantics](../ai-dlc/reference/shared.md#failure-semantics-for-clerk-dispatch) for non-blocking dispatch behaviour.
+
+Brief at this call site:
+- `state`: completed
+- `phase`: logical-design
+- `summary`: "Logical Design complete — {n_adrs} ADR(s), {n_new_files} new + {n_modified_files} modified files"
+- `state_md_path`: `docs/<identifier>/state.md`
+- `ac_count` / `nfr_count` / `risk_count`: unchanged from Inception
 
 ### Update State
 

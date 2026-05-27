@@ -131,7 +131,14 @@ See [artifacts reference](../ai-dlc/reference/artifacts.md) for the Domain Model
 
 ### Update Jira
 
-Post domain model summary as a comment.
+Dispatch the [clerk agent](../../agents/clerk.md) via the Task tool with the [Phase→Clerk brief](../ai-dlc/reference/shared.md#phase-clerk-brief). See [Failure semantics](../ai-dlc/reference/shared.md#failure-semantics-for-clerk-dispatch) for non-blocking dispatch behaviour.
+
+Brief at this call site:
+- `state`: completed
+- `phase`: domain-design
+- `summary`: "Domain Design complete — {n_aggregates} aggregate(s), {n_events} domain event(s)"
+- `state_md_path`: `docs/<identifier>/state.md`
+- `ac_count` / `nfr_count` / `risk_count`: unchanged from Inception (Domain Design does not author ACs/NFRs/risks)
 
 ### Update State
 

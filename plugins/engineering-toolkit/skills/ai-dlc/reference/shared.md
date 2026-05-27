@@ -97,7 +97,7 @@ Append-only. One row per phase completion, checkpoint, or material change. Newes
 Every ai-dlc phase skill MUST follow these rules. Phase-specific SKILL.md files link here instead of repeating them.
 
 - **ALWAYS** update `docs/<identifier>/state.md` after completing the phase
-- **ALWAYS** post a Jira comment with phase summary after completing (see [Jira Integration](#jira-integration) for format)
+- **ALWAYS** post a Jira comment with phase summary after completing — dispatch the [clerk agent](../../../agents/clerk.md) via the Task tool with the [Phase→Clerk brief](#phase-clerk-brief). See [Failure semantics](#failure-semantics-for-clerk-dispatch) — clerk failures do not block phase completion.
 - **ALWAYS** use AI-initiated recommendation at the checkpoint (see [protocol below](#ai-initiated-recommendation-protocol))
 - **ALWAYS** check for `state.md` at the start — resume if a previous session was interrupted
 - **ALWAYS** update the traceability matrix as phases complete (see [Traceability Matrix Protocol](#traceability-matrix-protocol))
@@ -369,6 +369,92 @@ NFRs identified: {count} | Risks: {count} | ACs: {count}
 Artifacts:
 - {Link or description of output}
 ```
+
+---
+
+## Phase→Clerk brief
+
+The contract every phase skill uses when dispatching the clerk agent via the Task tool. This brief is a **superset** of the source clerk's 7-field execute-ticket brief — clerk reads whichever fields are populated and degrades gracefully when phase-specific fields are absent.
+
+### Field schema (13 fields)
+
+| Field | Type | Required? | Notes |
+|---|---|---|---|
+| `state` | enum | required | `completed` \| `in-progress` \| `blocked` |
+| `phase` | enum | required | `plan` \| `inception` \| `domain-design` \| `logical-design` \| `red-team` \| `construct` \| `verify` \| `release` \| `observe` \| `discovery` \| `investigate` |
+| `iteration` | integer | optional (default 1) | Iteration number for phases that re-run after a Red Team route-back (Red Team, Construct, Logical Design, Inception, Plan). Drives the `iter<N>` stamp suffix (idempotency). Phases that run once omit it; clerk treats absence as `1`. |
+| `summary` | string | required | One-line phase summary, composed by the phase skill (clerk does not invent it) |
+| `state_md_path` | string | optional | Relative path to `docs/<identifier>/state.md`. **When absent, clerk degrades to ticket-key-only** — does not read state.md, posts using only the brief's inline fields. |
+| `ac_count` | integer | required | From state.md Traceability Matrix. May be 0 (Plan, Discovery). |
+| `nfr_count` | integer | required | From state.md NFRs table. May be 0 (Plan, Discovery, Domain Design). |
+| `risk_count` | integer | required | From state.md Risk Register. May be 0. |
+| `files` | string[] | optional | Present for Construct, Release. Paths relative to repo root. |
+| `branch` | string | optional | Present for Construct, Release. From `git rev-parse --abbrev-ref HEAD`. |
+| `repo` | string | optional | Present for Construct, Release. Repository name or path. |
+| `guard_verdict` | enum | optional | `PASS` \| `WARN` \| `FAIL`. Present for Verify, Release, Observe. |
+| `guard_summary` | string | optional | One-line verdict summary. Present for Verify, Release, Observe. |
+
+### Per-phase brief composition
+
+The "Sets `iteration`?" column marks the phases that can re-run after a Red Team route-back and therefore carry an iteration number; all other phases run once and omit `iteration` (clerk defaults it to 1).
+
+| Phase | Sets `iteration`? | Required fields | Optional fields populated | Notes |
+|---|---|---|---|---|
+| Plan | yes (1 unless routed back) | state, phase, summary, state_md_path, ac_count=0, nfr_count=0, risk_count | `iteration` (if >1) | Informational comment; ticket usually still in `Ready for Development`. |
+| Discovery | no (default 1) | state, phase, summary, state_md_path, ac_count=0, nfr_count=0, risk_count=0 | none | Reframing summary. |
+| Inception | yes (1 unless routed back) | state, phase, summary, state_md_path, ac_count, nfr_count, risk_count | `iteration` (if >1) | First phase with non-zero ACs/NFRs/risks. |
+| Domain Design | no (default 1) | state, phase, summary, state_md_path, ac_count, nfr_count, risk_count | none | Counts inherited from Inception. |
+| Logical Design | yes (1 unless routed back) | state, phase, summary, state_md_path, ac_count, nfr_count, risk_count | `iteration` (if >1) | Increments on Red Team route-back. |
+| Red Team | **yes** | state, phase, summary, state_md_path, ac_count, nfr_count, risk_count | `iteration` (the Red Team iteration counter) | Summary includes iteration + finding severity counts. iter-N stamp prevents swallowing the convergence comment. |
+| Investigate | no (default 1) | state, phase, summary, ac_count=0, nfr_count=0, risk_count=0 | none — `state_md_path` **optional** | Omit `state_md_path` when running outside `docs/<identifier>/`; clerk degrades to ticket-key-only. |
+| Construct | yes (1 unless routed back) | state, phase, summary, state_md_path, ac_count, nfr_count, risk_count | files, branch, repo (+ `iteration` if Red Team routed back) | First phase with execution-flavoured fields. |
+| Verify | no (default 1) | state, phase, summary, state_md_path, ac_count, nfr_count, risk_count | guard_verdict, guard_summary | Bias-isolation phase — **Task-tool dispatch mandatory**. |
+| Release | no (default 1) | state, phase, summary, state_md_path, ac_count, nfr_count, risk_count | files, branch, repo, guard_verdict, guard_summary | Clerk additionally transitions ticket to Done. |
+| Observe | no (default 1) | state, phase, summary, state_md_path, ac_count, nfr_count, risk_count | guard_verdict, guard_summary | guard_* fields come from observability checks. |
+
+### Dispatch protocol
+
+Every phase MUST dispatch clerk via the **Task tool**, not the Skill tool. Three reasons:
+
+1. **Bias isolation** — particularly for Verify, which reads Jira ticket activity. A clerk dispatched inline would mutate state Verify's own assertions read, creating a feedback loop. See ADR-001 in `docs/port-clerk/prd-plans/`.
+2. **Tool-grant scoping** — clerk's frontmatter declares 13 `mcp__atlassian__*` grants. Skill-tool inline dispatch would inherit those grants into the dispatching phase's context; Task-tool dispatch keeps them confined to clerk's subagent (least-privilege).
+3. **Uniformity** — a single dispatch posture across all 11 phases is easier to verify and harder to drift than a per-phase exception list.
+
+**Wire format**: pass the brief as a YAML-shaped markdown block in the Task `prompt` parameter, with `subagent_type='general-purpose'`. Example:
+
+```yaml
+phase: inception
+state: completed
+iteration: 1
+summary: "Inception complete — 14 ACs, 7 NFRs, 5 risks"
+state_md_path: docs/port-clerk/state.md
+ac_count: 14
+nfr_count: 7
+risk_count: 5
+```
+
+### Comment idempotency
+
+Clerk stamps the first paragraph of every AI-DLC dispatch comment with `[AI-DLC: <Phase> iter<N> <ISO-8601-UTC-timestamp>]` (minute precision), where `<N>` is the brief's `iteration` field (default `1` when absent). Before posting, clerk fetches the ticket's comments via `getJiraIssue` (comments return inline) and scans the comment bodies **in-code** for an existing `[AI-DLC: <Phase> iter<N>` prefix. If a matching stamp is found, clerk skips silently and returns `already-posted` to the dispatching phase. The match is keyed on **phase + iteration together**: a true retry of the same phase+iteration is skipped, while iteration 2 of a phase (Red Team iter-2, or a Construct re-run after a route-back) posts correctly — its `iter2` stamp does not match the prior `iter1` stamp.
+
+The scan is a deterministic in-code string match, **not** a `searchJiraIssuesUsingJql` query — JQL's `~` operator tokenises away the bracket/colon framing and cannot reliably match the stamp literal. If the `getJiraIssue` fetch fails (and it is not a 404/403), clerk **fails open**: it posts the comment and logs that the dedup scan was inconclusive (a duplicate is recoverable; a swallowed comment is not).
+
+This contract is parallel to clerk's existing transition idempotency (`clerk.md` line 55 / Failure handling table row "Already in target status"). See ADR-002 in `docs/port-clerk/prd-plans/`.
+
+### Failure semantics for clerk dispatch
+
+Clerk failures **do not block phase completion**.
+
+- If clerk returns COMPLETE → phase logs success and moves on.
+- If clerk returns BLOCKED, partial, or error (network, Jira 5xx, permission-denied, transition rejected post-pre-flight) → phase still:
+  - Marks the phase row in `docs/<identifier>/state.md` as **completed**
+  - Updates the traceability matrix as usual
+  - Surfaces the clerk failure as a **warning** in the chat session (not a phase-level failure)
+  - Records the clerk-failure note in `state.md` (e.g., "phase completed; clerk dispatch returned BLOCKED: <reason> — re-dispatch manually with /engineering-toolkit:agents/clerk")
+
+This preserves the orchestrator's existing "Jira ops fail → warn and continue, never block" promise (`ai-dlc/SKILL.md` rule line 382 + `ai-dlc-construct/SKILL.md:53`).
+
+**Exception**: `addCommentToJiraIssue` permission-denied is escalated to the user per clerk's failure-handling table (source line 188), but the phase still completes — the escalation is a chat-session notification, not a phase-level halt.
 
 ---
 

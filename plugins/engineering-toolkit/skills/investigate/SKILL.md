@@ -130,6 +130,20 @@ Write `docs/<identifier>/investigation.md` with the debugger's report, plus any 
 - [ ] {Specific action items}
 ```
 
+### Update Jira
+
+Dispatch the [clerk agent](../../agents/clerk.md) via the Task tool with the [Phase→Clerk brief](../ai-dlc/reference/shared.md#phase-clerk-brief). Investigate is typically dispatched within a bug-fix flow — the comment captures the root cause + recommended fix for the ticket's audit trail. See [Failure semantics](../ai-dlc/reference/shared.md#failure-semantics-for-clerk-dispatch).
+
+Brief at this call site:
+- `state`: completed
+- `phase`: investigate
+- `summary`: "Investigation complete — root cause: {root_cause_one_liner}. Recommended fix: {approach}. Risk: {low|medium|high}"
+- `state_md_path`: `docs/<identifier>/state.md` — **optional** (per ADR-003); omit when running outside a `docs/<identifier>/` context. When omitted, clerk degrades to ticket-key-only: it does not read state.md and posts using only the brief's inline fields.
+- `ac_count`: 0
+- `nfr_count`: 0
+- `risk_count`: 0
+- (no execution-flavoured fields; if a follow-up fix is identified, the construct phase dispatches its own clerk call with the execution fields)
+
 ### CHECKPOINT — Investigation Handoff
 
 Present the investigation results and recommend next steps:
