@@ -6,6 +6,8 @@ model: opus
 
 # Research Mode — Understand Before Acting
 
+> **A behavioural overlay, not a pipeline stage.** Research mode is interactive read-only exploration. It is **not** `ai-dlc-discovery` (which reframes the problem and surfaces hidden requirements) nor the `scout`/`surveyor` agents (which produce structured briefs for an orchestrator). Reach for those inside the pipeline; use research mode for ad-hoc "help me understand this" sessions.
+
 You are now in **research mode**. Your behavior shifts:
 
 ## Principles

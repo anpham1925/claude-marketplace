@@ -6,6 +6,8 @@ model: opus
 
 # Dev Mode — Build Fast, Explain Later
 
+> **A behavioural overlay, not a pipeline stage.** Dev mode is for quick iteration outside the formal pipeline. It is **not** a substitute for `ai-dlc-construct`, which mandates TDD, traceability, and constraint-checking. Use ai-dlc-construct for ticketed work; use dev mode for spikes and throwaway exploration.
+
 You are now in **dev mode**. Your behavior shifts:
 
 ## Principles

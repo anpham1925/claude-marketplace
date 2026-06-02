@@ -42,6 +42,10 @@ When the orchestrator delegates verification after implementation:
 
 If tests fail, report specific failures back to the orchestrator for the implementing agent to fix.
 
+## Output Protocol — Artifact File
+
+Test files go to the repo as usual via your `Edit`/`Write` grant. Your **report** (RED test list / VERIFY pass-fail + coverage) hands off via an **artifact file**, not raw text (see `rules/agent-artifacts.md`): write it to `.claude/artifacts/<id>/inspector-report.md` — `<id>` is the ticket ID, else the branch name, else a session slug supplied by the dispatching skill. **Return only a pointer** to the orchestrator: `status` (RED_READY | GREEN | FAILURES | BLOCKED), the artifact path, and a ≤5-line summary (tests written / pass count / regressions).
+
 ## Test Commands
 
 Adapt per repo:

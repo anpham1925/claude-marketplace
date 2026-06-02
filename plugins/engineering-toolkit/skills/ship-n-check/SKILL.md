@@ -28,13 +28,13 @@ Individual stages can also be invoked directly (e.g., `/engineering-toolkit:ship
 
 ## Done Flow (Full Pipeline)
 
-When finished coding and ready to submit, dispatch each stage to a Task subagent sequentially. **DO NOT call Skill(...) for stage execution** — Skill calls run inline in the parent context and accumulate transcript across all stages, blowing past the 200k haiku window. Each stage MUST run in an isolated subagent so only a short summary returns to the orchestrator.
+When finished coding and ready to submit, dispatch each stage to a Task subagent sequentially. **DO NOT call Skill(...) for stage execution** — Skill calls run inline in the parent context and accumulate transcript across all stages, blowing past the 200k haiku window. Each stage MUST run in an isolated subagent so only a short summary returns to the orchestrator. (The one exception is the CI/CD and Staging *waits*, which the orchestrator runs as backgrounded commands rather than wrapped subagents — see the carve-out below.)
 
 ```
 [ship-branch]  -->  [ship-quality]  -->  /simplify  -->  [ship-push-pr]
                                                               |
-                                                         [ship-cicd]        ← BLOCKING (10-30 min)
-                                                              |               Subagent reports progress
+                                                         [ship-cicd]        ← orchestrator backgrounds `gh run watch`
+                                                              |               (re-invoked on exit; no polling, no blocked subagent)
                                                         [ship-staging]
                                                               |
                                                        [ship-pr-review]
@@ -45,6 +45,8 @@ When finished coding and ready to submit, dispatch each stage to a Task subagent
 ### Stage Invocation (Task subagents, not Skill calls)
 
 For each stage, spawn a `general-purpose` Task subagent that invokes the stage skill internally and returns ONLY a short structured summary. Wait for each subagent to finish before dispatching the next — stages are sequential.
+
+**Exception — CI/CD and Staging waits run at the orchestrator, not in a blocking subagent** (see the carve-out below). For those stages the orchestrator follows the skill directly so it can background the watch and be re-invoked on exit; it dispatches a subagent only for failure diagnosis (`engineering-toolkit:ci-watcher`). All other stages follow the Task-subagent pattern above.
 
 **Required dispatch pattern:**
 
@@ -77,13 +79,17 @@ Return ONLY this summary (no transcript, no diff, no command output):
 | Quality | "ship-quality stage" | `/engineering-toolkit:ship-quality [ticket]` |
 | Simplify | "simplify stage" | `/simplify` |
 | Push & PR | "ship-push-pr stage" | `/engineering-toolkit:ship-push-pr [ticket]` |
-| CI/CD | "ship-cicd stage" | `/engineering-toolkit:ship-cicd [ticket]` |
-| Staging | "ship-staging stage" | `/engineering-toolkit:ship-staging [ticket]` |
+| CI/CD | — (runs at orchestrator) | `/engineering-toolkit:ship-cicd` — **exception: not a blocking subagent.** The orchestrator follows it directly and backgrounds the watch; it dispatches a `engineering-toolkit:ci-watcher` subagent only on failure (see the carve-out below) |
+| Staging | — (runs at orchestrator) | `/engineering-toolkit:ship-staging` — **exception:** the orchestrator follows it directly; the pod wait is a backgrounded `kubectl wait` |
 | PR Review | "ship-pr-review stage" | `/engineering-toolkit:ship-pr-review [ticket]` |
 
 **User-approval checkpoints stay in the parent.** When a stage's summary returns `NEEDS_USER_INPUT` (e.g. commit approval, PR creation approval, debatable auto-fix), the orchestrator surfaces the question to the user and only dispatches the next subagent after explicit approval. Subagents never decide on the user's behalf.
 
 **Loop-back on CI fixes.** If `ship-pr-review` pushes fixes, dispatch a fresh `ship-cicd` subagent — do not reuse the prior one.
+
+**CI/CD and staging waits run at the orchestrator — not inside a blocked subagent.** The *waiting* parts of `ship-cicd` (waiting on the run) and `ship-staging` (waiting on the pod) are backgrounded `gh run watch` / `kubectl wait` calls the orchestrator issues itself; the harness re-invokes the orchestrator when they exit. Dispatch a subagent for these stages only for *work* that needs bias isolation — a fresh `engineering-toolkit:ci-watcher` to diagnose a **failed** run. Never wrap a passing run or a readiness wait in a subagent the orchestrator then blocks on for 30 minutes — that is exactly what leaves subagents stuck without closing. See [Long-Running Operations](reference/shared.md#long-running-operations).
+
+**Subagent liveness.** A dispatched stage subagent must return a structured summary *and* write its stage-gate entry. If a subagent returns nothing, returns no `Status:` line, or its stage-gate entry is missing (e.g. it hit its turn limit and died mid-stage), treat the stage as FAIL — re-dispatch once, or surface to the user. Do NOT wait indefinitely for a summary or artifact pointer that never arrives.
 
 ### Resume Flow (no changes to commit)
 
@@ -115,9 +121,9 @@ Common failure modes — if you catch yourself doing any of these, stop and corr
 - **Forgetting `Co-Authored-By`** — Every commit must include it.
 - **Using `$()` in commit commands** — Write message to file first, then `git commit -F`.
 - **Skipping requirements review** — It's a blocking gate regardless of confidence.
-- **Polling CI with sleep loops** — Use `gh run watch --exit-status`.
+- **Polling CI with sleep loops** — Background `gh run watch --exit-status` (`run_in_background: true`); the harness re-invokes you on exit. Never sleep-poll or re-query "every N seconds".
 - **Calling stages via `Skill(...)` from the orchestrator** — Skill calls run inline and bloat the parent context. Always dispatch via Task subagents.
-- **Going silent during CI** — the ship-cicd subagent must report progress; surface its updates to the user. Never fire-and-forget.
+- **Going silent during CI** — tell the user the expected wait before backgrounding the watch, then report the full result on the re-invoke. The backgrounded watch wakes you on completion, so there's no fire-and-forget gap.
 - **Creating PR as non-draft** — Always `--draft`.
 - **Amending commits** — Default is always a NEW commit.
 - **Force-pushing** — Never, unless user explicitly asks. Never to master/main.
@@ -135,8 +141,10 @@ Common failure modes — if you catch yourself doing any of these, stop and corr
 - **NEVER** create the PR without user approval at Push & PR
 - **NEVER** auto-fix debatable items — always ask the user
 - **NEVER** exceed 3 fix-and-retry attempts in CI/CD or Address Reviews
-- **ALWAYS** dispatch stages as Task subagents — never call `Skill(/engineering-toolkit:ship-*)` from the orchestrator (Skill calls run inline and accumulate context across stages)
+- **ALWAYS** dispatch stages as Task subagents — never call `Skill(/engineering-toolkit:ship-*)` from the orchestrator (Skill calls run inline and accumulate context across stages). **Exception:** the CI/CD and Staging *waits* are run by the orchestrator as backgrounded commands (`gh run watch` / `kubectl wait`) — neither a Skill call nor a wrapped subagent — and a `engineering-toolkit:ci-watcher` subagent is dispatched only to diagnose a failed run (see the carve-out above)
 - **ALWAYS** wait for each subagent to finish and surface its summary before dispatching the next
+- **ALWAYS** run the CI/CD and staging *waits* at the orchestrator level via backgrounded `gh run watch` / `kubectl wait` — never inside a subagent the orchestrator blocks on
+- **NEVER** wait indefinitely for a subagent — if it returns no `Status:` summary or leaves its stage-gate entry unwritten, treat the stage as FAIL and re-dispatch once or surface to the user
 - **ALWAYS** run lint, type-check, and tests before submitting
 - **NEVER** delete `docs/<identifier>/review-feedback.md` — always append
 - If any quality check fails and can't be fixed, **STOP** and inform the user

@@ -107,13 +107,19 @@ Mark each NFR as: **ADDRESSED** (pattern implemented), **PARTIAL** (incomplete),
 
 ### Part 4: Code Review
 
-**Spawn a `code-reviewer` subagent** with risk context from state.md. Include in the prompt:
+**Spawn a `code-reviewer` subagent** with risk context from state.md (pass the `<id>`). Include in the prompt:
 - Complexity band (e.g. "Complexity: Medium")
 - Risk register entries with severity (e.g. "Risks: R-1 HIGH — concurrent balance updates")
 - NFR categories flagged (e.g. "NFRs: security, reliability, data-integrity")
 - The instruction: "Scale your adversarial analysis depth based on these risk signals."
 
 This enables the code-reviewer's adversarial section to automatically calibrate depth — deep analysis for high-risk changes, light checks for routine work.
+
+**Additional review lenses (parallel, dispatched on the signals below).** Each writes its own artifact under `.claude/artifacts/<id>/` and returns a pointer; read each by path and fold findings into the Review Feedback append:
+- **`engineering-toolkit:requirements-reviewer`** — always, to cross-check the diff against the AC list from `inception.md` (independent of the code-reviewer's quality lens). Writes `requirements-review.md`.
+- **`engineering-toolkit:security-reviewer`** — when the diff touches auth, input handling, secrets, external calls, or any NFR flagged `security`. Writes `security-review.md`.
+
+The code-reviewer, requirements-reviewer, and security-reviewer are independent lenses — run them concurrently, then merge. The canonical review checklist they all work from lives in `skills/engineering-foundations/reference/code-review.md`.
 
 Generate the full diff (detect default branch per `rules/git-conventions.md`):
 ```bash
@@ -265,7 +271,7 @@ Present results and recommend next phase (see [AI-initiated recommendation proto
 See [common phase rules](../ai-dlc/reference/shared.md#common-phase-rules) for state updates, Jira comments, and checkpoint protocol.
 
 Phase-specific:
-- **ALWAYS** use a fresh subagent for verification — never verify inline
+- **ALWAYS** run the verification *work* (Verifier, code-reviewer, requirements-reviewer, security-reviewer) in a fresh subagent isolated from the Constructor — this bias-isolation guarantee is non-negotiable. The Verify orchestration shell may run inline from a fresh terminal with no large parent context; even then the internal review spawns still happen, so the verification is never done in the calling context
 - **ALWAYS** validate traceability completeness — every AC must trace through all columns
 - **ALWAYS** validate NFR compliance — every NFR must be addressed
 - **NEVER** skip code review — even for small changes

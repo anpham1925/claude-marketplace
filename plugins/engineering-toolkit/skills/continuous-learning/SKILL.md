@@ -8,6 +8,8 @@ model: opus
 
 Mine sessions for reusable patterns and codify them as "instincts" — atomic, high-confidence behaviors that improve over time.
 
+> **Related: `review-learning`.** This skill mines **reusable coding instincts** from sessions (e.g. "use `z.infer<>` for TS types") and stores them as instincts. `engineering-toolkit:review-learning` mines **recurring code-review findings** across tickets and turns them into durable rules/skills. Different inputs, different outputs — but if a review-learning pattern keeps recurring in practice, capture it here as an instinct.
+
 ## What is an Instinct?
 
 An instinct is a specific, actionable pattern learned from experience:

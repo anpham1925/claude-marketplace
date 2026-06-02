@@ -4,6 +4,15 @@ Handoff contracts and artifact templates shared across AI-DLC phases. Extracted 
 
 ---
 
+## Two artifact tiers
+
+| Tier | Location | Holds |
+|---|---|---|
+| **Durable pipeline artifacts** | `docs/<id>/` | `state.md`, `prd-plans/*`, `review-feedback.md`, ADRs — the committed AI-DLC record (this document's contracts) |
+| **Transient agent handoffs** | `.claude/artifacts/<id>/` | One-shot subagent outputs (scout briefs, review findings, investigation/CI reports) consumed by the orchestrator or the next agent |
+
+Both tiers obey the same rule — **handoffs are file paths, not content** — and both use the same `<id>` (ticket → branch → session slug). Durable artifacts below are committed with the ticket; transient artifacts are disposable. See `rules/agent-artifacts.md` for the cross-cutting convention that applies to every agent dispatch, not just AI-DLC phases.
+
 ## Handoff Contracts
 
 Each phase produces a structured artifact **file** that feeds into the next. The orchestrator passes **file paths** between phases — never raw content. If the session dies, artifact files contain everything needed to resume.

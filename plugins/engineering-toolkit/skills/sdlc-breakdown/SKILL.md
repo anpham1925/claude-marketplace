@@ -14,6 +14,8 @@ This skill is a thin dispatcher. The actual decomposition work runs inside a `ge
 **Inputs**: Plan Summary (specs.md + flows.md) from Design — paths passed to subagent
 **Outputs returned to parent**: Breakdown Plan markdown + proposed sub-task list (no Jira side effects yet)
 
+> **Where this sits in the ticketing flow.** `create-user-story` writes the *parent* story (pre-pipeline) → `ai-dlc-inception` *understands* it (ACs, NFRs, risks — no Jira writes) → **`sdlc-breakdown`** *splits* the approved design into independent deployable sub-tasks (this skill, mid-pipeline, after design). Don't use this skill to author a single story — that's `create-user-story`.
+
 ## When to Trigger
 
 This stage is optional. After Plan Summary is complete, evaluate the plan:

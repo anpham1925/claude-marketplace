@@ -117,6 +117,7 @@ RIGHT (vertical tracer bullets):
 ```
 
 - **Red** — Write a failing test
+  - **Test authoring is owned by the `engineering-toolkit:inspector` agent.** Within a wave, dispatch `engineering-toolkit:inspector` (passing the `<id>` + the constraint file + the AC under test) to author the failing test; it owns all test files, writes its RED report to `.claude/artifacts/<id>/inspector-report.md`, and returns a pointer. The implementing subagent does not write tests — it reads the inspector's report by path and makes them pass (see `rules/agent-artifacts.md`).
   - Test file next to implementation (`.spec.ts`)
   - AAA pattern: Arrange, Act, Assert
   - Test the specific behavior from an acceptance criterion

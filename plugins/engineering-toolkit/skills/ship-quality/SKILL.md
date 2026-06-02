@@ -41,7 +41,9 @@ git diff origin/master...HEAD --name-only
 
 **This MUST be a subagent, not inline review** — the main agent carries implicit bias from implementation. A fresh subagent sees only requirements + diff.
 
-Pass the following prompt to a NEW `general-purpose` subagent:
+Dispatch the **`engineering-toolkit:requirements-reviewer`** agent via the Agent tool with `subagent_type: "engineering-toolkit:requirements-reviewer"`, passing the `<id>` (ticket → branch → session slug). It writes its review to `.claude/artifacts/<id>/requirements-review.md` and returns only a pointer (status + path + summary); read the review from that path (handoffs are file paths, not pasted text — see `rules/agent-artifacts.md`). It works from the canonical checklist in `skills/engineering-foundations/reference/code-review.md`.
+
+If for some reason the agent is unavailable, fall back to a fresh `general-purpose` subagent with this prompt:
 
 ```
 You are a requirements reviewer. Your job is to cross-check code changes against the original requirements and challenge the developer on any mismatches.

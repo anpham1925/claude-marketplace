@@ -189,31 +189,36 @@ Before writing a new entry, scan `docs/**/review-feedback.md` (glob across all t
 
 ## Long-Running Operations
 
-Some pipeline stages take 10-30+ minutes (CI/CD, staging deploy). Rules for these:
+Some pipeline stages wait on something external for 10-30+ minutes (CI/CD runs, staging deploys, review-bot workflows). Two things govern how you handle these: **how you wait** and **how you keep the user informed**.
 
-### Never Go Silent
+### Wait by detaching the command — never by polling
 
-- **Before starting**: Tell the user what's happening and the expected wait time
-- **During**: Report status changes as they happen (e.g., job completions)
-- **If >2 minutes pass with no change**: Proactively update the user ("Still waiting on e2e tests...")
-- **On completion**: Immediately report the full results
+The wait itself is a single blocking command run in the background. The harness re-invokes you when it exits, so you burn no tokens while waiting and never sit in a poll loop:
 
-### Inline vs Background
+| Waiting on | Command | How to run it |
+|---|---|---|
+| A CI/CD run | `gh run watch "$RUN_ID" --exit-status` | `Bash` with `run_in_background: true` |
+| A pod becoming ready | `kubectl --context <ctx> wait --for=condition=Ready pod/<pod> -n <ns> --timeout=300s` | `Bash` with `run_in_background: true` |
+| A review-bot workflow | `gh run watch "$RUN_ID" --exit-status` | `Bash` with `run_in_background: true` |
 
-| Context | Approach | Why |
-|---------|----------|-----|
-| **No parallel work** | Run inline (blocking) | You keep an active turn, can report immediately |
-| **Has parallel work** | Background agent + do the parallel work | Useful, but set user expectations first |
-| **Background + nothing to do** | **DON'T** — run inline instead | User sees silence, no progress, bad experience |
+`gh run watch` and `kubectl wait` block until their condition is met and exit non-zero on failure. They are **event-driven** — they long-poll the API for you — not token-driven. Backgrounding them means the harness re-invokes you the moment they exit.
 
-Background agents CAN notify the main agent via `<task-notification>`. The issue isn't technical — it's UX. During the wait, the user sees no spinner, no progress, no indication anything is happening. The main agent can't proactively update between turns.
+**Never** wrap a wait in a `for … sleep` loop, and never re-query status "every N seconds" from the model. That spends a model turn per poll for no benefit and is the single biggest source of wasted CI-wait cost. If you genuinely need to gate on a condition no single command expresses, use the `Monitor` tool — still not a model-driven sleep loop.
 
-### The "I'll Be Notified" Anti-Pattern
+### Wait at the level that owns the conversation
 
-If you catch yourself saying "I'll be notified when it's done" with nothing else to do — STOP. You're about to go idle while the user waits in silence. Instead:
-1. Run the monitoring command inline
-2. Report each status change as it happens
-3. Summarize results when complete
+Run the wait from the **top-level agent driving the pipeline**, not inside a stage subagent you are blocking on. If the orchestrator dispatches a stage subagent and *that* subagent backgrounds the watch, the re-invoke lands on the subagent while the orchestrator sits blocked waiting for it to return — which re-creates the "stuck subagent that never closes" problem.
+
+So:
+- The **orchestrator** backgrounds the watch itself (it already holds the run ID from the push/PR stage).
+- **Subagents are for work, not for waiting** — spawn one to read failed-job logs and propose a bias-isolated fix *when a run fails*, not to sit on a green run.
+
+### Never go silent
+
+- **Before starting**: tell the user what you're waiting on and the rough wait (e.g. "CI is running, ~10-20 min — I'll report the moment it finishes").
+- **On the re-invoke**: immediately report the full result.
+
+Because the harness re-invokes you when the backgrounded command exits, there is no "I'll be notified, then idle in silence" gap — you *will* be re-invoked, and you report at that instant. If you catch yourself about to poll in a sleep loop "so the user sees progress", stop: background the watch instead and report on exit.
 
 ---
 

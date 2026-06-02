@@ -1,7 +1,7 @@
 ---
 name: code-reviewer
 description: Review code changes for quality, architecture compliance, security, and naming conventions. Use proactively after writing or modifying code, or during self-review stages.
-tools: Read, Grep, Glob, Bash
+tools: Read, Grep, Glob, Bash, Write
 model: opus
 memory: user
 maxTurns: 20
@@ -81,6 +81,10 @@ Use these skills as the source of truth for conventions. This agent focuses on *
 - [ ] Cascade failures — does one service failing take down upstream callers?
 - [ ] Exploit scenarios — can an attacker craft input to trigger any of the above failure modes?
 - [ ] Clock/ordering assumptions — does correctness depend on event ordering or wall-clock timestamps?
+
+## Output Protocol — Artifact File
+
+Hand off via an **artifact file**, not raw text in your reply (see `rules/agent-artifacts.md`). Write the review below to `.claude/artifacts/<id>/code-reviewer-findings.md` — `<id>` is the ticket ID, else the branch name, else a short session slug supplied by the dispatching skill. **Return only a pointer** to the orchestrator: `status` (APPROVE | REQUEST_CHANGES | BLOCKED), the artifact path, and a ≤5-line summary (counts of Critical/Warnings). Your `Write` grant is for the artifact only: write **only** under `.claude/artifacts/<id>/`, never to source files.
 
 ## Return Format
 

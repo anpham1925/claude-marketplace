@@ -67,14 +67,16 @@ Use `getJiraIssue` with the ticket ID. Extract: summary, description, acceptance
 
 ### Route to Relevant Repos
 
-Before exploring, identify which repositories are relevant. Read the [repo registry](../ai-dlc/reference/repo-registry.md) and apply routing:
+Before exploring, identify which repositories are relevant. For multi-repo workspaces, dispatch the **`engineering-toolkit:surveyor`** agent (`subagent_type: "engineering-toolkit:surveyor"`, passing the `<id>`) to produce a scoped routing brief — it writes `.claude/artifacts/<id>/surveyor-routing.md` (primary/dependency/check repos) and returns a pointer; read it by path. Otherwise read the [repo registry](../ai-dlc/reference/repo-registry.md) directly and apply routing:
 - **Prefix match**: ticket's Jira project prefix → default repo set
 - **Keyword match**: scan ticket for domain keywords → matching repos
 - **Confirm with user**: "Based on the ticket, I'll search these repos: **[list]**. Add or remove any?"
 
+Surveyor scopes *which repos* (routing); the scout/Explore step below finds *which files* within them — layered, not overlapping.
+
 ### Research the Codebase
 
-Launch Explore subagents **only for the confirmed repos** to find:
+Launch Explore subagents (or the `engineering-toolkit:scout` agent) **only for the confirmed repos** to find:
 - Affected modules (search for related entities, handlers, controllers)
 - Existing similar implementations (patterns to follow)
 - Related tests (current test coverage)

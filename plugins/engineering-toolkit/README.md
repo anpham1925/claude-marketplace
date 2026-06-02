@@ -183,7 +183,7 @@ Skills trigger automatically based on what you say. Here's the complete routing:
 | "learn from reviews", "what mistakes do we keep making" | `review-learning` |
 | "update docs", "refresh docs", "docs are stale" | `update-docs` |
 | "context budget", "what's using tokens" | `context-budget` |
-| "compact", "running out of context" | `strategic-compaction` |
+| "compact", "running out of context", "handoff" | `handoff` |
 | "learn from this", "save this pattern" | `continuous-learning` |
 | "create a story", "create a ticket" | `create-user-story` |
 | "add storybook", "setup storybook" | `setup-storybook` |

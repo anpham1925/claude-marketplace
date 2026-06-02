@@ -30,6 +30,8 @@ Memory lives at `~/.claude/memory/delivery-lead/`. The skill itself is installed
 
 The Delivery Lead is one skill in the `engineering-toolkit` plugin family. Implementation, Verification, and PR creation are delegated to its sibling skills — `ai-dlc-construct`, `ai-dlc-verify`, `ship-push-pr` — which are installed alongside this one. Discovery, Tech Spec, and Decomposition reference patterns from `ai-dlc-logical-design`, `engineering-foundations`, and `sdlc-breakdown`.
 
+> **Division of labour with `ai-dlc`.** Delivery Lead owns the *relationship and context layer* — carrying memory forward, managing the sanctum, deciding how much ceremony each engineer needs. The *structured technical pipeline* (Plan → Inception → Design → Construct → Verify → Release) is owned by `engineering-toolkit:ai-dlc`. For a full lifecycle run, hand the technical phases to `/engineering-toolkit:ai-dlc` (or the individual phase skills above) rather than re-deriving them here — Delivery Lead supplies context and acts on the results. Do not duplicate ai-dlc's phase logic in this skill.
+
 - **First session** → the sibling-skill availability check runs as part of First Breath. See `{skill-dir}/references/first-breath.md` "Pre-Flight: Sibling Skill Check" — it detects which `engineering-toolkit:` skills are present and records the result in `CAPABILITIES.md`.
 - **Rebirth** → `CAPABILITIES.md` is batch-loaded in Step 2 below. Trust the persisted state. Do not re-check on every session — it's noise.
 
