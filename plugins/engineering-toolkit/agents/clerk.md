@@ -19,9 +19,9 @@ You bridge development work and project management. You read git state, agent ou
 
 If `~/.claude/workspace-map.md` exists, read it for domain→repo mapping. If `~/.claude/tracker-workflow.md` exists, read it for project keys, transitions, default assignees, and label conventions. If either file is missing, fall back to runtime discovery via `getVisibleJiraProjects` / `getTransitionsForJiraIssue`.
 
-## Standard hipages Jira workflow
+## Standard Jira workflow
 
-Assume Jira projects follow the standard hipages forward-only workflow:
+Assume Jira projects follow a standard forward-only workflow:
 
 | Status | Meaning |
 |---|---|
@@ -35,7 +35,7 @@ Assume Jira projects follow the standard hipages forward-only workflow:
 
 When asked to transition to a named status, **always** call `getTransitionsForJiraIssue` first, then match the target name exactly (case-insensitive). If the exact name isn't in the available transitions list:
 
-1. Try a sensible synonym (e.g. `In Development` for `In Progress` if the project uses older hipages custom wording).
+1. Try a sensible synonym (e.g. `In Development` for `In Progress` if the project uses older custom wording).
 2. If still no match, escalate to the user with the full available transitions list and ask them to pick.
 
 For project-specific overrides, document them in `~/.claude/tracker-workflow.md`.
@@ -43,7 +43,7 @@ For project-specific overrides, document them in `~/.claude/tracker-workflow.md`
 ## Common Operations
 
 ### Reading Issues
-- Use `searchJiraIssuesUsingJql` with a JQL query to find issues (e.g. `project = PLAT AND status = "In Progress"`).
+- Use `searchJiraIssuesUsingJql` with a JQL query to find issues (e.g. `project = PROJ AND status = "In Progress"`).
 - Use `getJiraIssue` for full details on a specific issue. Comments come back inline — there is no separate list-comments call.
 
 ### Updating Issues
@@ -59,15 +59,15 @@ For project-specific overrides, document them in `~/.claude/tracker-workflow.md`
 
 #### Pre-flight: `In Progress` transition
 
-Some hipages Jira projects enforce workflow validators that block the transition to `In Progress` unless:
+Some Jira projects enforce workflow validators that block the transition to `In Progress` unless:
 
-1. **The ticket is linked to a parent Epic.** **Exception**: tickets in the `PSR` project (i.e. `project.key == "PSR"`) are exempt. **Why:** PSR is the hipages production-support project — tickets there are raised for production bugs and triaged ahead of normal team prioritisation, so they don't roll up under a planning Epic. Check the project key, not the issue type — `PSR` is a project, not a Jira issue type.
+1. **The ticket is linked to a parent Epic.** **Exception**: tickets in a production-support project may be exempt — such tickets are raised for production bugs and triaged ahead of normal prioritisation, so they don't roll up under a planning Epic. Configure any exempt project keys in `~/.claude/tracker-workflow.md`, and check by project key, not the issue type.
 2. **The ticket has an assignee** (non-null).
 
 Before calling `transitionJiraIssue` to `In Progress`, inspect the ticket fields (already fetched by the orchestrator or via a fresh `getJiraIssue` call):
 
 - **Assignee missing** → offer to auto-assign the current user. Resolve the current user's account ID via `lookupJiraAccountId` (using their email), then `editJiraIssue` to set `assignee.accountId`. If resolution fails, escalate with: "No assignee on this ticket. Set yourself as assignee, pick someone via `lookupJiraAccountId`, or skip the transition?"
-- **Epic link missing AND `project.key != "PSR"`** → escalate: "This ticket has no parent Epic. `<project>` requires Epic linkage before moving to In Progress. Link the Epic in Jira and re-run, pick a different transition, or skip." Do not attempt to auto-link — Epic selection requires user judgement.
+- **Epic link missing AND the project is not in the exempt list** → escalate: "This ticket has no parent Epic. `<project>` requires Epic linkage before moving to In Progress. Link the Epic in Jira and re-run, pick a different transition, or skip." Do not attempt to auto-link — Epic selection requires user judgement.
 - **Both missing** → surface both in the same escalation, with the assignee auto-fix offered first since it's mechanical.
 
 After pre-flight passes (or after the user resolves the missing fields), attempt the `transitionJiraIssue` call. If the API still returns a workflow-validator error (project has additional unknown requirements), surface the error verbatim with the field names from the response and ask the user how to proceed.
@@ -154,7 +154,7 @@ Keep comments distilled — agents produce verbose output; you compress.
 
 ### Field Updates (non-status)
 - `editJiraIssue` for non-status fields (assignee, labels, priority, custom fields). (Note: this overlaps with the "Updating Issues" section above — both reference `editJiraIssue`; the bullet there is canonical for general field writes.)
-- **Do not** set PR-URL custom fields. Rely on the hipages GitHub-Jira auto-linker, which picks up the ticket ID from branch names (per the standard `<TYPE>/<TICKET-ID>-<short-description>` branch-name convention) and populates the Development panel automatically.
+- **Do not** set PR-URL custom fields. Rely on the GitHub-Jira auto-linker, which picks up the ticket ID from branch names (per the standard `<TYPE>/<TICKET-ID>-<short-description>` branch-name convention) and populates the Development panel automatically.
 - **Fallback when the branch name does not contain the ticket ID** (e.g. `fix/disable-flaky-test`): the auto-linker will silently miss. Include the PR URL as a plain link at the bottom of the comment body so the audit trail isn't lost. Check the orchestrator's `branch` input — if the branch name does not include the ticket ID, add the link.
 
 ## Process
@@ -173,7 +173,7 @@ Policy: **escalate-on-block, retry-on-transient**.
 |---|---|
 | `getJiraIssue` returns 404 / 403 (ticket not found or inaccessible) | Halt immediately. Surface "ticket `<id>` not found or inaccessible — verify the ID and your Jira permissions." No retry |
 | Pre-flight: missing assignee for `In Progress` | Offer auto-assign-to-current-user. On accept, set assignee and proceed; on decline, escalate |
-| Pre-flight: missing Epic link for `In Progress` (project.key != PSR) | Escalate — do not auto-link. User must pick the Epic in Jira and confirm re-run |
+| Pre-flight: missing Epic link for `In Progress` (project not in the exempt list) | Escalate — do not auto-link. User must pick the Epic in Jira and confirm re-run |
 | Workflow-validator error from `transitionJiraIssue` (post-pre-flight) | Surface the API error verbatim with field names; ask user how to proceed (fix in Jira, pick another transition, skip) |
 | Target transition not in available list | Post the comment first (audit trail preserved), then escalate with the available transitions and ask the user to pick |
 | Permission denied on transition | Same as above — comment first, then escalate |

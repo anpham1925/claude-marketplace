@@ -62,7 +62,7 @@ Compact at **logical phase transitions**, not arbitrary points. Reach for `/comp
 A single Markdown file saved to the **OS temporary directory** (NOT the workspace — handoff docs are ephemeral and shouldn't pollute the repo).
 
 - macOS / Linux: `${TMPDIR:-/tmp}/claude-handoff-<YYYYMMDDTHHMMSS>-<slug>.md`
-- The slug is a short kebab-case description of the work in flight (e.g., `port-prt-patterns`, `debug-fraud-test-leak`)
+- The slug is a short kebab-case description of the work in flight (e.g., `port-auth-patterns`, `debug-fraud-test-leak`)
 - Print the absolute path at the end so the user can `cat` it or pass it to the next session
 
 ## Document shape

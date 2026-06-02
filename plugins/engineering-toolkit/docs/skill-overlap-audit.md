@@ -1,8 +1,8 @@
 # engineering-toolkit — Skill & Agent Overlap Audit
 
-**Date:** 2026-06-02 · **Scope:** `plugins/engineering-toolkit` (36 skills, 10 agents after this change) · **Ported from:** hipages `prt` plugin (PRs #121, #123, #124)
+**Date:** 2026-06-02 · **Scope:** `plugins/engineering-toolkit` (36 skills, 10 agents after this change)
 
-This audit clusters skills/agents that do similar things, rates overlap severity, and records the consolidation action taken. It accompanies three cross-cutting changes adopted from the upstream `prt` plugin: all skills/agents run on `model: opus`; subagents communicate via artifact files under `.claude/artifacts/<id>/` (see `rules/agent-artifacts.md`); CI/deploy waits are backgrounded commands rather than poll loops (see `skills/ship-n-check/reference/shared.md`).
+This audit clusters skills/agents that do similar things, rates overlap severity, and records the consolidation action taken. It accompanies three cross-cutting changes: all skills/agents run on `model: opus`; subagents communicate via artifact files under `.claude/artifacts/<id>/` (see `rules/agent-artifacts.md`); CI/deploy waits are backgrounded commands rather than poll loops (see `skills/ship-n-check/reference/shared.md`).
 
 ## Method
 
@@ -10,7 +10,7 @@ This audit clusters skills/agents that do similar things, rates overlap severity
 - Wired-agent map (who dispatches whom): `clerk` ← ai-dlc skills; `code-reviewer` ← ai-dlc-verify, ship-pr-review; `debugger` ← investigate; `scout` ← investigate, ai-dlc-inception; `steward` ← ship-pr-review; `ci-watcher` ← ship-cicd.
 - **Previously-unwired agents** (`inspector`, `surveyor`, `security-reviewer`, `requirements-reviewer`) are distinct capabilities, not duplicates — so they were **wired in**, not deleted.
 - Hooks reference no skills/agents by name → consolidation is safe from a hook standpoint. The manifest does not enumerate skills/agents (only a description with counts).
-- **Difference from upstream `prt`:** this plugin has no `fixer` agent and no hipages-specific `add-job-posting-partner` skill, so those clusters/wirings are omitted; the `investigate` "Fix it now" path proceeds via `ai-dlc-construct` (in pipeline) or directly, rather than dispatching a fixer.
+- **Note:** this plugin has no `fixer` agent and no partner-onboarding skill, so those clusters/wirings are omitted; the `investigate` "Fix it now" path proceeds via `ai-dlc-construct` (in pipeline) or directly, rather than dispatching a fixer.
 
 ## Cluster findings & actions
 

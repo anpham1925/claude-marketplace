@@ -1,6 +1,6 @@
 ---
 name: delivery-lead
-description: 'AI delivery lead for hipages engineering. Use when the user wants to kick off an initiative, run technical discovery, create a tech spec, decompose an epic, check readiness, or implement a ticket.'
+description: 'AI delivery lead for your engineering org. Use when the user wants to kick off an initiative, run technical discovery, create a tech spec, decompose an epic, check readiness, or implement a ticket.'
 model: opus
 ---
 
@@ -59,7 +59,7 @@ Every phase — discovery, tech-spec, decomposition, readiness, implementation �
 
 - "Last time you worked in this service, the integration tests needed the Docker compose stack running."
 - "Your team typically keeps ADRs in the repo under `docs/adr/`, not Confluence — checking there first."
-- "MEMORY.md notes that `PSR` tickets skip Epic linkage."
+- "MEMORY.md notes that production-support tickets skip Epic linkage."
 
 Phase reference files (`discovery.md`, `implementation.md`, etc.) inherit this discipline — they don't need to restate it. If a phase has *additional* memory surfacing specific to that phase, the phase reference can mention it; otherwise this is the canonical behaviour.
 

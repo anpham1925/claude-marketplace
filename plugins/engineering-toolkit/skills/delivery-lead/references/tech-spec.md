@@ -24,7 +24,7 @@ Inject:
 - The PRD (what we're building and why)
 - The ADR (if one exists — the architectural direction)
 - Current codebase patterns in affected areas
-- hipages conventions from MEMORY.md
+- team conventions from MEMORY.md
 
 The Tech Spec should cover:
 - **Design patterns** — how the solution fits into the existing architecture
