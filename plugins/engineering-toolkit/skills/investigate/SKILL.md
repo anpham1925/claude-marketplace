@@ -37,11 +37,13 @@ model: opus
 
 Identify what to investigate and what NOT to touch:
 
-**Spawn a `scout` subagent** via the Agent tool with `subagent_type: "engineering-toolkit:scout"` to quickly locate:
+**Spawn a `scout` subagent** via the Agent tool with `subagent_type: "engineering-toolkit:scout"`. Pass it the `<id>` (ticket → branch → session slug) so it writes its brief to `.claude/artifacts/<id>/scout-brief.md` and returns only a pointer (status + path + summary). Scout locates:
 - The affected module/service/directory
 - Entry points (API handlers, event consumers, cron jobs)
 - Dependencies (DB queries, external API calls, cache operations)
 - Recent changes in the area (`git log --oneline -20 -- <affected path>`)
+
+Read `.claude/artifacts/<id>/scout-brief.md` to build the scope boundary below (see `rules/agent-artifacts.md` — handoffs are file paths, not pasted text).
 
 Define the scope boundary:
 > **Investigation scope**: `{module/path}`
@@ -53,7 +55,8 @@ Present the scope to the user before proceeding. The scope constrains where the 
 
 ### 3. Run the Investigation
 
-**Spawn a `debugger` subagent** via the Agent tool with `subagent_type: "engineering-toolkit:debugger"`. Include in the prompt:
+**Spawn a `debugger` subagent** via the Agent tool with `subagent_type: "engineering-toolkit:debugger"`. Pass the same `<id>`; the debugger writes its report to `.claude/artifacts/<id>/debugger-report.md` and returns a pointer. Include in the prompt:
+- The path `.claude/artifacts/<id>/scout-brief.md` (tell it to read the brief — do not paste the brief content)
 - The scoped module boundary
 - Symptom description and any error messages/stack traces
 - Entry points and dependencies identified in step 2
@@ -74,7 +77,7 @@ Include in the debugger prompt:
 
 ### 4. Review Investigation Results
 
-Read the debugger's investigation report. Evaluate:
+Read the debugger's investigation report from `.claude/artifacts/<id>/debugger-report.md` (the subagent returned only a pointer). Evaluate:
 
 | Outcome | Action |
 |---------|--------|

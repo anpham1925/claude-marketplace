@@ -1,7 +1,7 @@
 {
   "name": "engineering-toolkit",
-  "description": "Engineering toolkit — 34 composable skills, 10 agents, 20 rules, 8 hooks. Two orchestrators: AI-DLC (adaptive intent-to-production lifecycle with product discovery, structured investigation, adaptive planning, domain/logical design split, pre-Construct adversarial red-team review with loop-back routing, NFR tracking, adversarial code review, traceability, task decomposition, auto doc updates, and post-deploy observability) and ship-n-check (6-stage git pipeline). Config-driven git conventions. Mode switching (dev/research/review). Harness engineering. Language-specific rules for TypeScript, Python, Go. Git safety hooks. Skill-first enforcement. Framework stacks split into separate plugins: nestjs-toolkit, django-toolkit, nextjs-toolkit.",
-  "version": "6.24.0",
+  "description": "Engineering toolkit — 36 composable skills, 10 agents, 22 rules, 9 hooks. All skills and agents run on opus. Subagents communicate via artifact files under .claude/artifacts/<id>/ (paths, not raw text). Two orchestrators: AI-DLC (adaptive intent-to-production lifecycle with product discovery, structured investigation, adaptive planning, domain/logical design split, pre-Construct adversarial red-team review with loop-back routing, NFR tracking, adversarial code review, traceability, task decomposition, auto doc updates, and post-deploy observability) and ship-n-check (6-stage git pipeline; CI/CD and staging waits are backgrounded commands re-invoked on exit — never sleep-polled). Config-driven git conventions. Mode switching (dev/research/review). Session handoff with strategic compaction. Harness engineering. Language-specific rules for TypeScript, Python, Go. Git safety hooks. Skill-first + evidence-based prompt enforcement. Framework stacks split into separate plugins: nestjs-toolkit, django-toolkit, nextjs-toolkit.",
+  "version": "7.0.0",
   "author": {
     "name": "An Pham"
   }

@@ -1,6 +1,6 @@
 ---
 name: handoff
-description: "Compact the current conversation into a handoff document so a fresh Claude Code session (or another agent) can continue the work without losing context. TRIGGER when: user says 'handoff', 'hand off', 'pass this to another session', 'session handoff', 'pick this up later', 'context is too long, save state', or wants to end one session and resume in a new one. DO NOT trigger for: within-session compaction (use strategic-compaction), within-AI-DLC orchestrator-to-subagent return (use Subagent Return Contract in ai-dlc/reference/shared.md), or PR-handoff to a teammate (use update-docs + a PR description)."
+description: "Compact the current conversation into a handoff document so a fresh Claude Code session (or another agent) can continue the work without losing context. Also covers strategic context compaction — when and how to `/compact` within a session at phase transitions. TRIGGER when: user says 'handoff', 'hand off', 'pass this to another session', 'session handoff', 'pick this up later', 'context is too long, save state', 'compact', 'compact context', 'when should I compact', 'context is getting long', or wants to end one session and resume in a new one. DO NOT trigger for: within-AI-DLC orchestrator-to-subagent return (use Subagent Return Contract in ai-dlc/reference/shared.md), or PR-handoff to a teammate (use update-docs + a PR description)."
 argument-hint: '[focus area or "from <agent>"]'
 model: opus
 ---
@@ -21,16 +21,48 @@ This is the **session-to-session** handoff. For within-pipeline subagent handoff
 ## When NOT to use
 
 - **Within an AI-DLC run** — that's the Subagent Return Contract's job ([shared.md](../ai-dlc/reference/shared.md#subagent-return-contract))
-- **Mid-task context bloat with no break point** — use `strategic-compaction` to summarize in-place instead
+- **Mid-task context bloat with no break point** — `/compact` in-place instead of a full handoff (see [Strategic context compaction](#strategic-context-compaction) below)
 - **Capturing decisions or learnings for future sessions** — use the `auto memory` system (write to `MEMORY.md`)
 - **Documenting completed work for teammates** — use `update-docs` + a PR description
+
+## Strategic context compaction
+
+A handoff to a *new* session is the heavyweight option. The lightweight cousin is compacting **within** the current session with `/compact` — and the same "reference, don't duplicate; save state first" discipline applies. (This guidance absorbs the former `strategic-compaction` skill.)
+
+### When to compact (vs. handoff)
+
+Compact at **logical phase transitions**, not arbitrary points. Reach for `/compact` (stay in session) rather than a full handoff when the work continues but the recent context is now noise:
+
+| Transition | Why compact here |
+|---|---|
+| After research → before implementation | Findings are captured; raw search results can go |
+| After debugging → before new feature | Debug traces are noise for the next task |
+| After design review → before coding | Decisions live in plan files / ADRs |
+| After completing a PR → before next ticket | PR context is in git; start fresh |
+| After long exploration → before focused work | Breadth isn't needed for depth |
+
+### When NOT to compact
+
+- **Mid-implementation** — you'll lose variable names, file paths, partial state
+- **During debugging** — stack traces and error context are critical
+- **While reviewing** — review findings need full diff context
+- **Right before a checkpoint** — let the checkpoint capture state first
+
+### How to compact effectively
+
+1. **Save state to files first** — write working notes to `docs/<identifier>/state.md`, decisions to ADRs, and commit WIP. Anything not in a file is at risk.
+2. **Run `/compact` with a one-line summary** of what matters, e.g.
+   `/compact Implementing PROJ-123 payment retry. Tests pass. Next: add structured logging to retry attempts.`
+3. **After compacting**, re-read the files you were actively editing and check the task list before continuing.
+
+**Rule of thumb:** if the conversation is over ~50 messages or you've switched focus areas 3+ times, compact. If you're also leaving the session (or about to start a *heavy* phase), write a full handoff instead — use the rest of this skill.
 
 ## What to produce
 
 A single Markdown file saved to the **OS temporary directory** (NOT the workspace — handoff docs are ephemeral and shouldn't pollute the repo).
 
 - macOS / Linux: `${TMPDIR:-/tmp}/claude-handoff-<YYYYMMDDTHHMMSS>-<slug>.md`
-- The slug is a short kebab-case description of the work in flight (e.g., `port-prt-patterns`, `debug-fraud-test-leak`)
+- The slug is a short kebab-case description of the work in flight (e.g., `port-auth-patterns`, `debug-fraud-test-leak`)
 - Print the absolute path at the end so the user can `cat` it or pass it to the next session
 
 ## Document shape
@@ -77,7 +109,7 @@ A single Markdown file saved to the **OS temporary directory** (NOT the workspac
 <Pick from the skills available in this plugin/marketplace. Examples:
 - `/engineering-toolkit:ai-dlc-construct` — if mid-Construct phase, ticket=PROJ-123, state.md at docs/PROJ-123/
 - `/engineering-toolkit:ship-n-check` — if work is done and just needs to ship
-- `/prt:investigate` — if root-causing a bug
+- `/engineering-toolkit:investigate` — if root-causing a bug
 Only list skills the next session will actually need; don't dump the full catalog.>
 
 ## What to AVOID

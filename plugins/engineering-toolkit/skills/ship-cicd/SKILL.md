@@ -7,169 +7,66 @@ model: opus
 
 ## Purpose
 
-Monitor CI/CD pipelines and fix failures. Two phases: test pipelines first, then build/deploy.
+Monitor a CI/CD run and fix failures. The wait is a single backgrounded watch (re-invoked on exit, never polled); diagnosis happens in the `ci-watcher` agent only when the run fails.
 
 ## Steps
 
-### Spawn CI Watcher Subagent (recommended)
+This skill has two distinct jobs — **waiting** for the run, and **diagnosing** it if it fails. Keep them separate; conflating them is what leaves subagents blocked for 30 minutes.
 
-CI monitoring + failure diagnosis is exactly the "isolated investigation" workload that benefits from a fresh subagent — the agent that wrote the code shouldn't be the one reading CI logs and proposing fixes (author bias kicks in immediately).
+### Wait — at the orchestrator level, in the background
 
-Spawn a fresh `engineering-toolkit:ci-watcher` subagent via the Agent tool with:
-
-- This file's path as methodology
-- The PR number / branch name
-- The ticket identifier
-- The latest commit SHA
-
-The subagent runs the full Phase A (test pipelines) + Phase B (build/deploy) flow including the fix-and-retry loop (max 3 attempts), writes its `## [YYYY-MM-DD] TICKET — source: ci-fix` entry to `docs/<identifier>/review-feedback.md`, and updates `stage-gate.md`. It returns a short summary (CI status, fix attempts, blocking issues if any).
-
-The orchestrator (this agent) presents the summary at the next checkpoint and decides whether to proceed to staging.
-
-**Inline fallback**: if invoked directly from a fresh terminal (parent context small) and the user wants live progress streaming, run inline. The subagent path is the default for ship-n-check / ai-dlc-release flows.
-
-### Gate Check
-
-Follow the [stage workflow template](../ship-n-check/reference/shared.md#stage-workflow-template). Verify "Push & PR" is checked.
-
----
-
-## Phase A: Test Pipelines
-
-### Find the Latest Run
-
-**Run each command separately — never use `$()` command substitution:**
-
-```bash
-# Get run info
-gh run list --branch "BRANCH_NAME" --limit 1 --json databaseId,headSha,status
-
-# Get pushed commit sha
-git rev-parse HEAD
-```
-
-Compare `headSha` from the run with the local HEAD. They must match before proceeding.
-
-### Identify Test Jobs
-
-```bash
-gh run view "$RUN_ID" --json jobs --jq '.jobs[] | {name: .name, status: .status, conclusion: .conclusion}'
-```
-
-A job is a **test job** if its name (case-insensitive) contains: `test`, `lint`, `check`, `spec`, `unit`, `e2e`, `integration`, `ci`.
-
-Everything else (`build`, `docker`, `image`, `deploy`, `release`, `push`, `publish`) is a **build/deploy job** for Phase B.
-
-### Poll Test Jobs
-
-```bash
-gh run view "$RUN_ID" --json jobs --jq '.jobs[] | {name: .name, status: .status, conclusion: .conclusion}'
-```
-
-Repeat every 30 seconds until all test jobs have `status: completed`. If any fail, enter the Fix-and-Retry Loop immediately (don't wait for build jobs).
-
-### Gate Write
-
-Check off "CI/CD (tests)" in `stage-gate.md`.
-
----
-
-## Phase B: Build & Deploy Pipelines
-
-### Watch Full Run
-
-After all test jobs pass:
+The agent driving the pipeline waits on the run *itself* — it does **not** wrap a passing run in a subagent. Find the run, confirm its `headSha` matches local HEAD (re-run `gh run list` if the push isn't registered yet), then watch the whole run with a single backgrounded command:
 
 ```bash
 gh run watch "$RUN_ID" --exit-status
 ```
 
-This blocks until all remaining jobs complete.
+Run it with `Bash` `run_in_background: true` — the harness re-invokes you when the run exits. No polling; no subagent sitting on a green run. See [Long-Running Operations](../ship-n-check/reference/shared.md#long-running-operations).
 
-### Gate Write
+When it exits, read the jobs once to report and gate:
 
-Check off "CI/CD (build/deploy)" in `stage-gate.md`.
+```bash
+gh run view "$RUN_ID" --json jobs --jq '.jobs[] | {name: .name, status: .status, conclusion: .conclusion}'
+```
+
+All jobs green → check off both "CI/CD (tests)" and "CI/CD (build/deploy)" in `stage-gate.md` and proceed to staging. Any job failed → diagnose (next section).
+
+### Diagnose + fix — only when the run fails — in a fresh `engineering-toolkit:ci-watcher` subagent
+
+Reading CI logs and proposing fixes is the "isolated investigation" workload that benefits from a fresh subagent — the agent that wrote the code shouldn't be the one reading its CI failure (author bias kicks in immediately). **Only when the run fails**, spawn a fresh `engineering-toolkit:ci-watcher` via the Agent tool with:
+
+- The `<id>` (ticket → branch → session slug)
+- The PR number / branch name
+- The latest commit SHA
+
+It runs the fix-and-retry loop (max 3 attempts), writes results to `.claude/artifacts/<id>/ci-watcher-results.md`, appends a `source: ci-fix` entry to `docs/<identifier>/review-feedback.md`, and updates `stage-gate.md`. It **returns only a pointer** (status + artifact path + ≤5-line summary). Read the artifact for detail (handoffs are file paths, not pasted text — see `rules/agent-artifacts.md`), present the summary at the next checkpoint, and decide whether to proceed.
+
+**Do NOT spawn a subagent just to wait on a passing run** — that nesting (orchestrator → stage subagent → ci-watcher) is what blocks the orchestrator and produces hung subagents.
+
+### Gate Check
+
+Follow the [stage workflow template](../ship-n-check/reference/shared.md#stage-workflow-template). Verify "Push & PR" is checked. Confirm both "CI/CD (tests)" and "CI/CD (build/deploy)" are checked in `stage-gate.md` before staging.
 
 ---
 
 ## User Communication During CI
 
-CI/CD is a **long-running stage** (typically 10-30 minutes). The agent MUST keep the user informed throughout.
+CI/CD is a **long-running stage** (typically 10-30 minutes). Keep the user informed without polling — see [Long-Running Operations](../ship-n-check/reference/shared.md#long-running-operations) for the canonical pattern.
 
-- **Before starting**: Tell the user "CI is running. Typical wait: 10-20 minutes. I'll report as jobs complete."
-- **Phase A polling**: Report each job completion as it happens (e.g., "Lint passed, waiting on e2e tests...")
-- **Phase B blocking**: Before calling `gh run watch`, tell the user: "All tests passed. Waiting for build/deploy (~5-10 min)."
-- **On completion**: Immediately report the full results table.
+- **Before starting**: tell the user "CI is running, ~10-20 min — I'll report the moment it finishes." Don't promise per-job updates you'd need a sleep loop to deliver.
+- **On the re-invoke / when the ci-watcher returns**: immediately report the full results table.
 
-### Inline vs Background: Choose Based on Context
-
-| Situation | Approach |
-|-----------|----------|
-| **Nothing else to do** (typical ship-n-check flow) | Run **inline** — poll or `gh run watch`. You keep an active turn and can report immediately on completion. |
-| **Parallel work available** (e.g., writing docs, preparing PR body) | Spawn background agent with `run_in_background: true`. **But**: tell the user what you're doing in parallel, and set expectations ("CI is running in background while I prepare X. I'll report when it completes.") |
-
-### Background Agent Pitfalls
-
-Background agents CAN notify the main agent via `<task-notification>`. But:
-1. The user sees **silence** during the wait — no spinner, no progress
-2. The main agent can't proactively update the user between turns
-3. If the main agent has nothing else to do, it goes idle and the user wonders what's happening
-
-**Anti-pattern**: Spawning a background agent then saying "I'll be notified when it's done" with nothing else to do. The user sits in silence until they ask for an update.
-
-**If you choose background**: Always have meaningful parallel work. Never go idle waiting for a notification.
+The wait is a backgrounded `gh run watch` that re-invokes you on exit, so there's no idle-in-silence gap and no reason to sleep-poll for "progress". The waiting and the diagnosis are separate jobs: background the watch for the run; spawn the `ci-watcher` subagent only to diagnose a **failure**, never to sit on a green run (that nesting — orchestrator → stage subagent → ci-watcher — is what leaves subagents blocked for 30 minutes).
 
 ---
 
-## Fix-and-Retry Loop (max 3 attempts)
+> **Where the procedure lives.** The *wait* (backgrounded watch + gate) is owned by this skill, above. The *failure-diagnosis* procedure — job-log analysis, fix-and-retry loop (max 3), known-infra-error rerun list, and CI-fix feedback format — lives canonically in `agents/ci-watcher.md`; this skill dispatches that agent on failure rather than restating it.
 
-```
-1. Extract logs      -> gh run view "$RUN_ID" --log-failed
-2. Check infra error -> if match, gh run rerun "$RUN_ID" --failed (skip 3-5)
-3. Analyze & fix     -> fix the code locally
-4. Local verify      -> run lint, type-check, tests
-5. **GATE: Document fix** -> append to docs/<identifier>/review-feedback.md with `source: ci-fix` entry. **Do NOT proceed to commit until this is written.** This captures CI failure patterns for cross-ticket learning.
-6. Commit & push     -> git add <files> && git commit -F ... && git push
-7. Find new run      -> gh run list --branch "$BRANCH" --limit 1
-8. Watch test jobs   -> Phase A again
-```
+## Rules (orchestration)
 
-### Known Infrastructure Errors (rerun, don't fix)
-
-- `Failed to CreateArtifact: (409) Conflict`
-- Network timeouts or registry connection errors
-- Runner allocation failures
-- Docker registry authentication errors
-- `ECONNRESET` or `ETIMEDOUT` during install
-
-For these: `gh run rerun "$RUN_ID" --failed` instead of fixing code.
-
-### CI Fix Feedback Format
-
-Append to `docs/<identifier>/review-feedback.md`:
-
-```markdown
----
-## [YYYY-MM-DD] TICKET — source: ci-fix
-
-### CI/CD-FIX
-- [ ] [file:line] CI job `<job-name>` failed — Description of fix applied (attempt N/3)
-
-### Summary
-- **CI fixes**: N issues
-```
-
-## Rules
-
-- **ALWAYS** verify `headSha` matches the pushed commit before watching
-- **ALWAYS** watch test jobs first (Phase A) — fix test failures before waiting for builds
-- **ALWAYS** use job-level polling for Phase A, `gh run watch --exit-status` for Phase B
-- **ALWAYS** append CI fixes to `review-feedback.md`
-- **ALWAYS** report job completions to the user as they happen
-- **ALWAYS** tell the user expected wait time before starting Phase B
-- **ALWAYS** prefer inline monitoring when there's no parallel work to do
-- **NEVER** wait for build/deploy jobs if test jobs are still failing
-- **NEVER** poll with sleep loops — use `gh run watch` for Phase B
-- **NEVER** exceed 3 fix-and-retry attempts — stop and inform user
-- **NEVER** spawn a background agent then go idle — if background, do parallel work
-- **NEVER** commit a CI fix without first documenting it in review-feedback.md — this is a blocking gate, not optional
+- **ALWAYS** wait with a single backgrounded `gh run watch "$RUN_ID" --exit-status` (`Bash` `run_in_background: true`) — the harness re-invokes you on exit. Never sleep-poll or re-query jobs "every N seconds".
+- **ALWAYS** dispatch a fresh `engineering-toolkit:ci-watcher` to diagnose/fix a **failed** run — author bias makes the implementing agent a poor CI-log reader. Don't spawn it to wait on a green run.
+- **ALWAYS** read the ci-watcher's results from `.claude/artifacts/<id>/ci-watcher-results.md` rather than expecting them pasted into the return.
+- **ALWAYS** tell the user the expected wait time before backgrounding the watch.
+- **NEVER** proceed to staging until the run is green and `stage-gate.md` shows both CI gates checked — or, if it failed, until the ci-watcher reports PASS after its fixes.
+- **NEVER** wait indefinitely for the ci-watcher's pointer — if it returns no `status`, or its artifact/gate entry is missing (e.g. it hit its turn limit), treat the stage as FAIL and re-dispatch once or surface to the user.

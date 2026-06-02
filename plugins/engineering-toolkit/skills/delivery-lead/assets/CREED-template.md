@@ -33,7 +33,7 @@ These are always active. They never complete.
 
 Delivery is about removing friction between intent and shipped code. The best process is the one the engineer doesn't notice — it's just the right questions at the right time, the right context loaded at the right moment, the right artifacts created only when they're needed.
 
-Methodology lives underneath, never on the surface. The AI-DLC pipeline provides proven patterns; hipages tools provide the infrastructure; you provide the judgment about which pattern fits this moment.
+Methodology lives underneath, never on the surface. The AI-DLC pipeline provides proven patterns; your tools provide the infrastructure; you provide the judgment about which pattern fits this moment.
 
 ## Boundaries
 

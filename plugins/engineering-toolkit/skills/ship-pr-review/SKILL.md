@@ -18,13 +18,13 @@ Reading + addressing PR feedback benefits from a fresh agent — the author is e
 Spawn a fresh `engineering-toolkit:code-reviewer` subagent via the Agent tool with:
 
 - This file's path as methodology
+- The `<id>` (ticket → branch → session slug)
 - The PR number
-- The ticket identifier
 - The branch name
 
-The subagent runs the full "Open PR for Review" + "Address Reviews" flow: marks the PR ready, waits for review-bot workflows, reads ALL feedback (inline + issue-level + top-level + bot comments), categorizes (BLOCKER / AUTO-FIX / NEEDS-INPUT / INFO), applies AUTO-FIX items with the fix-and-retry loop (max 3 attempts per item), writes its `## [YYYY-MM-DD] TICKET — source: pr-review` entry to `docs/<identifier>/review-feedback.md`, and updates `stage-gate.md`. NEEDS-INPUT items are written back to `state.md` so the orchestrator can surface them.
+The subagent runs the full "Open PR for Review" + "Address Reviews" flow: marks the PR ready, waits for review-bot workflows, reads ALL feedback (inline + issue-level + top-level + bot comments), categorizes (BLOCKER / AUTO-FIX / NEEDS-INPUT / INFO), applies AUTO-FIX items with the fix-and-retry loop (max 3 attempts per item), writes its findings to `.claude/artifacts/<id>/code-reviewer-findings.md` plus a `## [YYYY-MM-DD] TICKET — source: pr-review` entry to `docs/<identifier>/review-feedback.md`, and updates `stage-gate.md`. NEEDS-INPUT items are written back to `state.md` so the orchestrator can surface them. It **returns only a pointer** (status + artifact path + ≤5-line summary).
 
-The orchestrator (this agent) reads the review-feedback entry + state.md after the subagent returns, then presents NEEDS-INPUT items to the user.
+The orchestrator (this agent) reads the findings artifact + review-feedback entry + state.md by path after the subagent returns (handoffs are file paths, not pasted text — see `rules/agent-artifacts.md`), then presents NEEDS-INPUT items to the user.
 
 **Inline fallback**: if there's a single trivial review comment and the user wants direct visibility into the fix, run inline. The subagent path is the default for ship-n-check / ai-dlc-release flows.
 
@@ -67,9 +67,11 @@ Run each as a separate command — **never use `$()` command substitution**:
 # Find run ID
 gh run list --branch "BRANCH_NAME" --workflow "WORKFLOW_NAME" --limit 1 --json databaseId,status
 
-# Watch (blocks until done)
+# Watch — run with Bash run_in_background: true so the harness re-invokes you on exit
 gh run watch RUN_ID --exit-status
 ```
+
+Background the watch (`Bash` `run_in_background: true`) rather than blocking on it — see [Long-Running Operations](../ship-n-check/reference/shared.md#long-running-operations).
 
 ### Read Review Comments
 
@@ -119,11 +121,11 @@ Re-fetch **all three** comment sources (same commands as "Read Review Comments" 
 Before categorizing, dispatch a fresh `engineering-toolkit:steward` subagent via the Agent tool to triage the feedback. Steward is the critical-thinker pass: it reads every comment (human and bot), evaluates each against the ticket/spec, repo patterns, and technical correctness, and returns an ACCEPT / DISCUSS / ESCALATE classification per comment — **treating AI-bot feedback with more skepticism than human feedback** (bots hallucinate issues and flag non-problems).
 
 Pass steward:
+- The `<id>` (ticket → branch → session slug)
 - The PR number and repo
-- The ticket identifier (if any)
 - The comments already fetched in "Read All Comments" above
 
-Steward returns its structured report (the per-comment table + Accepted / Discussed / Escalated sections). Use it as the input to the next step:
+Steward writes its structured report (the per-comment table + Accepted / Discussed / Escalated sections) to `.claude/artifacts/<id>/steward-report.md` and returns only a pointer; read the verdicts from that path (handoffs are file paths, not pasted text — see `rules/agent-artifacts.md`). Use them as the input to the next step:
 
 - Steward **ACCEPT** → maps to **Actionable** in the categorize step below (code change needed).
 - Steward **DISCUSS** → maps to **Debatable** / a reply-with-reasoning (no code change yet; needs user input if contentious).

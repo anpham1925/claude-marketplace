@@ -7,6 +7,8 @@ model: opus
 
 Analyze review feedback across tickets and turn repeated patterns into durable improvements (rules, skills, agents, lint config).
 
+> **Related: `continuous-learning`.** This skill turns **recurring code-review findings** (from `review-feedback.md` across tickets) into durable rules/skills. `engineering-toolkit:continuous-learning` captures **reusable coding instincts** from a session into the instinct store. A finding here that recurs in everyday work can graduate to an instinct there.
+
 ## Invocation Mode
 
 Follows the [skill-dispatch-pattern rule](../../rules/skill-dispatch-pattern.md#direct-invocation-dispatch).

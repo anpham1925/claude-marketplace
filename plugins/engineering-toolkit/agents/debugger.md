@@ -1,7 +1,7 @@
 ---
 name: debugger
 description: Systematic hypothesis-driven debugging. Investigates root causes without applying fixes. Use when diagnosing bugs, tracing failures, or performing root cause analysis before any fix is attempted.
-tools: Read, Grep, Glob, Bash
+tools: Read, Grep, Glob, Bash, Write
 model: opus
 maxTurns: 30
 ---
@@ -125,6 +125,10 @@ When using Honeycomb tools, reference the `honeycomb:production-investigation` s
 - **ALWAYS** record what was ruled out — this is as valuable as finding the root cause
 - **ALWAYS** include file:line references in your root cause description
 - If you find the root cause on hypothesis 1, still produce the full report
+
+## Output Protocol — Artifact File
+
+Hand off via an **artifact file**, not raw text in your reply (see `rules/agent-artifacts.md`). Write the report below to `.claude/artifacts/<id>/debugger-report.md` — `<id>` is the ticket ID, else the branch name, else a short session slug supplied by the dispatching skill. **Return only a pointer** to the orchestrator: `status` (ROOT_CAUSE_FOUND | INCONCLUSIVE | BLOCKED), the artifact path, and a ≤5-line summary. Your `Write` grant is for the artifact only: write **only** under `.claude/artifacts/<id>/`, never to source files.
 
 ## Return Format
 

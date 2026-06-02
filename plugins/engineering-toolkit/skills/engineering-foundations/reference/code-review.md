@@ -2,6 +2,8 @@
 
 > Claude already knows how to review code. This file covers **our specific review checklist and the format we expect**.
 
+> **Canonical checklist.** This is the single source of truth for the review checklist. The other review surfaces — `mode-review`, `ai-dlc-verify` (Part 4), `ship-quality`, and the `code-reviewer` / `security-reviewer` / `requirements-reviewer` agents — all work from *this* checklist rather than restating their own. When the checklist changes, change it here.
+
 ## 5-Section Review
 
 ### Architecture Compliance

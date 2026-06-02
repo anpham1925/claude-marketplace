@@ -45,6 +45,8 @@ Read `docs/<identifier>/state.md`. Verify Inception is completed. Load the Incep
 
 Before identifying aggregates, invoke the `engineering-toolkit:ubiquitous-language` skill to produce `docs/<identifier>/UBIQUITOUS_LANGUAGE.md`. Aggregates named with unresolved vocabulary tend to acquire drift later — this step catches "account = Customer AND User" before it becomes an entity.
 
+> **DDD layering.** Concepts (what an aggregate/entity/value-object/domain-event *is*) are defined canonically in `skills/engineering-foundations/reference/domain-model.md` — consult it if you need the definitions. This phase *applies* those concepts to the ticket; `ubiquitous-language` hardens the *vocabulary*; the framework stack plugins (`nestjs-toolkit`, etc.) provide the *framework-specific implementation*. Reference, don't restate.
+
 Skip only when:
 - The source material has no terminology ambiguity (rare — confirm with user)
 - An existing `UBIQUITOUS_LANGUAGE.md` for this identifier is already current

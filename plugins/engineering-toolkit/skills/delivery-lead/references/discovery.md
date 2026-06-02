@@ -23,8 +23,8 @@ This capability is conditional — only triggered when genuine architectural dec
 
 Use the ADR pattern documented in `engineering-toolkit:engineering-foundations` — the source of truth for ADR shape and the 3-test gate (hard-to-reverse ∧ surprising-without-context ∧ real-trade-off). Apply it inline rather than delegating; `engineering-toolkit:ai-dlc-logical-design` is a ticket-scoped phase that expects `state.md` and `inception.md` — Discovery operates at initiative altitude, before either of those exists.
 
-Inject hipages context before drafting:
-- Service topology from Backyard catalog (if available)
+Inject org context before drafting:
+- Service topology from your service catalog (if available)
 - Team ownership boundaries
 - Existing architectural patterns in the affected domain (from MEMORY.md)
 

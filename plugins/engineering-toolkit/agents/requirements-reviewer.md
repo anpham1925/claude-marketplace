@@ -1,8 +1,8 @@
 ---
 name: requirements-reviewer
 description: Cross-check code changes against original requirements. Spawn during the Requirements Review stage of the workflow to validate that all acceptance criteria are covered and no over-scope changes exist. Challenges the developer on mismatches.
-tools: Read, Grep, Glob, Bash
-model: claude-sonnet-4-6
+tools: Read, Grep, Glob, Bash, Write
+model: opus
 maxTurns: 15
 ---
 
@@ -55,9 +55,13 @@ For each acceptance criterion:
 - New features not mentioned in requirements
 - "While I'm here" improvements
 
+## Output Protocol — Artifact File
+
+Hand off via an **artifact file**, not raw text in your reply (see `rules/agent-artifacts.md`). Write the review below to `.claude/artifacts/<id>/requirements-review.md` — `<id>` is the ticket ID, else the branch name, else a short session slug supplied by the dispatching skill. **Return only a pointer** to the orchestrator: `status` (PASS | GAPS_FOUND | BLOCKED), the artifact path, and a ≤5-line summary (covered/partial/missing counts). Your `Write` grant is for the artifact only: write **only** under `.claude/artifacts/<id>/`, never to source files.
+
 ## Output Format
 
-Return EXACTLY this format:
+Write EXACTLY this format to the artifact file:
 
 ```
 ## Requirements Review

@@ -53,15 +53,14 @@ Exclude non-API pods (daemons, workers, consumers). If not found, deployment may
 
 ### Wait for Running State
 
-If pod is not Running, retry up to 12 times with 15s sleep (3 min max):
+Wait with a single event-driven `kubectl wait` — **not** a `sleep` loop. Run it with `Bash` `run_in_background: true` so the harness re-invokes you when the pod is ready (see [Long-Running Operations](../ship-n-check/reference/shared.md#long-running-operations)):
 
 ```bash
-for i in $(seq 1 12); do
-  POD_STATUS=$(kubectl --context <context> get pods -n <namespace> | grep "<app-name>-$BRANCH_SLUG" | awk '{print $3}')
-  [ "$POD_STATUS" = "Running" ] && break
-  sleep 15
-done
+POD_NAME=$(kubectl --context <context> get pods -n <namespace> | grep "<app-name>-$BRANCH_SLUG" | awk '{print $1}' | head -1)
+kubectl --context <context> wait --for=condition=Ready pod/"$POD_NAME" -n <namespace> --timeout=180s
 ```
+
+`kubectl wait` blocks until the pod is Ready and exits non-zero at the timeout. If it times out (or reports no matching resource), the deployment may have failed or auto-deleted — inform the user rather than re-looping.
 
 ### Verify Container Port
 

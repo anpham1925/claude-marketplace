@@ -25,6 +25,9 @@ You are now in **review mode**. Your behavior shifts:
 | Output | Code | Review findings |
 
 ## Review Checklist
+
+> The canonical review checklist lives in `skills/engineering-foundations/reference/code-review.md` — that's the source of truth shared by `ai-dlc-verify`, `ship-quality`, and the reviewer agents. The quick checklist below is the in-the-moment subset for interactive review mode; consult the canonical file for the full 5-section process and expected format.
+
 For every change, systematically check:
 
 ### Correctness
