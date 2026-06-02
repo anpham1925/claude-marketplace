@@ -178,6 +178,7 @@ Skills trigger automatically based on what you say. Here's the complete routing:
 | "research mode", "exploration mode" | `mode-research` |
 | "review mode", "quality mode" | `mode-review` |
 | "investigate", "debug this", "why is this failing" | `investigate` |
+| "work in a worktree", "isolate this work", "set up a worktree" | `using-git-worktrees` |
 | "break this down", "split this ticket" | `sdlc-breakdown` |
 | "daily summary", "what did I do today", "standup" | `daily-summary` |
 | "learn from reviews", "what mistakes do we keep making" | `review-learning` |
@@ -263,7 +264,7 @@ The Plan phase classifies intent and determines which phases to run:
 | **ci-watcher** | sonnet | Monitor CI/CD pipelines, analyze failures |
 | **debugger** | opus | Hypothesis-driven debugging — investigates without fixing (max 3 rounds) |
 
-## Rules (18)
+## Rules (23)
 
 Context-triggered rules that activate when matching files are edited:
 
@@ -287,6 +288,11 @@ Context-triggered rules that activate when matching files are edited:
 | **Architecture Boundaries** | `*.ts`, `*.tsx` | Layer import direction enforcement (apps/modules/libs) |
 | **Test Fixtures** | `*.spec.ts`, `*.e2e-spec.ts` | Use existing factories before creating inline test data |
 | **Rule Authoring** | `rules/**/*.md` | File extension coverage checklist + version bump rules |
+| **Evidence-Based** | _(always on)_ | Back load-bearing claims with verifiable evidence; tag VERIFIED / INFERRED / ASSUMED |
+| **Verification Before Completion** | _(always on)_ | No completion/success claim without fresh verification output produced this session |
+| **Agent Artifacts** | _(always on)_ | Subagents hand off via files under `.claude/artifacts/<id>/`, returning pointers not raw text |
+| **Background-Process Discipline** | _(always on)_ | Kill backgrounded processes you no longer need — silent CPU/DB drain is on you |
+| **Skill Dispatch Pattern** | _(authoring SKILL.md)_ | Decide inline-vs-subagent before writing a skill body |
 
 ## Hooks (8)
 
