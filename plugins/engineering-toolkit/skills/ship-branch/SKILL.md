@@ -9,6 +9,8 @@ model: opus
 
 Create a branch and commit changes following git conventions. This is the first stage of the ship-n-check pipeline.
 
+> Need an isolated workspace first? Use `engineering-toolkit:using-git-worktrees` to set one up before branching.
+
 ## Steps
 
 ### Gate Check
