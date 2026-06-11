@@ -131,6 +131,12 @@ Write to `docs/<identifier>/prd-plans/domain-model.md`:
 
 See [artifacts reference](../ai-dlc/reference/artifacts.md) for the Domain Model Artifact format.
 
+### Build the Plan View
+
+Draw the diagrams this phase owns for the ticket's intent type — state machine(s) for stateful aggregates and key interaction sequence(s) — per the [diagram set by intent](../ai-dlc/reference/diagram-rendering.md#diagram-set-by-intent). Recommended defaults: tailor to the feature, don't over-draw a small one.
+
+After writing `domain-model.md`, combine the plan's artifacts into one readable **local** page (prose + inline-rendered state/sequence diagrams) and surface its path at the checkpoint — don't make the user copy Mermaid into mermaid.live. The `.md` files stay canonical; the page is a generated read-view. Follow the [plan view protocol](../ai-dlc/reference/diagram-rendering.md): run `build-plan-view.mjs --in docs/<identifier>/prd-plans/domain-model.md --out docs/<identifier>/prd-plans/plan-view.html`, record the `Plan View` path in `state.md`, and surface it at the checkpoint. Non-blocking — if the build fails, point at the `.md` artifacts and continue.
+
 ### Update Jira
 
 Dispatch the [clerk agent](../../agents/clerk.md) via the Task tool with the [Phase→Clerk brief](../ai-dlc/reference/shared.md#phase-clerk-brief). See [Failure semantics](../ai-dlc/reference/shared.md#failure-semantics-for-clerk-dispatch) for non-blocking dispatch behaviour.
@@ -157,6 +163,8 @@ Present the domain model and recommend next phase (see [AI-initiated recommendat
 > Modeled {N} aggregates: {list}
 > Defined {N} domain events: {list}
 > Identified {N} business rules and {N} state transitions
+> View the full plan (prose + diagrams): docs/<identifier>/prd-plans/plan-view.html
+> Diagram coverage ({intent} · Domain Design): {included ✓ · omitted (why)}
 >
 > I recommend proceeding to **Logical Design** to apply architectural patterns. Specifically:
 > - {NFR-1} suggests we need {pattern} for {reason}
@@ -180,6 +188,7 @@ Present the domain model and recommend next phase (see [AI-initiated recommendat
 See [common phase rules](../ai-dlc/reference/shared.md#common-phase-rules) for state updates, Jira comments, and checkpoint protocol.
 
 Phase-specific:
+- **ALWAYS** build the combined plan view (`plan-view.html`) before the checkpoint and surface its path (see [plan view](../ai-dlc/reference/diagram-rendering.md)) — never hand the user raw Mermaid to paste into mermaid.live
 - **NEVER** include infrastructure concerns — no databases, no HTTP, no message brokers
 - **NEVER** design in a vacuum — always check existing domain models first
 - **ALWAYS** present options for non-obvious aggregate boundaries

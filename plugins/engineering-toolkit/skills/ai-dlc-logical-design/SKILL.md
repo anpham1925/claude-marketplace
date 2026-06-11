@@ -205,6 +205,13 @@ After design approval, write to `docs/<identifier>/prd-plans/`:
 - Request flow, data flow, state transitions
 - Include domain event flows
 - Include error/retry flows if applicable
+- Prefer several focused mermaid blocks (one per concern) over one mega-graph — each renders inline at its place in the page
+
+### Build the Plan View
+
+Draw the flows this phase owns for the ticket's intent type — context/system flow, data flow, error/retry, ER (if schema changes), before/after structure (for refactors) — per the [diagram set by intent](../ai-dlc/reference/diagram-rendering.md#diagram-set-by-intent). Recommended defaults: tailor to the feature, don't over-draw.
+
+After writing `specs.md` + `flows.md`, regenerate the combined **local** page over the existing artifacts (`domain-model.md`, `specs.md`, `flows.md`, ADRs) → `plan-view.html`, bump the `Plan View` `last rendered` in `state.md`, and surface the path at the checkpoint. The `.md` files stay canonical; the page is a generated read-view. Follow the [plan view protocol](../ai-dlc/reference/diagram-rendering.md). Non-blocking — if the build fails, point at the `.md` artifacts and continue.
 
 ### Update Jira
 
@@ -233,6 +240,8 @@ Present the solution design and recommend next phase (see [AI-initiated recommen
 > - Chose {pattern} for {NFR}
 > - {N} ADRs generated for significant decisions
 > - File plan: {N} new files, {N} modified files
+> - View the full plan (prose + diagrams): docs/<identifier>/prd-plans/plan-view.html
+> - Diagram coverage ({intent} · Logical Design): {included ✓ · omitted (why)}
 >
 > I recommend proceeding to **Construct** using {N} dependency waves:
 > - Wave 1: {foundational components}
@@ -256,6 +265,7 @@ Present the solution design and recommend next phase (see [AI-initiated recommen
 See [common phase rules](../ai-dlc/reference/shared.md#common-phase-rules) for state updates, Jira comments, and checkpoint protocol.
 
 Phase-specific:
+- **ALWAYS** rebuild the combined plan view (`plan-view.html`) before the checkpoint and surface its path (see [plan view](../ai-dlc/reference/diagram-rendering.md)) — never hand the user raw Mermaid to paste into mermaid.live
 - **NEVER** design in a vacuum — always read existing code first
 - **ALWAYS** present 2-3 options with trade-offs for significant decisions
 - **ALWAYS** map every NFR to an architectural pattern
