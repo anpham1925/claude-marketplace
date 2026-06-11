@@ -60,6 +60,26 @@ Each phase runs as an **isolated subagent** via the Agent tool. The subagent:
 
 The orchestrator stays lean — after each subagent completes, it reads `state.md` and the output artifact files to build the checkpoint summary. **Never rely on the subagent's return text for context** — if the session dies mid-pipeline, artifact files must contain everything needed to resume.
 
+### Dispatch ownership — depth-1 only
+
+The Claude Code harness forbids a subagent from spawning another subagent (max nesting depth 1; see `code.claude.com/docs/en/subagents.md`). So **every `Agent`/`Task` dispatch in this pipeline is issued by the orchestrator** (this skill, at the top level) — never by a phase subagent. A phase subagent that tries to dispatch a specialist will fail or silently no-op.
+
+Phases come in two shapes:
+
+- **Leaf phases** — Discovery, Plan, Domain Design, Logical Design, Red Team, Observe. Each runs as one `general-purpose` phase subagent that does all its own work and dispatches nothing.
+- **Coordinator phases** — Inception, Construct, Verify. These need specialist agents, so the **orchestrator** drives them at the top level: it dispatches each specialist at depth-1, lets each write its artifact under `.claude/artifacts/<id>/`, then synthesizes (directly, or via one `general-purpose` worker reading those artifact paths). A coordinator phase's Steps describe the procedure the orchestrator follows and **read** specialist artifacts rather than spawning specialists.
+
+Specialist dispatch map — all issued by the orchestrator, depth-1:
+
+| Phase | Orchestrator dispatches (depth-1) |
+|---|---|
+| Inception | `surveyor` (repo routing) → `scout`/Explore (file discovery) |
+| Construct | per wave: `inspector` (RED tests) + one worker per independent component (GREEN) |
+| Verify | Verifier (`general-purpose`, AC checks) + `code-reviewer` + `requirements-reviewer` + `security-reviewer` + `debugger` (on failures) |
+| every phase | `clerk` (Jira comment), after the phase completes |
+
+`clerk` was already orchestrator-level; this rule extends the same depth-1 discipline to every other specialist.
+
 ### Spawning a Phase Subagent
 
 For each phase, spawn an Agent with:
@@ -78,7 +98,7 @@ All paths are relative to `docs/<identifier>/`. Every phase also updates `state.
 | Logical Design | `general-purpose` | opus | `state.md`, `prd-plans/inception.md`, `prd-plans/domain-model.md` (if exists) | `prd-plans/specs.md`, `prd-plans/flows.md`, `prd-plans/ADR-*.md`, `state.md` (traceability: Design Decision column) |
 | Red Team | `general-purpose` | opus | `state.md`, `prd-plans/inception.md`, `prd-plans/specs.md`, `prd-plans/flows.md`, `prd-plans/ADR-*.md` | `red-team-report.md`, `state.md` (Red Team iteration count + routing decisions) |
 | Construct | `general-purpose` | sonnet | `state.md`, `prd-plans/specs.md`, `prd-plans/flows.md`, `prd-plans/domain-model.md` (if exists), `red-team-report.md` (if exists) | Code + tests, `state.md` (traceability: Code Files, Test Files columns) |
-| Verify | `code-reviewer` | opus | `state.md`, `prd-plans/inception.md`, `prd-plans/specs.md`, code diff | `review-feedback.md`, `state.md` |
+| Verify | `general-purpose` (orchestrator-coordinated) | opus | `state.md`, `prd-plans/inception.md`, `prd-plans/specs.md`, code diff | `review-feedback.md`, `state.md` |
 | Release | `general-purpose` | sonnet | `state.md` | Merged PR, `state.md` |
 | Observe | `general-purpose` | sonnet | `state.md`, `prd-plans/inception.md` (Observability Plan) | `state.md` (Observation Report) |
 

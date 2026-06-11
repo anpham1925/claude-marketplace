@@ -93,7 +93,7 @@ Present the wave plan to the user before starting.
 
 ### Execute Each Wave (TDD)
 
-Within a wave, **launch parallel subagents** for independent components:
+Within a wave, the **orchestrator** launches one worker per independent component at depth-1 (subagents can't dispatch — see [Dispatch ownership](../ai-dlc/SKILL.md#dispatch-ownership--depth-1-only)):
 - Each subagent receives: Solution Design + Domain Model + **`prd-plans/constraints.md` verbatim (never summarized)** + relevant existing code only
 - Each subagent's prompt MUST include a **constraint acknowledgement** preamble:
   > "Before writing code, list which constraints from `constraints.md` apply to your component and state how each will be avoided. After finishing, run `grep -r '<forbidden_tokens>' <changed files>` for every applicable constraint and report any matches as a violation."
@@ -117,7 +117,7 @@ RIGHT (vertical tracer bullets):
 ```
 
 - **Red** — Write a failing test
-  - **Test authoring is owned by the `engineering-toolkit:inspector` agent.** Within a wave, dispatch `engineering-toolkit:inspector` (passing the `<id>` + the constraint file + the AC under test) to author the failing test; it owns all test files, writes its RED report to `.claude/artifacts/<id>/inspector-report.md`, and returns a pointer. The implementing subagent does not write tests — it reads the inspector's report by path and makes them pass (see `rules/agent-artifacts.md`).
+  - **Test authoring is owned by the `engineering-toolkit:inspector` agent, dispatched by the orchestrator** at depth-1. For each behaviour the orchestrator dispatches `engineering-toolkit:inspector` (passing the `<id>` + the constraint file + the AC under test) to author the failing test; it owns all test files and writes its RED report to `.claude/artifacts/<id>/inspector-report.md`. The component worker does not write tests — it reads the inspector's report by path and makes them pass (see `rules/agent-artifacts.md`).
   - Test file next to implementation (`.spec.ts`)
   - AAA pattern: Arrange, Act, Assert
   - Test the specific behavior from an acceptance criterion

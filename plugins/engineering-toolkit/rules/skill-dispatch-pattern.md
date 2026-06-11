@@ -82,7 +82,7 @@ The `## Invocation Mode` header preserves three independent invocation paths —
 2. **Orchestrator full-pipeline** (`/engineering-toolkit:ai-dlc PROJ-123`): orchestrator iterates phases, spawning one subagent per phase with the skip-instruction. Each phase subagent executes Steps directly.
 3. **Orchestrator single-phase routing** (`/engineering-toolkit:ai-dlc inception PROJ-123`): orchestrator parses the phase name from `$ARGUMENTS`, spawns ONE phase subagent with the skip-instruction, then stops. This is the existing arg-parsing in ai-dlc/SKILL.md.
 
-When authoring a phase skill, the Steps section MUST be self-sufficient (it can be run by either a parent-spawned subagent OR an orchestrator-spawned subagent — both call into the same Steps). Don't add code paths that assume "the orchestrator already did X."
+When authoring a phase skill, the Steps section MUST be self-sufficient (runnable by either a parent-spawned or an orchestrator-spawned subagent). **But Steps must NOT dispatch further subagents** — the harness forbids a subagent from spawning subagents (depth-1 max). A phase that needs specialist agents is a *coordinator phase*: the orchestrator (top level) dispatches those specialists at depth-1 and the phase Steps **read** their artifacts. Never write Steps that spawn `code-reviewer` / `inspector` / `surveyor` / `debugger` / etc. from inside a phase subagent.
 
 ## Anti-patterns
 

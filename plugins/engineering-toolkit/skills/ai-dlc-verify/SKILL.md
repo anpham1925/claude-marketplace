@@ -30,7 +30,7 @@ Follows the [skill-dispatch-pattern rule](../../rules/skill-dispatch-pattern.md#
 **Inputs**: Code + tests from Construct, `prd-plans/inception.md` (ACs, NFRs, risks), `prd-plans/specs.md` (Solution Design), Traceability Matrix from `state.md`
 **Outputs**: `review-feedback.md` (Review Feedback) + updated `state.md` (Verification Report, AC status)
 **Return Contract**: see [Subagent Return Contract](../ai-dlc/reference/shared.md#subagent-return-contract) — final return MUST be the 7-line structured shape, not free-form prose
-**Subagent type**: `general-purpose` — **MUST be a fresh subagent** (context-isolated from the Constructor to avoid bias)
+**Subagent type**: `general-purpose` — the **orchestrator** dispatches it at depth-1; it MUST be a fresh subagent, context-isolated from the Constructor to avoid bias. Per [Dispatch ownership](../ai-dlc/SKILL.md#dispatch-ownership--depth-1-only), the Verifier dispatches nothing — the orchestrator dispatches the code-reviewer / requirements-reviewer / security-reviewer / debugger lenses.
 
 **Definition of Done**:
 - Every AC is marked PASS or FAIL against an actual test run (not a hand-wave)
@@ -59,7 +59,7 @@ See [shared reference](../ai-dlc/reference/shared.md) for format.
 
 ### Part 1: Acceptance Criterion Verification
 
-**Spawn a fresh Verifier subagent** (NOT the Constructor):
+The **orchestrator** dispatches a fresh Verifier subagent (`general-purpose`, NOT the Constructor) at depth-1:
 
 For each acceptance criterion:
 1. Identify how to verify it (run tests, check code paths, trace data flow)
@@ -70,8 +70,8 @@ For each acceptance criterion:
 #### Debug Failures
 
 For each FAIL:
-- Spawn a debug subagent with: failing deliverable, expected vs actual, relevant code
-- Debug agent diagnoses root cause and produces a fix
+- The **orchestrator** dispatches the `engineering-toolkit:debugger` agent at depth-1 with: failing deliverable, expected vs actual, relevant code
+- The debugger diagnoses root cause (writes `.claude/artifacts/<id>/debugger-report.md`) and proposes a fix
 - Apply fix, re-verify
 - Max 2 fix-and-verify cycles per deliverable
 
@@ -107,7 +107,7 @@ Mark each NFR as: **ADDRESSED** (pattern implemented), **PARTIAL** (incomplete),
 
 ### Part 4: Code Review
 
-**Spawn a `code-reviewer` subagent** with risk context from state.md (pass the `<id>`). Include in the prompt:
+The **orchestrator** dispatches a `code-reviewer` subagent (depth-1) with risk context from state.md (pass the `<id>`). Include in the prompt:
 - Complexity band (e.g. "Complexity: Medium")
 - Risk register entries with severity (e.g. "Risks: R-1 HIGH — concurrent balance updates")
 - NFR categories flagged (e.g. "NFRs: security, reliability, data-integrity")
@@ -115,7 +115,7 @@ Mark each NFR as: **ADDRESSED** (pattern implemented), **PARTIAL** (incomplete),
 
 This enables the code-reviewer's adversarial section to automatically calibrate depth — deep analysis for high-risk changes, light checks for routine work.
 
-**Additional review lenses (parallel, dispatched on the signals below).** Each writes its own artifact under `.claude/artifacts/<id>/` and returns a pointer; read each by path and fold findings into the Review Feedback append:
+**Additional review lenses — the orchestrator dispatches these in parallel (depth-1) on the signals below.** Each writes its own artifact under `.claude/artifacts/<id>/`; read each by path and fold findings into the Review Feedback append:
 - **`engineering-toolkit:requirements-reviewer`** — always, to cross-check the diff against the AC list from `inception.md` (independent of the code-reviewer's quality lens). Writes `requirements-review.md`.
 - **`engineering-toolkit:security-reviewer`** — when the diff touches auth, input handling, secrets, external calls, or any NFR flagged `security`. Writes `security-review.md`.
 
