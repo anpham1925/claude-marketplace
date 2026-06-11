@@ -17,6 +17,7 @@ Hooks are **deterministic**. They run as shell scripts before or after every too
 
 | Script | Matcher | What it does |
 |--------|---------|--------------|
+| `worktree-fetch-default.sh` | `EnterWorktree` | Runs `git fetch origin <default-branch>` before a worktree is created, so it branches from the true remote tip. `EnterWorktree` (fresh mode) branches from the *stale local* origin ref without fetching — this closes that window and prevents conflicts with work merged since the last fetch. Side-effect-only and non-blocking (always exits 0) |
 | `block-no-verify.sh` | `Bash` | Blocks `git commit --no-verify` and `git push --force` to main/master |
 | `git-safety.sh` | `Bash` | Blocks `git reset --hard`, `git clean -f`, `git checkout .`, `git restore .`, `git branch -D main/master`. Warns on force pushes to other branches and rebases onto shared branches |
 | `ship-conventions.sh` | `Bash` | Config-driven shipping conventions (reads `conventions.json`). Blocks `$()` in commits, PRs without `--draft`, broad staging, and commits on protected branches. Branch naming is advisory (handled by skill instructions, not hooks) |
@@ -137,6 +138,7 @@ PreToolUse hooks communicate decisions via JSON on stdout:
 - **Approve:** `{"decision": "approve"}`
 - **Approve with warning:** `{"decision": "approve", "message": "warning text"}`
 - **Block:** `{"decision": "block", "reason": "explanation"}`
+- **Side-effect only (no decision):** exit 0 with empty stdout — the tool proceeds through the normal permission flow. Used by `worktree-fetch-default.sh`, which performs a `git fetch` and gets out of the way.
 
 PostToolUse hooks print warnings/suggestions as plain text to stdout. Empty output means no issues.
 
