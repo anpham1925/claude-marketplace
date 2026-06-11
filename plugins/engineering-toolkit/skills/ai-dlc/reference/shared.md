@@ -414,7 +414,7 @@ The "Sets `iteration`?" column marks the phases that can re-run after a Red Team
 
 ### Dispatch protocol
 
-Every phase MUST dispatch clerk via the **Task tool**, not the Skill tool. Three reasons:
+The orchestrator MUST dispatch clerk via the **Task tool** (not the Skill tool) after every phase — at depth-1, never from inside a phase subagent (see [Dispatch ownership](../SKILL.md#dispatch-ownership--depth-1-only)). Three reasons:
 
 1. **Bias isolation** — particularly for Verify, which reads Jira ticket activity. A clerk dispatched inline would mutate state Verify's own assertions read, creating a feedback loop. See ADR-001 in `docs/port-clerk/prd-plans/`.
 2. **Tool-grant scoping** — clerk's frontmatter declares 13 `mcp__atlassian__*` grants. Skill-tool inline dispatch would inherit those grants into the dispatching phase's context; Task-tool dispatch keeps them confined to clerk's subagent (least-privilege).
