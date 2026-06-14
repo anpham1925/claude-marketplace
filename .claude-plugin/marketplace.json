@@ -9,8 +9,8 @@
   "plugins": [
     {
       "name": "engineering-toolkit",
-      "description": "Core engineering toolkit — 37 skills, 10 agents, 23 rules, 10 hooks. All skills and agents run on opus; subagents hand off via artifact files (paths, not raw text). AI-DLC (adaptive intent-to-production lifecycle) and ship-n-check (git pipeline with backgrounded CI/deploy waits). Config-driven git conventions, mode switching, harness engineering, skill-first + evidence-based enforcement, language-specific rules for TypeScript/Python/Go.",
-      "version": "8.2.0",
+      "description": "Core engineering toolkit — 38 skills, 10 agents, 23 rules, 10 hooks. All skills and agents run on opus; subagents hand off via artifact files (paths, not raw text). AI-DLC (adaptive intent-to-production lifecycle) and ship-n-check (git pipeline with backgrounded CI/deploy waits). Config-driven git conventions, mode switching, harness engineering, skill-first + evidence-based enforcement, language-specific rules for TypeScript/Python/Go.",
+      "version": "8.3.0",
       "author": {
         "name": "An Pham"
       },
